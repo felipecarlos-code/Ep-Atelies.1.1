@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "AppState": {
+      "title": "App State",
+      "description": "The complete state of the application containing atelies, turmas, partners, schedules, selectedYear, and selectedQuarter.",
+      "type": "object",
+      "properties": {
+        "atelies": { "type": "array", "description": "List of active atelies." },
+        "turmas": { "type": "array", "description": "List of academic groups / deals." },
+        "partners": { "type": "array", "description": "List of enrolled partners." },
+        "schedules": { "type": "object", "description": "Matrix of schedule rows per academic year and quarter." },
+        "selectedYear": { "type": "string", "description": "Currently selected academic year." },
+        "selectedQuarter": { "type": "string", "description": "Currently selected quarter." }
+      },
+      "required": ["atelies", "turmas", "partners", "schedules", "selectedYear", "selectedQuarter"]
+    }
+  },
+  "firestore": {
+    "app_state/{docId}": {
+      "schema": "AppState",
+      "description": "Collection storing the application's overall state documents."
+    }
+  }
+}
