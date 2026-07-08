@@ -5,7 +5,6 @@ import express from "express";
 import path from "path";
 import dns from "dns";
 import fs from "fs";
-import { Firestore } from "@google-cloud/firestore";
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 
@@ -15,22 +14,31 @@ dns.setDefaultResultOrder("ipv4first");
 export function createExpressApp() {
   const app = express();
 
-  // Graceful Firestore initialization
-  let db: Firestore | null = null;
-  try {
-    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-    if (fs.existsSync(configPath)) {
-      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-      db = new Firestore({
-        projectId: config.projectId,
-        databaseId: config.firestoreDatabaseId || "(default)",
-      });
-      console.log(`[Firestore] Connected securely to Firestore database: "${config.firestoreDatabaseId}"`);
+  // Graceful Firestore initialization (lazy loaded to prevent gRPC/credential crashes on serverless like Vercel)
+  let db: any = null;
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  const isVercel = !!process.env.VERCEL;
+
+  if (fs.existsSync(configPath) && !isVercel) {
+    (async () => {
+      try {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        const { Firestore } = await import("@google-cloud/firestore");
+        db = new Firestore({
+          projectId: config.projectId,
+          databaseId: config.firestoreDatabaseId || "(default)",
+        });
+        console.log(`[Firestore] Connected securely to Firestore database: "${config.firestoreDatabaseId}"`);
+      } catch (error: any) {
+        console.error("[Firestore] Failed to initialize database:", error.message);
+      }
+    })();
+  } else {
+    if (isVercel) {
+      console.log("[Firestore] Running on Vercel: Bypassed Firestore initialization to prevent authentication & gRPC issues.");
     } else {
       console.warn("[Firestore] firebase-applet-config.json not found. Database features will be mock-only.");
     }
-  } catch (error: any) {
-    console.error("[Firestore] Failed to initialize database:", error.message);
   }
 
   // Graceful Supabase initialization
