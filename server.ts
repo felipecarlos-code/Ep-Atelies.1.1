@@ -8,12 +8,7 @@ import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 
-// Ensure localhost resolves to ipv4 first for stable connections
-try {
-  dns.setDefaultResultOrder("ipv4first");
-} catch (e: any) {
-  console.warn("[DNS] Could not set setDefaultResultOrder:", e?.message || String(e));
-}
+// DNS default order is not overridden to ensure smooth DNS resolution in Vercel serverless environment.
 
 export function createExpressApp() {
   const app = express();
@@ -26,7 +21,21 @@ export function createExpressApp() {
     try {
       supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
-          persistSession: false
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        },
+        global: {
+          fetch: async (url, init) => {
+            return globalThis.fetch(url, {
+              ...init,
+              keepalive: false,
+              headers: {
+                ...init?.headers,
+                "Connection": "close"
+              }
+            });
+          }
         }
       });
       console.log(`[Supabase] Initialized client successfully for URL: "${supabaseUrl}"`);
@@ -73,7 +82,21 @@ export function createExpressApp() {
       try {
         return createClient(headerUrl, headerKey, {
           auth: {
-            persistSession: false
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          },
+          global: {
+            fetch: async (url, init) => {
+              return globalThis.fetch(url, {
+                ...init,
+                keepalive: false,
+                headers: {
+                  ...init?.headers,
+                  "Connection": "close"
+                }
+              });
+            }
           }
         });
       } catch (err: any) {
