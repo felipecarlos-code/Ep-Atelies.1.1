@@ -9,7 +9,11 @@ import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
 
 // Ensure localhost resolves to ipv4 first for stable connections
-dns.setDefaultResultOrder("ipv4first");
+try {
+  dns.setDefaultResultOrder("ipv4first");
+} catch (e: any) {
+  console.warn("[DNS] Could not set setDefaultResultOrder:", e?.message || String(e));
+}
 
 export function createExpressApp() {
   const app = express();
@@ -50,6 +54,21 @@ export function createExpressApp() {
       supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
           persistSession: false
+        },
+        global: {
+          fetch: async (url, init) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout to prevent Vercel serverless gateway timeout
+            try {
+              const res = await globalThis.fetch(url, {
+                ...init,
+                signal: controller.signal
+              });
+              return res;
+            } finally {
+              clearTimeout(timeoutId);
+            }
+          }
         }
       });
       console.log(`[Supabase] Initialized client successfully for URL: "${supabaseUrl}"`);
@@ -99,13 +118,18 @@ export function createExpressApp() {
             persistSession: false
           },
           global: {
-            fetch: (url, init) => {
+            fetch: async (url, init) => {
               const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
-              return fetch(url, {
-                ...init,
-                signal: controller.signal
-              }).finally(() => clearTimeout(timeoutId));
+              const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout to prevent Vercel serverless gateway timeout
+              try {
+                const res = await globalThis.fetch(url, {
+                  ...init,
+                  signal: controller.signal
+                });
+                return res;
+              } finally {
+                clearTimeout(timeoutId);
+              }
             }
           }
         });
