@@ -194,6 +194,16 @@ export default function App() {
       const res = await fetch("/api/db/load", {
         headers: forceHeaders || getDbHeaders()
       });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        setIsDbConfigured(false);
+        return { 
+          success: false, 
+          message: `Erro do servidor (${res.status}): ${errorText || res.statusText}` 
+        };
+      }
+      
       const resData = await res.json();
       
       if (resData.diagnostics) {
@@ -345,6 +355,13 @@ export default function App() {
             selectedQuarter 
           })
         });
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`Erro ao salvar no servidor (${res.status}):`, errorText || res.statusText);
+          return;
+        }
+        
         const resData = await res.json();
         if (!resData.success) {
           if (resData.code === "TABLE_NOT_FOUND") {
@@ -386,6 +403,13 @@ export default function App() {
           selectedQuarter 
         })
       });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        setSyncToast({ message: `Erro do servidor (${res.status}): ${errorText || res.statusText}`, type: 'error' });
+        return;
+      }
+      
       const resData = await res.json();
       if (resData.success) {
         setSyncToast({ message: "Dados sincronizados e guardados com sucesso no Supabase!", type: 'success' });

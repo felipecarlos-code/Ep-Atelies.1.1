@@ -78,18 +78,31 @@ export function createExpressApp() {
 
   // Helper to dynamically get or initialize Supabase client for a request (supporting client header credentials)
   const getSupabaseClient = (req: express.Request) => {
-    const headerUrl = req.headers["x-supabase-url"] as string;
-    const headerKey = req.headers["x-supabase-key"] as string;
+    const rawUrl = req.headers["x-supabase-url"];
+    const rawKey = req.headers["x-supabase-key"];
+    
+    const headerUrl = typeof rawUrl === "string" ? rawUrl.trim() : undefined;
+    const headerKey = typeof rawKey === "string" ? rawKey.trim() : undefined;
     
     if (headerUrl && headerKey) {
       try {
         return createClient(headerUrl, headerKey, {
           auth: {
             persistSession: false
+          },
+          global: {
+            fetch: (url, init) => {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+              return fetch(url, {
+                ...init,
+                signal: controller.signal
+              }).finally(() => clearTimeout(timeoutId));
+            }
           }
         });
       } catch (err: any) {
-        console.error("[Supabase Request Dynamic] Failed to create client from request headers:", err.message);
+        console.error("[Supabase Request Dynamic] Failed to create client from request headers:", err?.message || String(err));
       }
     }
     return supabase;
@@ -147,7 +160,8 @@ export function createExpressApp() {
           }
         });
       } catch (error: any) {
-        console.error("[Supabase] Error fetching database document:", error.message);
+        const errorMsg = error?.message || String(error);
+        console.error("[Supabase] Error fetching database document:", errorMsg);
         // Fallback to Firestore if it is configured
         if (db) {
           console.log("[Supabase Fallback] Falling back to Firestore loading...");
@@ -155,10 +169,10 @@ export function createExpressApp() {
           return res.status(200).json({ 
             success: false, 
             configured: false, 
-            error: `Erro de conexão com o Supabase: ${error.message}`,
+            error: `Erro de conexão com o Supabase: ${errorMsg}`,
             diagnostics: {
               ...diagnostics,
-              connectionError: error.message
+              connectionError: errorMsg
             }
           });
         }
@@ -176,8 +190,9 @@ export function createExpressApp() {
           return res.json({ success: true, configured: true, isFirestore: true, data: null, diagnostics });
         }
       } catch (error: any) {
-        console.error("[Firestore] Error fetching database document:", error.message);
-        return res.status(200).json({ success: false, configured: false, error: error.message, diagnostics });
+        const errorMsg = error?.message || String(error);
+        console.error("[Firestore] Error fetching database document:", errorMsg);
+        return res.status(200).json({ success: false, configured: false, error: errorMsg, diagnostics });
       }
     }
 
@@ -234,17 +249,18 @@ export function createExpressApp() {
 
         return res.json({ success: true, isSupabase: true, diagnostics });
       } catch (error: any) {
-        console.error("[Supabase] Error writing database document:", error.message);
+        const errorMsg = error?.message || String(error);
+        console.error("[Supabase] Error writing database document:", errorMsg);
         // Fallback to Firestore if configured
         if (db) {
           console.log("[Supabase Fallback] Falling back to Firestore saving...");
         } else {
           return res.status(200).json({ 
             success: false, 
-            error: `Erro do Supabase: ${error.message}`,
+            error: `Erro do Supabase: ${errorMsg}`,
             diagnostics: {
               ...diagnostics,
-              connectionError: error.message
+              connectionError: errorMsg
             }
           });
         }
@@ -258,8 +274,9 @@ export function createExpressApp() {
         await docRef.set(payload);
         return res.json({ success: true, isFirestore: true, diagnostics });
       } catch (error: any) {
-        console.error("[Firestore] Error writing database document:", error.message);
-        return res.status(200).json({ success: false, error: error.message, diagnostics });
+        const errorMsg = error?.message || String(error);
+        console.error("[Firestore] Error writing database document:", errorMsg);
+        return res.status(200).json({ success: false, error: errorMsg, diagnostics });
       }
     }
 
