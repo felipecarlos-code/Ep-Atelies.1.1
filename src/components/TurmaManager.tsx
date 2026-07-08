@@ -28,11 +28,21 @@ export const COURSE_MAP: Record<string, string> = {
   ECMD: 'Engenharia de Computação',
   ESMD: 'Engenharia de Software',
   SIMD: 'Sistemas da Informação',
+  '1': '1º Ano',
+  '1º': '1º Ano',
+  '1ª': '1º Ano',
 };
 
 export function autoDetectCourse(text: string): string | null {
   if (!text) return null;
-  const upper = text.toUpperCase();
+  const trimmed = text.trim();
+  
+  // Se começar com a letra "1", retorna "1º Ano" (De-Para Inteligente para 1º Ano)
+  if (trimmed.startsWith('1')) {
+    return '1º Ano';
+  }
+  
+  const upper = trimmed.toUpperCase();
   const keys = ['ECMD', 'ESMD', 'SIMD', 'CCMD', 'AMD'];
   for (const key of keys) {
     if (upper.includes(key)) {
@@ -68,8 +78,16 @@ export function cleanOrDetectCourse(courseRaw?: string, courseModuleRaw?: string
 
 export function getFriendlyStageName(stage: string): string {
   if (!stage) return "";
-  const normalized = stage.toLowerCase().trim();
   
+  // 1. Normalização agressiva para fins de comparação (sem acentos, minúsculas, sem caracteres especiais)
+  const clean = stage
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, " ");
+
+  // 2. Mapeamento exato de chaves limpas
   const mapping: Record<string, string> = {
     "appointmentscheduled": "Contato Inicial",
     "qualifiedtobuy": "Qualificado",
@@ -79,29 +97,57 @@ export function getFriendlyStageName(stage: string): string {
     "closedwon": "Fechado Ganho (Won)",
     "closedlost": "Fechado Perdido (Lost)",
     
-    // EP / B2B - EP - Iniciativas custom stage mappings
-    "appointmentscheduled_ep": "Início da Prospecção",
-    "presentationscheduled_ep": "Reunião de Alinhamento",
-    "proposal_sent": "Proposta Enviada",
-    "under_review": "Em Análise",
+    // Mapeamentos específicos do EP
+    "appointmentscheduled ep": "Início da Prospecção",
+    "presentationscheduled ep": "Reunião de Alinhamento",
+    "proposal sent": "Proposta Enviada",
+    "under review": "Em Análise",
     "approved": "Aprovado",
     "contracting": "Em Contratação",
     "active": "Ativo / Em Andamento",
     "completed": "Concluído",
     "cancelled": "Cancelado",
+    
+    // Variações comuns limpas
+    "pre projeto": "Pré-Projeto",
+    "preprojeto": "Pré-Projeto",
+    "projeto": "Projeto",
+    "em analise": "Em Análise",
+    "proposta enviada": "Proposta Enviada",
+    "reuniao de alinhamento": "Reunião de Alinhamento",
+    "inicio da prospeccao": "Início da Prospecção",
+    "ativo em andamento": "Ativo / Em Andamento",
+    "fechado ganho": "Fechado Ganho",
+    "fechado perdido": "Fechado Perdido",
   };
 
-  if (mapping[normalized]) return mapping[normalized];
+  if (mapping[clean]) return mapping[clean];
 
-  if (normalized.includes("won") || normalized.includes("ganho") || normalized.includes("sucesso")) return "Fechado Ganho";
-  if (normalized.includes("lost") || normalized.includes("perdido") || normalized.includes("cancelado")) return "Fechado Perdido";
-  if (normalized.includes("proposal") || normalized.includes("proposta") || normalized.includes("apresenta")) return "Proposta / Apresentação";
-  if (normalized.includes("negotiation") || normalized.includes("negocia")) return "Em Negociação";
-  if (normalized.includes("appointment") || normalized.includes("agendado") || normalized.includes("contato")) return "Contato Inicial";
-  if (normalized.includes("qualified") || normalized.includes("qualificado")) return "Qualificado";
-  if (normalized.includes("contract") || normalized.includes("contrato")) return "Em Contratação";
-  
-  return stage.charAt(0).toUpperCase() + stage.slice(1);
+  // 3. Checagem por substrings comuns em português/inglês
+  if (clean.includes("pre projeto") || clean.includes("preprojeto")) return "Pré-Projeto";
+  if (clean.includes("won") || clean.includes("ganho") || clean.includes("sucesso")) return "Fechado Ganho";
+  if (clean.includes("lost") || clean.includes("perdido")) return "Fechado Perdido";
+  if (clean.includes("proposal") || clean.includes("proposta") || clean.includes("apresenta")) return "Proposta / Apresentação";
+  if (clean.includes("negotiation") || clean.includes("negocia")) return "Em Negociação";
+  if (clean.includes("appointment") || clean.includes("agendado") || clean.includes("contato")) return "Contato Inicial";
+  if (clean.includes("qualified") || clean.includes("qualificado")) return "Qualificado";
+  if (clean.includes("contract") || clean.includes("contrato")) return "Em Contratação";
+  if (clean.includes("analise") || clean.includes("review")) return "Em Análise";
+  if (clean.includes("reuniao") || clean.includes("meeting")) return "Reunião de Alinhamento";
+  if (clean.includes("ativo") || clean.includes("active") || clean.includes("andamento")) return "Ativo / Em Andamento";
+  if (clean.includes("concluido") || clean.includes("completed") || clean.includes("conclui")) return "Concluído";
+  if (clean.includes("cancelado") || clean.includes("cancelled") || clean.includes("cancela")) return "Cancelado";
+
+  // 4. Fallback: Title Case inteligente para garantir consistência visual perfeita
+  const words = stage.toLowerCase().trim().split(/[\s_\-]+/);
+  return words
+    .map((word, index) => {
+      if (index > 0 && ["de", "do", "da", "em", "para", "e", "o", "a", "com"].includes(word)) {
+        return word;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
 }
 
 function PartnerLogo({ partner }: { partner?: Partner }) {
@@ -182,6 +228,8 @@ export default function TurmaManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   
+  const isEditingFromHubspot = editingId ? /^[0-9]+$/.test(editingId) : false;
+  
   // States matching the 9 required fields
   const [name, setName] = useState('');
   const [projectTitle, setProjectTitle] = useState('');
@@ -210,9 +258,9 @@ export default function TurmaManager({
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('');
 
-  // Extract unique stages
+  // Extract unique friendly stages to prevent visual duplicates from raw API keys or case differences
   const uniqueStages = Array.from(
-    new Set(turmas.map((t) => t.dealstage || '').filter(Boolean))
+    new Set(turmas.map((t) => getFriendlyStageName(t.dealstage || '')).filter(Boolean))
   ).sort();
 
   // Filtered turmas list
@@ -222,7 +270,7 @@ export default function TurmaManager({
       (t.projectTitle && t.projectTitle.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (t.classCode && t.classCode.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesStage = !stageFilter || t.dealstage === stageFilter;
+    const matchesStage = !stageFilter || getFriendlyStageName(t.dealstage || '') === stageFilter;
     
     return matchesSearch && matchesStage;
   });
@@ -682,6 +730,15 @@ export default function TurmaManager({
             </button>
           </div>
 
+          {isEditingFromHubspot && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3.5 text-xs text-amber-800 flex items-start gap-2.5 shadow-3xs animate-fade-in">
+              <Database size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold">Negócio integrado com o HubSpot CRM.</span> As informações principais do negócio foram sincronizadas automaticamente e estão bloqueadas para edição local a fim de manter a consistência de dados. O Período Letivo e a Qtd de Alunos podem ser ajustados localmente.
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* 1 - Nome do Negócio */}
             <div>
@@ -698,8 +755,9 @@ export default function TurmaManager({
                   const det = autoDetectCourse(val);
                   if (det) setCourse(det);
                 }}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: Copel ou Cocamar"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -717,8 +775,9 @@ export default function TurmaManager({
                   const det = autoDetectCourse(val);
                   if (det) setCourse(det);
                 }}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: Rastreabilidade Agro"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -731,8 +790,9 @@ export default function TurmaManager({
                 type="text"
                 value={dealstage}
                 onChange={(e) => setDealstage(e.target.value)}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: Contrato Assinado ou Proposta"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -744,7 +804,8 @@ export default function TurmaManager({
               <select
                 value={partnerId}
                 onChange={(e) => setPartnerId(e.target.value)}
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                disabled={isEditingFromHubspot}
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 <option value="">Sem empresa associada...</option>
                 {partners.map(p => (
@@ -762,8 +823,9 @@ export default function TurmaManager({
                 type="text"
                 value={applicationYear}
                 onChange={(e) => setApplicationYear(e.target.value)}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: 2026"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -775,7 +837,8 @@ export default function TurmaManager({
               <select
                 value={applicationQuarter}
                 onChange={(e) => setApplicationQuarter(e.target.value)}
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                disabled={isEditingFromHubspot}
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 <option value="Q1">Q1 - Primeiro Trimestre</option>
                 <option value="Q2">Q2 - Segundo Trimestre</option>
@@ -800,8 +863,9 @@ export default function TurmaManager({
                     setCourse(det);
                   }
                 }}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: 1AMD3 - LÓGICA PARA PREDIÇÃO..."
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -814,9 +878,11 @@ export default function TurmaManager({
               <select
                 value={course}
                 onChange={(e) => setCourse(e.target.value)}
-                className="w-full text-xs border border-indigo-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                disabled={isEditingFromHubspot}
+                className="w-full text-xs border border-indigo-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 <option value="">Selecione o Curso...</option>
+                <option value="1º Ano">1º Ano</option>
                 <option value="Ciência da Computação">Ciência da Computação (CCMD)</option>
                 <option value="Adm Tech">Adm Tech (AMD)</option>
                 <option value="Engenharia de Computação">Engenharia de Computação (ECMD)</option>
@@ -839,8 +905,9 @@ export default function TurmaManager({
                   const det = autoDetectCourse(val);
                   if (det) setCourse(det);
                 }}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: 2026-1B-T14"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -858,8 +925,9 @@ export default function TurmaManager({
                   const det = autoDetectCourse(val);
                   if (det) setCourse(det);
                 }}
+                disabled={isEditingFromHubspot}
                 placeholder="Ex: copel-2026-q1"
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -912,9 +980,10 @@ export default function TurmaManager({
             <textarea
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
+              disabled={isEditingFromHubspot}
               placeholder="Descreva o escopo, metas, e especificações técnicas negociadas..."
               rows={3}
-              className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all resize-none font-medium"
+              className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all resize-none font-medium disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -970,7 +1039,7 @@ export default function TurmaManager({
               <option value="">Todas as etapas</option>
               {uniqueStages.map((stage) => (
                 <option key={stage} value={stage}>
-                  {getFriendlyStageName(stage)}
+                  {stage}
                 </option>
               ))}
             </select>

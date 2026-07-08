@@ -1187,9 +1187,74 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             turmas={turmas}
             partners={partners}
             onSyncData={({ atelies: syncedAtelies, turmas: syncedTurmas, partners: syncedPartners }) => {
-              setAtelies(syncedAtelies);
-              setTurmas(syncedTurmas);
-              setPartners(syncedPartners);
+              // 1. Merge Ateliês: update existing and keep others
+              setAtelies((prevAtelies) => {
+                const merged = [...prevAtelies];
+                syncedAtelies.forEach((synced) => {
+                  const idx = merged.findIndex(
+                    (a) => a.id === synced.id || a.name.toLowerCase().trim() === synced.name.toLowerCase().trim()
+                  );
+                  if (idx > -1) {
+                    merged[idx] = {
+                      ...merged[idx],
+                      ...synced,
+                    };
+                  } else {
+                    merged.push(synced);
+                  }
+                });
+                return merged;
+              });
+
+              // 2. Merge Partners (Empresas): update existing and keep others
+              setPartners((prevPartners) => {
+                const merged = [...prevPartners];
+                syncedPartners.forEach((synced) => {
+                  const idx = merged.findIndex(
+                    (p) => p.id === synced.id || p.name.toLowerCase().trim() === synced.name.toLowerCase().trim()
+                  );
+                  if (idx > -1) {
+                    merged[idx] = {
+                      ...merged[idx],
+                      ...synced,
+                    };
+                  } else {
+                    merged.push(synced);
+                  }
+                });
+                return merged;
+              });
+
+              // 3. Merge Turmas (Negócios): CRITICAL to preserve period and studentCount
+              setTurmas((prevTurmas) => {
+                const merged = [...prevTurmas];
+                syncedTurmas.forEach((synced) => {
+                  const idx = merged.findIndex((t) => {
+                    // Match by ID
+                    if (t.id === synced.id) return true;
+                    // Match by HubSpot unique class ID
+                    if (synced.uniqueClassId && t.uniqueClassId === synced.uniqueClassId) return true;
+                    // Match by Name (case insensitive, trimmed)
+                    if (synced.name && t.name.toLowerCase().trim() === synced.name.toLowerCase().trim()) return true;
+                    return false;
+                  });
+
+                  if (idx > -1) {
+                    const existing = merged[idx];
+                    merged[idx] = {
+                      ...existing, // keep local properties
+                      ...synced,   // update with latest HubSpot properties
+                      // Force preserve user-edited local fields
+                      period: existing.period || synced.period || '',
+                      studentCount: existing.studentCount !== undefined ? existing.studentCount : synced.studentCount,
+                    };
+                  } else {
+                    // New business, add it
+                    merged.push(synced);
+                  }
+                });
+                return merged;
+              });
             }}
           />
         )}
