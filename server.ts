@@ -27,21 +27,6 @@ export function createExpressApp() {
       supabase = createClient(supabaseUrl, supabaseKey, {
         auth: {
           persistSession: false
-        },
-        global: {
-          fetch: async (url, init) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout to prevent Vercel serverless gateway timeout
-            try {
-              const res = await globalThis.fetch(url, {
-                ...init,
-                signal: controller.signal
-              });
-              return res;
-            } finally {
-              clearTimeout(timeoutId);
-            }
-          }
         }
       });
       console.log(`[Supabase] Initialized client successfully for URL: "${supabaseUrl}"`);
@@ -89,21 +74,6 @@ export function createExpressApp() {
         return createClient(headerUrl, headerKey, {
           auth: {
             persistSession: false
-          },
-          global: {
-            fetch: async (url, init) => {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 4000); // 4-second timeout to prevent Vercel serverless gateway timeout
-              try {
-                const res = await globalThis.fetch(url, {
-                  ...init,
-                  signal: controller.signal
-                });
-                return res;
-              } finally {
-                clearTimeout(timeoutId);
-              }
-            }
           }
         });
       } catch (err: any) {
