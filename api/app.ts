@@ -969,6 +969,15 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
       }
 
       try {
+        // Deduplicate filteredDeals by deal ID to prevent duplicate keys in UI and duplicate batch requests
+        const uniqueDealsMap = new Map<string, any>();
+        filteredDeals.forEach(deal => {
+          if (deal && deal.id) {
+            uniqueDealsMap.set(String(deal.id), deal);
+          }
+        });
+        filteredDeals = Array.from(uniqueDealsMap.values());
+
         // Perform high-precision batch read on the final filtered deals and merge direct associations
         if (filteredDeals.length > 0) {
           const dealIds = filteredDeals.map(d => String(d.id));

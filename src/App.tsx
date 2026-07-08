@@ -35,6 +35,17 @@ import {
   Copy
 } from 'lucide-react';
 
+function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
+  if (!Array.isArray(arr)) return [];
+  const uniqueMap = new Map<string, T>();
+  arr.forEach((item) => {
+    if (item && item.id) {
+      uniqueMap.set(item.id, item);
+    }
+  });
+  return Array.from(uniqueMap.values());
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot'>('sprints');
 
@@ -46,12 +57,14 @@ export default function App() {
 
   const [turmas, setTurmas] = useState<Turma[]>(() => {
     const saved = localStorage.getItem('turmas_data');
-    return saved ? JSON.parse(saved) : DEFAULT_TURMAS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_TURMAS;
+    return deduplicateArrayById(parsed);
   });
 
   const [partners, setPartners] = useState<Partner[]>(() => {
     const saved = localStorage.getItem('partners_data');
-    return saved ? JSON.parse(saved) : DEFAULT_PARTNERS;
+    const parsed = saved ? JSON.parse(saved) : DEFAULT_PARTNERS;
+    return deduplicateArrayById(parsed);
   });
 
   const [selectedYear, setSelectedYear] = useState<string>(() => {
@@ -227,8 +240,8 @@ export default function App() {
             selectedQuarter: dbQuarter 
           } = resData.data;
           if (dbAtelies) setAtelies(dbAtelies);
-          if (dbTurmas) setTurmas(dbTurmas);
-          if (dbPartners) setPartners(dbPartners);
+          if (dbTurmas) setTurmas(deduplicateArrayById(dbTurmas));
+          if (dbPartners) setPartners(deduplicateArrayById(dbPartners));
           if (dbSchedules) setSchedules(dbSchedules);
           if (dbYear) setSelectedYear(dbYear);
           if (dbQuarter) setSelectedQuarter(dbQuarter);
@@ -732,8 +745,8 @@ export default function App() {
           const parsed = JSON.parse(event.target?.result as string);
           if (parsed.atelies && parsed.turmas && parsed.partners) {
             setAtelies(parsed.atelies);
-            setTurmas(parsed.turmas);
-            setPartners(parsed.partners);
+            setTurmas(deduplicateArrayById(parsed.turmas));
+            setPartners(deduplicateArrayById(parsed.partners));
             
             if (parsed.schedules) {
               setSchedules(parsed.schedules);
@@ -1187,74 +1200,9 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             turmas={turmas}
             partners={partners}
             onSyncData={({ atelies: syncedAtelies, turmas: syncedTurmas, partners: syncedPartners }) => {
-              // 1. Merge Ateliês: update existing and keep others
-              setAtelies((prevAtelies) => {
-                const merged = [...prevAtelies];
-                syncedAtelies.forEach((synced) => {
-                  const idx = merged.findIndex(
-                    (a) => a.id === synced.id || a.name.toLowerCase().trim() === synced.name.toLowerCase().trim()
-                  );
-                  if (idx > -1) {
-                    merged[idx] = {
-                      ...merged[idx],
-                      ...synced,
-                    };
-                  } else {
-                    merged.push(synced);
-                  }
-                });
-                return merged;
-              });
-
-              // 2. Merge Partners (Empresas): update existing and keep others
-              setPartners((prevPartners) => {
-                const merged = [...prevPartners];
-                syncedPartners.forEach((synced) => {
-                  const idx = merged.findIndex(
-                    (p) => p.id === synced.id || p.name.toLowerCase().trim() === synced.name.toLowerCase().trim()
-                  );
-                  if (idx > -1) {
-                    merged[idx] = {
-                      ...merged[idx],
-                      ...synced,
-                    };
-                  } else {
-                    merged.push(synced);
-                  }
-                });
-                return merged;
-              });
-
-              // 3. Merge Turmas (Negócios): CRITICAL to preserve period and studentCount
-              setTurmas((prevTurmas) => {
-                const merged = [...prevTurmas];
-                syncedTurmas.forEach((synced) => {
-                  const idx = merged.findIndex((t) => {
-                    // Match by ID
-                    if (t.id === synced.id) return true;
-                    // Match by HubSpot unique class ID
-                    if (synced.uniqueClassId && t.uniqueClassId === synced.uniqueClassId) return true;
-                    // Match by Name (case insensitive, trimmed)
-                    if (synced.name && t.name.toLowerCase().trim() === synced.name.toLowerCase().trim()) return true;
-                    return false;
-                  });
-
-                  if (idx > -1) {
-                    const existing = merged[idx];
-                    merged[idx] = {
-                      ...existing, // keep local properties
-                      ...synced,   // update with latest HubSpot properties
-                      // Force preserve user-edited local fields
-                      period: existing.period || synced.period || '',
-                      studentCount: existing.studentCount !== undefined ? existing.studentCount : synced.studentCount,
-                    };
-                  } else {
-                    // New business, add it
-                    merged.push(synced);
-                  }
-                });
-                return merged;
-              });
+              setAtelies(syncedAtelies);
+              setTurmas(deduplicateArrayById(syncedTurmas));
+              setPartners(deduplicateArrayById(syncedPartners));
             }}
           />
         )}

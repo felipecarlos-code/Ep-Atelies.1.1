@@ -224,9 +224,12 @@ export default function BoletimEP({
 
   // Get active allocations for selected phase
   const activeAllocations = rows
-    .filter((row) => row.turmaId)
+    .filter((row) => {
+      if (!row.turmaId) return false;
+      return turmas.some((t) => t.id === row.turmaId);
+    })
     .map((row) => {
-      const turma = turmas.find((t) => t.id === row.turmaId);
+      const turma = turmas.find((t) => t.id === row.turmaId)!;
       const partner = partners.find((p) => p.id === row.partnerId);
       
       const atelieIdsStr = row.allocations[selectedPhase] || '';
@@ -247,10 +250,9 @@ export default function BoletimEP({
         atelieNames,
         atelieBlocks,
         atelieColor,
-        ...getEpMeta(turma!),
+        ...getEpMeta(turma),
       };
-    })
-    .filter((alloc) => alloc.turma);
+    });
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
   const activePhaseLabel = activePhaseObj ? activePhaseObj.label : selectedPhase;
