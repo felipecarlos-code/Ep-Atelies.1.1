@@ -18,33 +18,6 @@ try {
 export function createExpressApp() {
   const app = express();
 
-  // Graceful Firestore initialization (lazy loaded to prevent gRPC/credential crashes on serverless like Vercel)
-  let db: any = null;
-  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
-  const isVercel = !!process.env.VERCEL;
-
-  if (fs.existsSync(configPath) && !isVercel) {
-    (async () => {
-      try {
-        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-        const { Firestore } = await import("@google-cloud/firestore");
-        db = new Firestore({
-          projectId: config.projectId,
-          databaseId: config.firestoreDatabaseId || "(default)",
-        });
-        console.log(`[Firestore] Connected securely to Firestore database: "${config.firestoreDatabaseId}"`);
-      } catch (error: any) {
-        console.error("[Firestore] Failed to initialize database:", error.message);
-      }
-    })();
-  } else {
-    if (isVercel) {
-      console.log("[Firestore] Running on Vercel: Bypassed Firestore initialization to prevent authentication & gRPC issues.");
-    } else {
-      console.warn("[Firestore] firebase-applet-config.json not found. Database features will be mock-only.");
-    }
-  }
-
   // Graceful Supabase initialization
   let supabase: any = null;
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -76,7 +49,7 @@ export function createExpressApp() {
       console.error("[Supabase] Failed to initialize Supabase client:", error.message);
     }
   } else {
-    console.log("[Supabase] Supabase credentials not found in environment (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, VITE_SUPABASE_URL). Database defaults to Firestore or local mode.");
+    console.log("[Supabase] Supabase credentials not found in environment (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, VITE_SUPABASE_URL). Database defaults to local mode.");
   }
 
   // Graceful Gemini initialization
@@ -147,7 +120,6 @@ export function createExpressApp() {
     const diagnostics = {
       hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
       hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
-      hasFirestoreConfig: fs.existsSync(path.join(process.cwd(), "firebase-applet-config.json")),
       isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
     };
 
@@ -194,41 +166,19 @@ export function createExpressApp() {
       } catch (error: any) {
         const errorMsg = error?.message || String(error);
         console.error("[Supabase] Error fetching database document:", errorMsg);
-        // Fallback to Firestore if it is configured
-        if (db) {
-          console.log("[Supabase Fallback] Falling back to Firestore loading...");
-        } else {
-          return res.status(200).json({ 
-            success: false, 
-            configured: false, 
-            error: `Erro de conexão com o Supabase: ${errorMsg}`,
-            diagnostics: {
-              ...diagnostics,
-              connectionError: errorMsg
-            }
-          });
-        }
+        return res.status(200).json({ 
+          success: false, 
+          configured: false, 
+          error: `Erro de conexão com o Supabase: ${errorMsg}`,
+          diagnostics: {
+            ...diagnostics,
+            connectionError: errorMsg
+          }
+        });
       }
     }
 
-    // 2. Check if Firestore is active
-    if (db) {
-      try {
-        const docRef = db.collection("app_state").doc("latest");
-        const doc = await docRef.get();
-        if (doc.exists) {
-          return res.json({ success: true, configured: true, isFirestore: true, data: doc.data(), diagnostics });
-        } else {
-          return res.json({ success: true, configured: true, isFirestore: true, data: null, diagnostics });
-        }
-      } catch (error: any) {
-        const errorMsg = error?.message || String(error);
-        console.error("[Firestore] Error fetching database document:", errorMsg);
-        return res.status(200).json({ success: false, configured: false, error: errorMsg, diagnostics });
-      }
-    }
-
-    // 3. Fallback
+    // Fallback
     return res.json({ 
       success: false, 
       configured: false, 
@@ -245,7 +195,6 @@ export function createExpressApp() {
     const diagnostics = {
       hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
       hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
-      hasFirestoreConfig: fs.existsSync(path.join(process.cwd(), "firebase-applet-config.json")),
       isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
     };
 
@@ -283,32 +232,14 @@ export function createExpressApp() {
       } catch (error: any) {
         const errorMsg = error?.message || String(error);
         console.error("[Supabase] Error writing database document:", errorMsg);
-        // Fallback to Firestore if configured
-        if (db) {
-          console.log("[Supabase Fallback] Falling back to Firestore saving...");
-        } else {
-          return res.status(200).json({ 
-            success: false, 
-            error: `Erro do Supabase: ${errorMsg}`,
-            diagnostics: {
-              ...diagnostics,
-              connectionError: errorMsg
-            }
-          });
-        }
-      }
-    }
-
-    // 2. Check if Firestore is active
-    if (db) {
-      try {
-        const docRef = db.collection("app_state").doc("latest");
-        await docRef.set(payload);
-        return res.json({ success: true, isFirestore: true, diagnostics });
-      } catch (error: any) {
-        const errorMsg = error?.message || String(error);
-        console.error("[Firestore] Error writing database document:", errorMsg);
-        return res.status(200).json({ success: false, error: errorMsg, diagnostics });
+        return res.status(200).json({ 
+          success: false, 
+          error: `Erro do Supabase: ${errorMsg}`,
+          diagnostics: {
+            ...diagnostics,
+            connectionError: errorMsg
+          }
+        });
       }
     }
 

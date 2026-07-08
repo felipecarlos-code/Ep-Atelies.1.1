@@ -165,7 +165,6 @@ export default function App() {
   const [dbDiagnostics, setDbDiagnostics] = useState<{
     hasSupabaseUrl?: boolean;
     hasSupabaseKey?: boolean;
-    hasFirestoreConfig?: boolean;
     hasTable?: boolean;
     connectionError?: string;
   } | null>(null);
@@ -214,8 +213,6 @@ export default function App() {
         setIsDbConfigured(true);
         if (resData.isSupabase) {
           setDbProvider('Supabase');
-        } else if (resData.isFirestore) {
-          setDbProvider('Firestore');
         }
         if (resData.warning) {
           setDbWarning(resData.warning);
