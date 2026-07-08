@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Atelie, Turma, Partner, AllocationRow, PhaseKey } from './types';
 import { 
   DEFAULT_ATELIES, 
@@ -27,7 +27,12 @@ import {
   GraduationCap,
   Database,
   Cloud,
-  CloudOff
+  CloudOff,
+  X,
+  CheckCircle2,
+  XCircle,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 
 export default function App() {
@@ -156,50 +161,145 @@ export default function App() {
   const [isLoadingDb, setIsLoadingDb] = useState(true);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [isSavingDb, setIsSavingDb] = useState(false);
+  
+  const [dbDiagnostics, setDbDiagnostics] = useState<{
+    hasSupabaseUrl?: boolean;
+    hasSupabaseKey?: boolean;
+    hasFirestoreConfig?: boolean;
+    hasTable?: boolean;
+    connectionError?: string;
+  } | null>(null);
+  const [showDbHelp, setShowDbHelp] = useState(false);
+
+  // Custom client-side Supabase credentials
+  const [inputSupabaseUrl, setInputSupabaseUrl] = useState(() => localStorage.getItem("custom_supabase_url") || "");
+  const [inputSupabaseKey, setInputSupabaseKey] = useState(() => localStorage.getItem("custom_supabase_key") || "");
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isTestingConn, setIsTestingConn] = useState(false);
+
+  const getDbHeaders = () => {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json"
+    };
+    const url = localStorage.getItem("custom_supabase_url");
+    const key = localStorage.getItem("custom_supabase_key");
+    if (url) headers["x-supabase-url"] = url;
+    if (key) headers["x-supabase-key"] = key;
+    return headers;
+  };
+
+  const loadDb = async (forceHeaders?: Record<string, string>) => {
+    try {
+      setIsLoadingDb(true);
+      const res = await fetch("/api/db/load", {
+        headers: forceHeaders || getDbHeaders()
+      });
+      const resData = await res.json();
+      
+      if (resData.diagnostics) {
+        setDbDiagnostics(resData.diagnostics);
+      }
+      
+      if (resData.success && resData.configured) {
+        setIsDbConfigured(true);
+        if (resData.isSupabase) {
+          setDbProvider('Supabase');
+        } else if (resData.isFirestore) {
+          setDbProvider('Firestore');
+        }
+        if (resData.warning) {
+          setDbWarning(resData.warning);
+        }
+        if (resData.data) {
+          const { 
+            atelies: dbAtelies, 
+            turmas: dbTurmas, 
+            partners: dbPartners, 
+            schedules: dbSchedules, 
+            selectedYear: dbYear, 
+            selectedQuarter: dbQuarter 
+          } = resData.data;
+          if (dbAtelies) setAtelies(dbAtelies);
+          if (dbTurmas) setTurmas(dbTurmas);
+          if (dbPartners) setPartners(dbPartners);
+          if (dbSchedules) setSchedules(dbSchedules);
+          if (dbYear) setSelectedYear(dbYear);
+          if (dbQuarter) setSelectedQuarter(dbQuarter);
+        }
+        return { success: true, message: "Conectado com sucesso!" };
+      } else {
+        setIsDbConfigured(false);
+        return { success: false, message: resData.error || "Sem conexão ativa na nuvem." };
+      }
+    } catch (err: any) {
+      console.error("Error loading database state:", err);
+      setIsDbConfigured(false);
+      return { success: false, message: err.message || "Erro de rede ao conectar." };
+    } finally {
+      setIsLoadingDb(false);
+      setInitialLoadDone(true);
+    }
+  };
 
   // 1. Initial Load effect from database
   useEffect(() => {
-    async function loadDb() {
-      try {
-        setIsLoadingDb(true);
-        const res = await fetch("/api/db/load");
-        const resData = await res.json();
-        if (resData.success && resData.configured) {
-          setIsDbConfigured(true);
-          if (resData.isSupabase) {
-            setDbProvider('Supabase');
-          } else if (resData.isFirestore) {
-            setDbProvider('Firestore');
-          }
-          if (resData.warning) {
-            setDbWarning(resData.warning);
-          }
-          if (resData.data) {
-            const { 
-              atelies: dbAtelies, 
-              turmas: dbTurmas, 
-              partners: dbPartners, 
-              schedules: dbSchedules, 
-              selectedYear: dbYear, 
-              selectedQuarter: dbQuarter 
-            } = resData.data;
-            if (dbAtelies) setAtelies(dbAtelies);
-            if (dbTurmas) setTurmas(dbTurmas);
-            if (dbPartners) setPartners(dbPartners);
-            if (dbSchedules) setSchedules(dbSchedules);
-            if (dbYear) setSelectedYear(dbYear);
-            if (dbQuarter) setSelectedQuarter(dbQuarter);
-          }
-        }
-      } catch (err) {
-        console.error("Error loading database state:", err);
-      } finally {
-        setIsLoadingDb(false);
-        setInitialLoadDone(true);
-      }
-    }
     loadDb();
   }, []);
+
+  const handleSaveCustomCredentials = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsTestingConn(true);
+    setTestResult(null);
+    
+    const cleanUrl = inputSupabaseUrl.trim();
+    const cleanKey = inputSupabaseKey.trim();
+    
+    if (!cleanUrl || !cleanKey) {
+      setTestResult({ success: false, message: "Por favor, preencha a URL e a Chave do Supabase." });
+      setIsTestingConn(false);
+      return;
+    }
+    
+    // Temporarily save to local storage
+    localStorage.setItem("custom_supabase_url", cleanUrl);
+    localStorage.setItem("custom_supabase_key", cleanKey);
+    
+    // Test connection by calling loadDb with these headers
+    const tempHeaders = {
+      "Content-Type": "application/json",
+      "x-supabase-url": cleanUrl,
+      "x-supabase-key": cleanKey
+    };
+    
+    const res = await loadDb(tempHeaders);
+    if (res.success) {
+      setTestResult({ success: true, message: "Conectado e sincronizado com sucesso!" });
+      // Keep it open briefly to show success
+      setTimeout(() => {
+        setTestResult(null);
+      }, 3000);
+    } else {
+      setTestResult({ 
+        success: false, 
+        message: `Não foi possível conectar: ${res.message}` 
+      });
+      // Rollback local storage
+      localStorage.removeItem("custom_supabase_url");
+      localStorage.removeItem("custom_supabase_key");
+    }
+    setIsTestingConn(false);
+  };
+
+  const handleDisconnectDb = async () => {
+    localStorage.removeItem("custom_supabase_url");
+    localStorage.removeItem("custom_supabase_key");
+    setInputSupabaseUrl("");
+    setInputSupabaseKey("");
+    setTestResult(null);
+    setIsDbConfigured(false);
+    setDbProvider(null);
+    await loadDb({ "Content-Type": "application/json" });
+  };
 
   // Sync to LocalStorage on changes as secondary local cache
   useEffect(() => {
@@ -235,7 +335,7 @@ export default function App() {
         setIsSavingDb(true);
         const res = await fetch("/api/db/save", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getDbHeaders(),
           body: JSON.stringify({ 
             atelies, 
             turmas, 
@@ -276,7 +376,7 @@ export default function App() {
       setSyncToast({ message: "Sincronizando os dados locais atuais com a nuvem (Supabase)...", type: 'info' });
       const res = await fetch("/api/db/save", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getDbHeaders(),
         body: JSON.stringify({ 
           atelies, 
           turmas, 
@@ -731,17 +831,14 @@ export default function App() {
         {/* Database & Cloud Sync + Coordinator Profile */}
         <div className="flex items-center gap-4">
           {/* Cloud Sync Status Indicator */}
-          <div 
-            title={
-              isLoadingDb ? 'Carregando os dados mais recentes do banco de dados...' :
-              isSavingDb ? 'Salvando alterações em tempo real no banco de dados...' :
-              isDbConfigured ? 'Conexão ativa e segura com o banco de dados.' : 'Operando no modo local'
-            }
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all duration-300 ${
+          <button 
+            onClick={() => setShowDbHelp(true)}
+            title="Clique para ver o status detalhado da conexão com o banco de dados e guia de configuração no Vercel/Supabase"
+            className={`flex items-center gap-2 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer hover:scale-[1.03] active:scale-95 ${
               isLoadingDb ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
               isSavingDb ? 'bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse' :
-              isDbConfigured ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
-              'bg-slate-100 text-slate-500 border-slate-200'
+              isDbConfigured ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 
+              'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
             }`}
           >
             {isDbConfigured ? (
@@ -759,7 +856,7 @@ export default function App() {
                isSavingDb ? 'Gravando...' :
                isDbConfigured ? 'Sinc' : 'Local'}
             </span>
-          </div>
+          </button>
 
           {isDbConfigured && (
             <button
@@ -1083,6 +1180,284 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Supabase Connection & Vercel Setup Guide Modal */}
+      {showDbHelp && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto" id="db-help-modal">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fade-in">
+            {/* Header */}
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between bg-slate-50 rounded-t-xl">
+              <div className="flex items-center gap-2">
+                <Database className="text-indigo-600" size={18} />
+                <h3 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">
+                  Status de Conexão & Banco de Dados Nuvem
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowDbHelp(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-200/60 rounded-full transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              {/* Status Section */}
+              <div className="p-4 rounded-lg flex items-start gap-3.5 border" style={{
+                backgroundColor: isDbConfigured ? '#ecfdf5' : '#f8fafc',
+                borderColor: isDbConfigured ? '#a7f3d0' : '#e2e8f0'
+              }}>
+                <div className={`p-2 rounded-full ${isDbConfigured ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                  {isDbConfigured ? <Cloud size={20} /> : <CloudOff size={20} />}
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                    Modo Atual: {isDbConfigured ? `Sincronizado via Nuvem (${dbProvider})` : 'Modo Offline / Local (LocalStorage)'}
+                  </h4>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    {isDbConfigured 
+                      ? 'Seus dados estão sendo guardados e sincronizados de forma segura e imediata em tempo real. Você pode acessar este painel de qualquer computador ou navegador sem perder seu progresso.'
+                      : 'O aplicativo está salvando as alterações de forma segura apenas neste navegador local. Se você limpar o cache ou trocar de computador, os dados voltarão ao estado padrão. Para conectá-lo permanentemente ao seu banco de dados Supabase na Vercel, siga o guia abaixo.'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Diagnostics Section */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest mb-3">
+                  Relatório Diagnóstico do Servidor
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 bg-slate-50 border border-slate-150 rounded flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">Variável SUPABASE_URL:</span>
+                    <span className="flex items-center gap-1.5 font-bold">
+                      {dbDiagnostics?.hasSupabaseUrl ? (
+                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Configurado
+                        </span>
+                      ) : (
+                        <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <XCircle size={10} /> Ausente
+                        </span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-150 rounded flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700">Variável SUPABASE_KEY:</span>
+                    <span className="flex items-center gap-1.5 font-bold">
+                      {dbDiagnostics?.hasSupabaseKey ? (
+                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Configurado
+                        </span>
+                      ) : (
+                        <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <XCircle size={10} /> Ausente
+                        </span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-150 rounded flex items-center justify-between text-xs sm:col-span-2">
+                    <span className="font-semibold text-slate-700">Status da Tabela "app_state":</span>
+                    <span className="flex items-center gap-1.5 font-bold">
+                      {isDbConfigured && dbProvider === 'Supabase' && (dbDiagnostics?.hasTable !== false) ? (
+                        <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <CheckCircle2 size={10} /> Ativa e Criada
+                        </span>
+                      ) : !isDbConfigured && !dbDiagnostics?.hasSupabaseUrl ? (
+                        <span className="text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full text-[10px]">
+                          Aguardando credenciais
+                        </span>
+                      ) : (
+                        <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1">
+                          <XCircle size={10} /> Tabela inexistente no Supabase
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {dbDiagnostics?.connectionError && (
+                  <div className="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded text-xs font-mono">
+                    <strong>Erro de Conexão do Servidor:</strong> {dbDiagnostics.connectionError}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Connection Form */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <Database size={14} className="text-indigo-600" />
+                  Conexão Direta e Rápida (Sem alterar o Vercel)
+                </h4>
+                <p className="text-xs text-slate-600 mb-4 leading-relaxed font-medium">
+                  Insira os dados do seu banco Supabase abaixo. Suas credenciais ficam salvas de forma segura em seu navegador e o sistema fará a conexão imediatamente.
+                </p>
+
+                <form onSubmit={handleSaveCustomCredentials} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      URL do Projeto (Project URL)
+                    </label>
+                    <input 
+                      type="url"
+                      placeholder="https://xxxx.supabase.co"
+                      value={inputSupabaseUrl}
+                      onChange={(e) => setInputSupabaseUrl(e.target.value)}
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Chave de API (anon public ou service_role)
+                    </label>
+                    <input 
+                      type="password"
+                      placeholder="eyJhbGciOi..."
+                      value={inputSupabaseKey}
+                      onChange={(e) => setInputSupabaseKey(e.target.value)}
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
+                      required
+                    />
+                  </div>
+
+                  {testResult && (
+                    <div className={`p-3 rounded text-xs leading-relaxed flex items-start gap-2 ${
+                      testResult.success 
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                        : 'bg-rose-50 border border-rose-200 text-rose-800'
+                    }`}>
+                      <div className="mt-0.5">
+                        {testResult.success ? <CheckCircle2 size={14} className="text-emerald-700" /> : <XCircle size={14} className="text-rose-700" />}
+                      </div>
+                      <span className="font-semibold">{testResult.message}</span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2.5 pt-1">
+                    <button
+                      type="submit"
+                      disabled={isTestingConn}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      {isTestingConn ? "Testando e Conectando..." : "Salvar e Sincronizar Agora"}
+                    </button>
+
+                    {(localStorage.getItem("custom_supabase_url") || localStorage.getItem("custom_supabase_key")) && (
+                      <button
+                        type="button"
+                        onClick={handleDisconnectDb}
+                        className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+                      >
+                        Desconectar Banco
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+
+              {/* Step-by-Step Guide */}
+              <div className="border-t border-slate-100 pt-5">
+                <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest mb-4">
+                  Guia Alternativo: Conectar via Variáveis de Ambiente no Vercel
+                </h4>
+
+                <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+                  {/* Step 1 */}
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      1
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Copie as credenciais de API no Supabase</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        Acesse seu painel no <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-0.5">Supabase <ExternalLink size={10} /></a>, entre em seu Projeto, vá em <strong>Project Settings</strong> (engrenagem inferior) &gt; <strong>API</strong>. Copie a <strong>Project URL</strong> e a chave <strong>anon public</strong> (ou a <em>service_role</em>).
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      2
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Cadastre as Variáveis de Ambiente na Vercel</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        Abra o dashboard da sua conta <a href="https://vercel.com" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-0.5">Vercel <ExternalLink size={10} /></a>, clique no projeto deste aplicativo, vá em <strong>Settings</strong> &gt; <strong>Environment Variables</strong> e adicione as seguintes variáveis:
+                      </p>
+                      <ul className="list-disc ml-5 mt-1.5 space-y-1 text-slate-600">
+                        <li>Nome: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono font-bold text-slate-800 text-[11px]">SUPABASE_URL</code> • Valor: <em>(Cole a URL do projeto Supabase)</em></li>
+                        <li>Nome: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono font-bold text-slate-800 text-[11px]">SUPABASE_KEY</code> • Valor: <em>(Cole a chave anon ou service_role)</em></li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      3
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Recarregue o Servidor (Redeploy)</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        Para que o servidor do Vercel leia as novas variáveis cadastradas, você precisa fazer um novo deploy das variáveis. Na Vercel, clique na aba <strong>Deployments</strong> do projeto, clique nos três pontinhos (<strong className="font-bold">...</strong>) ao lado do último deploy ativo e clique em <strong className="text-indigo-600">Redeploy</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Step 4 */}
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      4
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Crie a tabela no SQL Editor do seu Supabase</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        No menu esquerdo do painel do Supabase, clique em <strong>SQL Editor</strong>. Clique em <strong>New Query</strong> (ou "Quickstarts"), cole o código SQL de criação da tabela abaixo e execute clicando no botão verde <strong className="text-emerald-600 uppercase">Run</strong>:
+                      </p>
+                      <pre className="mt-2.5 p-3 bg-slate-900 text-slate-200 font-mono text-[10.5px] rounded border border-slate-800 select-all relative group shadow-inner">
+{`CREATE TABLE app_state (
+  id TEXT PRIMARY KEY,
+  data JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);`}
+                      </pre>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);`);
+                          alert("SQL Copiado com sucesso!");
+                        }}
+                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
+                      >
+                        <Copy size={11} />
+                        <span>Copiar Código SQL</span>
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-100 px-6 py-4 flex justify-end bg-slate-50 rounded-b-xl">
+              <button 
+                onClick={() => setShowDbHelp(false)}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-bold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

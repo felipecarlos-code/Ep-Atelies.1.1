@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import dns from "dns";
@@ -32,8 +35,8 @@ export function createExpressApp() {
 
   // Graceful Supabase initialization
   let supabase: any = null;
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (supabaseUrl && supabaseKey) {
     try {
       supabase = createClient(supabaseUrl, supabaseKey, {
@@ -46,7 +49,7 @@ export function createExpressApp() {
       console.error("[Supabase] Failed to initialize Supabase client:", error.message);
     }
   } else {
-    console.log("[Supabase] SUPABASE_URL and SUPABASE_KEY/SUPABASE_SERVICE_ROLE_KEY not found in environment. Database defaults to Firestore or local mode.");
+    console.log("[Supabase] Supabase credentials not found in environment (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, VITE_SUPABASE_URL). Database defaults to Firestore or local mode.");
   }
 
   // Graceful Gemini initialization
@@ -73,12 +76,42 @@ export function createExpressApp() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+  // Helper to dynamically get or initialize Supabase client for a request (supporting client header credentials)
+  const getSupabaseClient = (req: express.Request) => {
+    const headerUrl = req.headers["x-supabase-url"] as string;
+    const headerKey = req.headers["x-supabase-key"] as string;
+    
+    if (headerUrl && headerKey) {
+      try {
+        return createClient(headerUrl, headerKey, {
+          auth: {
+            persistSession: false
+          }
+        });
+      } catch (err: any) {
+        console.error("[Supabase Request Dynamic] Failed to create client from request headers:", err.message);
+      }
+    }
+    return supabase;
+  };
+
   // Load database status & state
   app.get("/api/db/load", async (req, res) => {
+    const hasHeaderUrl = !!req.headers["x-supabase-url"];
+    const hasHeaderKey = !!req.headers["x-supabase-key"];
+    const diagnostics = {
+      hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
+      hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
+      hasFirestoreConfig: fs.existsSync(path.join(process.cwd(), "firebase-applet-config.json")),
+      isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
+    };
+
+    const activeSupabase = getSupabaseClient(req);
+
     // 1. Check if Supabase is active
-    if (supabase) {
+    if (activeSupabase) {
       try {
-        const { data: row, error } = await supabase
+        const { data: row, error } = await activeSupabase
           .from("app_state")
           .select("data")
           .eq("id", "latest")
@@ -93,7 +126,11 @@ export function createExpressApp() {
               configured: true, 
               isSupabase: true,
               data: null, 
-              warning: "A tabela 'app_state' não existe no Supabase. Crie-a no SQL Editor do Supabase." 
+              warning: "A tabela 'app_state' não existe no Supabase. Crie-a no SQL Editor do Supabase.",
+              diagnostics: {
+                ...diagnostics,
+                hasTable: false
+              }
             });
           }
           throw error;
@@ -103,7 +140,11 @@ export function createExpressApp() {
           success: true, 
           configured: true, 
           isSupabase: true,
-          data: row ? row.data : null 
+          data: row ? row.data : null,
+          diagnostics: {
+            ...diagnostics,
+            hasTable: true
+          }
         });
       } catch (error: any) {
         console.error("[Supabase] Error fetching database document:", error.message);
@@ -111,7 +152,15 @@ export function createExpressApp() {
         if (db) {
           console.log("[Supabase Fallback] Falling back to Firestore loading...");
         } else {
-          return res.status(500).json({ success: false, error: `Supabase error: ${error.message}` });
+          return res.status(200).json({ 
+            success: false, 
+            configured: false, 
+            error: `Erro de conexão com o Supabase: ${error.message}`,
+            diagnostics: {
+              ...diagnostics,
+              connectionError: error.message
+            }
+          });
         }
       }
     }
@@ -122,28 +171,43 @@ export function createExpressApp() {
         const docRef = db.collection("app_state").doc("latest");
         const doc = await docRef.get();
         if (doc.exists) {
-          return res.json({ success: true, configured: true, isFirestore: true, data: doc.data() });
+          return res.json({ success: true, configured: true, isFirestore: true, data: doc.data(), diagnostics });
         } else {
-          return res.json({ success: true, configured: true, isFirestore: true, data: null });
+          return res.json({ success: true, configured: true, isFirestore: true, data: null, diagnostics });
         }
       } catch (error: any) {
         console.error("[Firestore] Error fetching database document:", error.message);
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(200).json({ success: false, configured: false, error: error.message, diagnostics });
       }
     }
 
     // 3. Fallback
-    return res.json({ success: false, configured: false, error: "Database not configured." });
+    return res.json({ 
+      success: false, 
+      configured: false, 
+      error: "Nenhum banco de dados configurado.", 
+      diagnostics 
+    });
   });
 
   // Save database state
   app.post("/api/db/save", async (req, res) => {
     const payload = req.body;
+    const hasHeaderUrl = !!req.headers["x-supabase-url"];
+    const hasHeaderKey = !!req.headers["x-supabase-key"];
+    const diagnostics = {
+      hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
+      hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
+      hasFirestoreConfig: fs.existsSync(path.join(process.cwd(), "firebase-applet-config.json")),
+      isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
+    };
+
+    const activeSupabase = getSupabaseClient(req);
 
     // 1. Check if Supabase is active
-    if (supabase) {
+    if (activeSupabase) {
       try {
-        const { error } = await supabase
+        const { error } = await activeSupabase
           .from("app_state")
           .upsert({ 
             id: "latest", 
@@ -158,20 +222,31 @@ export function createExpressApp() {
               configured: true,
               isSupabase: true,
               error: "A tabela 'app_state' não existe no Supabase.",
-              code: "TABLE_NOT_FOUND"
+              code: "TABLE_NOT_FOUND",
+              diagnostics: {
+                ...diagnostics,
+                hasTable: false
+              }
             });
           }
           throw error;
         }
 
-        return res.json({ success: true, isSupabase: true });
+        return res.json({ success: true, isSupabase: true, diagnostics });
       } catch (error: any) {
         console.error("[Supabase] Error writing database document:", error.message);
         // Fallback to Firestore if configured
         if (db) {
           console.log("[Supabase Fallback] Falling back to Firestore saving...");
         } else {
-          return res.status(500).json({ success: false, error: `Supabase error: ${error.message}` });
+          return res.status(200).json({ 
+            success: false, 
+            error: `Erro do Supabase: ${error.message}`,
+            diagnostics: {
+              ...diagnostics,
+              connectionError: error.message
+            }
+          });
         }
       }
     }
@@ -181,14 +256,14 @@ export function createExpressApp() {
       try {
         const docRef = db.collection("app_state").doc("latest");
         await docRef.set(payload);
-        return res.json({ success: true, isFirestore: true });
+        return res.json({ success: true, isFirestore: true, diagnostics });
       } catch (error: any) {
         console.error("[Firestore] Error writing database document:", error.message);
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(200).json({ success: false, error: error.message, diagnostics });
       }
     }
 
-    return res.status(500).json({ success: false, error: "Database not configured." });
+    return res.status(200).json({ success: false, error: "Database not configured.", diagnostics });
   });
 
   // Proxy endpoint to search for brand logos and domains via Clearbit Autocomplete and Gemini Fallback
