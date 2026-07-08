@@ -1057,7 +1057,7 @@ export default function App() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" id="main-content-area">
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-8" id="main-content-area">
         {syncToast && (
           <div className={`mb-6 p-4 rounded-lg border flex items-center justify-between gap-3 shadow-xs transition-all duration-300 ${
             syncToast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' :
@@ -1197,7 +1197,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
 
       {/* Premium Footer */}
       <footer className="bg-slate-900 text-slate-400 py-6 mt-auto border-t border-slate-800 text-xs" id="main-footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p>© 2026 Controle de Ateliês e Sprints • Inteli Acadêmico</p>
           <div className="flex items-center gap-4">
             <span className="text-gray-500">Desenvolvido para Gestão Avançada de Espaços e Desafios</span>
