@@ -6,45 +6,91 @@ import path from "path";
 import dns from "dns";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
-import { createClient } from "@supabase/supabase-js";
-
 // DNS default order is not overridden to ensure smooth DNS resolution in Vercel serverless environment.
+
+// Ultra-lightweight direct Supabase PostgREST helper to avoid hanging connection pools on Vercel Serverless Functions
+async function callSupabaseREST(
+  url: string,
+  key: string,
+  path: string,
+  options: {
+    method?: string;
+    body?: any;
+    headers?: Record<string, string>;
+  } = {}
+) {
+  const method = options.method || "GET";
+  // Ensure we don't have double slashes
+  const baseUrl = url.endsWith("/") ? url.slice(0, -1) : url;
+  const targetUrl = `${baseUrl}/rest/v1/${path}`;
+
+  const headers: Record<string, string> = {
+    "apikey": key,
+    "Authorization": `Bearer ${key}`,
+    "Accept": "application/json",
+    "Connection": "close",
+    ...options.headers,
+  };
+
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000); // Strict 6-second timeout
+
+  try {
+    const res = await globalThis.fetch(targetUrl, {
+      method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
+      keepalive: false,
+    });
+
+    clearTimeout(timeoutId);
+
+    // Parse JSON safely
+    let responseData: any = null;
+    const responseText = await res.text();
+    if (responseText) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { message: responseText };
+      }
+    }
+
+    if (!res.ok) {
+      return {
+        data: null,
+        error: {
+          message: responseData?.message || responseData?.details || responseText || `HTTP error ${res.status}`,
+          code: responseData?.code || String(res.status),
+          hint: responseData?.hint || "",
+        },
+      };
+    }
+
+    return { data: responseData, error: null };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    const isTimeout = err?.name === "AbortError";
+    return {
+      data: null,
+      error: {
+        message: isTimeout 
+          ? "A requisição ao Supabase expirou (timeout de 6s). Verifique se o seu projeto do Supabase está ativo/pausado." 
+          : err?.message || String(err),
+        code: isTimeout ? "TIMEOUT" : "FETCH_ERROR",
+        hint: "",
+      },
+    };
+  }
+}
 
 export function createExpressApp() {
   const app = express();
-
-  // Graceful Supabase initialization
-  let supabase: any = null;
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (supabaseUrl && supabaseKey) {
-    try {
-      supabase = createClient(supabaseUrl, supabaseKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false
-        },
-        global: {
-          fetch: async (url, init) => {
-            return globalThis.fetch(url, {
-              ...init,
-              keepalive: false,
-              headers: {
-                ...init?.headers,
-                "Connection": "close"
-              }
-            });
-          }
-        }
-      });
-      console.log(`[Supabase] Initialized client successfully for URL: "${supabaseUrl}"`);
-    } catch (error: any) {
-      console.error("[Supabase] Failed to initialize Supabase client:", error.message);
-    }
-  } else {
-    console.log("[Supabase] Supabase credentials not found in environment (tried SUPABASE_URL, NEXT_PUBLIC_SUPABASE_URL, VITE_SUPABASE_URL). Database defaults to local mode.");
-  }
 
   // Graceful Gemini initialization
   let aiClient: GoogleGenAI | null = null;
@@ -70,66 +116,38 @@ export function createExpressApp() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-  // Helper to dynamically get or initialize Supabase client for a request (supporting client header credentials)
-  const getSupabaseClient = (req: express.Request) => {
-    const rawUrl = req.headers["x-supabase-url"];
-    const rawKey = req.headers["x-supabase-key"];
-    
-    const headerUrl = typeof rawUrl === "string" ? rawUrl.trim() : undefined;
-    const headerKey = typeof rawKey === "string" ? rawKey.trim() : undefined;
-    
-    if (headerUrl && headerKey) {
-      try {
-        return createClient(headerUrl, headerKey, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-          },
-          global: {
-            fetch: async (url, init) => {
-              return globalThis.fetch(url, {
-                ...init,
-                keepalive: false,
-                headers: {
-                  ...init?.headers,
-                  "Connection": "close"
-                }
-              });
-            }
-          }
-        });
-      } catch (err: any) {
-        console.error("[Supabase Request Dynamic] Failed to create client from request headers:", err?.message || String(err));
-      }
-    }
-    return supabase;
-  };
-
   // Load database status & state
   app.get("/api/db/load", async (req, res) => {
+    // Ensure connection close header to prevent serverless function hangs
+    res.setHeader("Connection", "close");
+
+    const rawUrl = req.headers["x-supabase-url"] || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const rawKey = req.headers["x-supabase-key"] || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
     const hasHeaderUrl = !!req.headers["x-supabase-url"];
     const hasHeaderKey = !!req.headers["x-supabase-key"];
     const diagnostics = {
-      hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
-      hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
+      hasSupabaseUrl: !!rawUrl,
+      hasSupabaseKey: !!rawKey,
       isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
     };
 
-    const activeSupabase = getSupabaseClient(req);
+    const urlStr = typeof rawUrl === "string" ? rawUrl.trim() : undefined;
+    const keyStr = typeof rawKey === "string" ? rawKey.trim() : undefined;
 
     // 1. Check if Supabase is active
-    if (activeSupabase) {
+    if (urlStr && keyStr) {
       try {
-        const { data: row, error } = await activeSupabase
-          .from("app_state")
-          .select("data")
-          .eq("id", "latest")
-          .maybeSingle();
+        // Query app_state table via direct PostgREST GET call
+        const { data, error } = await callSupabaseREST(
+          urlStr,
+          keyStr,
+          "app_state?id=eq.latest&select=data"
+        );
 
         if (error) {
           // PGRST116 is normal for empty result, but if it's "does not exist" or other postgres errors (code 42P01)
-          if (error.code === "42P01" || error.message?.includes("does not exist")) {
+          if (error.code === "42P01" || error.message?.includes("does not exist") || error.message?.includes("relation") || error.message?.includes("not found")) {
             console.warn("[Supabase] Table 'app_state' does not exist in your Supabase database. Prompting user to create it.");
             return res.json({ 
               success: true, 
@@ -143,8 +161,10 @@ export function createExpressApp() {
               }
             });
           }
-          throw error;
+          throw new Error(error.message);
         }
+
+        const row = Array.isArray(data) ? data[0] : null;
 
         return res.json({ 
           success: true, 
@@ -182,30 +202,47 @@ export function createExpressApp() {
 
   // Save database state
   app.post("/api/db/save", async (req, res) => {
+    // Ensure connection close header to prevent serverless function hangs
+    res.setHeader("Connection", "close");
+
     const payload = req.body;
+    const rawUrl = req.headers["x-supabase-url"] || process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const rawKey = req.headers["x-supabase-key"] || process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
     const hasHeaderUrl = !!req.headers["x-supabase-url"];
     const hasHeaderKey = !!req.headers["x-supabase-key"];
     const diagnostics = {
-      hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL) || hasHeaderUrl,
-      hasSupabaseKey: !!(process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) || hasHeaderKey,
+      hasSupabaseUrl: !!rawUrl,
+      hasSupabaseKey: !!rawKey,
       isUsingClientCredentials: hasHeaderUrl && hasHeaderKey
     };
 
-    const activeSupabase = getSupabaseClient(req);
+    const urlStr = typeof rawUrl === "string" ? rawUrl.trim() : undefined;
+    const keyStr = typeof rawKey === "string" ? rawKey.trim() : undefined;
 
     // 1. Check if Supabase is active
-    if (activeSupabase) {
+    if (urlStr && keyStr) {
       try {
-        const { error } = await activeSupabase
-          .from("app_state")
-          .upsert({ 
-            id: "latest", 
-            data: payload, 
-            updated_at: new Date().toISOString() 
-          });
+        // Upsert state via direct PostgREST POST call
+        const { error } = await callSupabaseREST(
+          urlStr,
+          keyStr,
+          "app_state?on_conflict=id",
+          {
+            method: "POST",
+            headers: {
+              "Prefer": "resolution=merge-duplicates"
+            },
+            body: { 
+              id: "latest", 
+              data: payload, 
+              updated_at: new Date().toISOString() 
+            }
+          }
+        );
 
         if (error) {
-          if (error.code === "42P01" || error.message?.includes("does not exist")) {
+          if (error.code === "42P01" || error.message?.includes("does not exist") || error.message?.includes("relation") || error.message?.includes("not found")) {
             return res.status(200).json({
               success: false,
               configured: true,
@@ -218,7 +255,7 @@ export function createExpressApp() {
               }
             });
           }
-          throw error;
+          throw new Error(error.message);
         }
 
         return res.json({ success: true, isSupabase: true, diagnostics });
