@@ -1101,12 +1101,15 @@ export default function App() {
   id TEXT PRIMARY KEY,
   data JSONB NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);`}
+);
+
+-- Desabilitar RLS para permitir acesso de leitura/escrita com chave anon sem politicas complexas
+ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
                 </pre>
                 <div className="mt-3 flex gap-3">
                   <button 
                     onClick={() => {
-                      navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);`);
+                      navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);\n\nALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`);
                     }}
                     className="px-2.5 py-1 bg-slate-800 text-white rounded text-[11px] font-semibold hover:bg-slate-900 transition-all cursor-pointer"
                   >
@@ -1447,11 +1450,14 @@ export default function App() {
   id TEXT PRIMARY KEY,
   data JSONB NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);`}
+);
+
+-- Desabilitar RLS para permitir acesso de leitura/escrita com chave anon sem politicas complexas
+ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
                       </pre>
                       <button 
                         onClick={() => {
-                          navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);`);
+                          navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);\n\nALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`);
                           alert("SQL Copiado com sucesso!");
                         }}
                         className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
