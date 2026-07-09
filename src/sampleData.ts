@@ -20,9 +20,9 @@ export const DEFAULT_ATELIES: Atelie[] = [
 ];
 
 export const DEFAULT_TURMAS: Turma[] = [
-  { id: 't1', name: '1º Ano - Engenharia de Computação - Grupo A', course: 'Engenharia de Computação', period: 'Manhã', studentCount: 30, projectDescription: 'Desenvolvimento de aplicativo móvel para controle de estoque inteligente' },
-  { id: 't2', name: '1º Ano - Engenharia de Software - Grupo B', course: 'Engenharia de Software', period: 'Manhã', studentCount: 35, projectDescription: 'Plataforma web para otimização de rotas de entregas expressas' },
-  { id: 't3', name: '2º Ano - Ciência da Computação - Grupo A', course: 'Ciência da Computação', period: 'Tarde', studentCount: 28, projectDescription: 'Modelo de inteligência artificial para detecção de fraudes em transações financeiras' },
+  { id: 't1', name: '1º Ano - Engenharia de Computação - Grupo A', course: 'Engenharia de Computação', period: 'Manhã', studentCount: 30, projectDescription: 'Desenvolvimento de aplicativo móvel para controle de estoque inteligente', epAtelie: ['a1', 'a2'] },
+  { id: 't2', name: '1º Ano - Engenharia de Software - Grupo B', course: 'Engenharia de Software', period: 'Manhã', studentCount: 35, projectDescription: 'Plataforma web para otimização de rotas de entregas expressas', epAtelie: ['a3'] },
+  { id: 't3', name: '2º Ano - Ciência da Computação - Grupo A', course: 'Ciência da Computação', period: 'Tarde', studentCount: 28, projectDescription: 'Modelo de inteligência artificial para detecção de fraudes em transações financeiras', epAtelie: ['a2', 'a4', 'a5'] },
   { id: 't4', name: '2º Ano - Sistemas de Informação - Grupo A', course: 'Sistemas de Informação', period: 'Tarde', studentCount: 32, projectDescription: 'Sistema de telemetria e análise de dados em tempo real para sensores industriais' },
   { id: 't5', name: '3º Ano - Engenharia de Computação - Grupo Alpha', course: 'Engenharia de Computação', period: 'Manhã', studentCount: 25, projectDescription: 'Protótipo de IoT para monitoramento de consumo de energia residencial' },
   { id: 't6', name: '3º Ano - Ciência da Computação - Grupo Beta', course: 'Ciência da Computação', period: 'Tarde', studentCount: 27, projectDescription: 'Algoritmo de recomendação personalizado baseado em redes neurais' },

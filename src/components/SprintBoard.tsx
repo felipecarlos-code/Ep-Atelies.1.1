@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey, PRESET_COLORS } from '../types';
+import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { 
   Building2, 
   Users, 
@@ -108,7 +109,9 @@ export default function SprintBoard({
         if (!atelieIdsStr) return;
         const ids = atelieIdsStr.split(',').map((s) => s.trim()).filter(Boolean);
         ids.forEach((atelieId) => {
-          const key = `${phase}-${atelieId}`;
+          const matchedAtelie = findMatchingAtelie(atelieId, atelies);
+          const resolvedId = matchedAtelie ? matchedAtelie.id : atelieId;
+          const key = `${phase}-${resolvedId}`;
           if (!usage[key]) {
             usage[key] = [];
           }
@@ -312,7 +315,7 @@ export default function SprintBoard({
           className="overflow-x-auto transition-all duration-200"
           style={{ paddingBottom: (activeTurmaSearchRowId || activePartnerSearchRowId) ? '200px' : '0px' }}
         >
-          <table className="w-full text-left border-collapse table-fixed min-w-[2040px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[2200px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 {/* Fixed Headers with subtle geometric border and shade */}
@@ -321,6 +324,9 @@ export default function SprintBoard({
                 </th>
                 <th className="w-[185px] p-2.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200">
                   Parceiro
+                </th>
+                <th className="w-[160px] p-2.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200">
+                  Ateliê
                 </th>
                 {/* Phase Columns */}
                 {PHASES.map((phase) => (
@@ -340,7 +346,7 @@ export default function SprintBoard({
             <tbody className="divide-y divide-slate-100">
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={PHASES.length + 3} className="p-12 text-center text-slate-500">
+                  <td colSpan={PHASES.length + 4} className="p-12 text-center text-slate-500">
                     <HelpCircle className="mx-auto text-slate-300 mb-2" size={36} />
                     <p className="font-bold text-sm text-slate-700">Nenhuma linha de alocação cadastrada</p>
                     <p className="text-xs text-slate-400 mt-1">Clique no botão "Adicionar Linha" para criar um agendamento.</p>
@@ -546,6 +552,30 @@ export default function SprintBoard({
                         </div>
                       </td>
 
+                      {/* ATELIE LANE (From Business Registration / Cadastro de Negócios) */}
+                      <td className="p-2 border-r border-slate-200 bg-slate-50/10 text-xs">
+                        <div className="flex flex-wrap gap-1 max-h-[120px] overflow-y-auto">
+                          {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 ? (
+                            currentTurma.epAtelie.map((atelieIdOrName) => {
+                              const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies);
+                              const name = foundAtelie ? foundAtelie.name : atelieIdOrName;
+                              const block = foundAtelie ? ` (${foundAtelie.block})` : '';
+                              return (
+                                <span 
+                                  key={atelieIdOrName}
+                                  className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[9px] uppercase tracking-wide truncate max-w-full block"
+                                  title={`${name}${block}`}
+                                >
+                                  {name}{block}
+                                </span>
+                              );
+                            })
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic">Nenhum ateliê</span>
+                          )}
+                        </div>
+                      </td>
+
                       {/* SPRINT PHASE CELLS */}
                       {PHASES.map((phase) => {
                         const selectedAtelieIds = row.allocations[phase.key]
@@ -572,7 +602,7 @@ export default function SprintBoard({
                                 {(() => {
                                   const compCheck = (() => {
                                     if (selectedAtelieIds.length <= 1) {
-                                      const singleAtelie = atelies.find(a => a.id === selectedAtelieIds[0]);
+                                      const singleAtelie = findMatchingAtelie(selectedAtelieIds[0], atelies);
                                       return { isComposable: true, totalCapacity: singleAtelie ? singleAtelie.capacity : 0 };
                                     }
 
@@ -580,13 +610,13 @@ export default function SprintBoard({
                                     let disconnectedAtelies: string[] = [];
 
                                     for (let i = 0; i < selectedAtelieIds.length; i++) {
-                                      const at1 = atelies.find(x => x.id === selectedAtelieIds[i]);
+                                      const at1 = findMatchingAtelie(selectedAtelieIds[i], atelies);
                                       if (!at1) continue;
 
                                       let hasConnection = false;
                                       for (let j = 0; j < selectedAtelieIds.length; j++) {
                                         if (i === j) continue;
-                                        const at2 = atelies.find(x => x.id === selectedAtelieIds[j]);
+                                        const at2 = findMatchingAtelie(selectedAtelieIds[j], atelies);
                                         if (!at2) continue;
 
                                         const isDirectlyLinked = 
@@ -608,7 +638,7 @@ export default function SprintBoard({
                                     }
 
                                     const sumCapacity = selectedAtelieIds.reduce((sum, id) => {
-                                      const a = atelies.find(x => x.id === id);
+                                      const a = findMatchingAtelie(id, atelies);
                                       return sum + (a ? a.capacity : 0);
                                     }, 0);
 
@@ -670,15 +700,28 @@ export default function SprintBoard({
                                 })()}
 
                                 {selectedAtelieIds.map((selectedAtelieId, index) => {
-                                  const selectedAtelie = atelies.find((a) => a.id === selectedAtelieId);
-                                  if (!selectedAtelie) return null;
+                                  const selectedAtelie = findMatchingAtelie(selectedAtelieId, atelies);
+                                  const isMissing = !selectedAtelie;
+                                  
+                                  const atelieObj = selectedAtelie || {
+                                    id: selectedAtelieId,
+                                    name: selectedAtelieId.startsWith('atelie-') 
+                                      ? selectedAtelieId.replace('atelie-', '').toUpperCase().replace(/-/g, ' ') 
+                                      : selectedAtelieId,
+                                    block: 'Importado',
+                                    capacity: 0,
+                                    color: 'Rose'
+                                  };
 
-                                  // Check for conflicts
-                                  const conflictKey = `${phase.key}-${selectedAtelieId}`;
+                                  // Check for conflicts using resolved ID
+                                  const resolvedId = selectedAtelie ? selectedAtelie.id : selectedAtelieId;
+                                  const conflictKey = `${phase.key}-${resolvedId}`;
                                   const sharingTurmas = usageMap[conflictKey] || [];
                                   const hasConflict = sharingTurmas.length > 1;
 
-                                  const colorPreset = PRESET_COLORS.find((p) => p.name === selectedAtelie.color) || PRESET_COLORS[0];
+                                  const colorPreset = isMissing
+                                    ? { bg: 'bg-amber-50 border-amber-300 border-dashed text-amber-900', badge: 'bg-amber-100 text-amber-800' }
+                                    : (PRESET_COLORS.find((p) => p.name === selectedAtelie.color) || PRESET_COLORS[0]);
 
                                   return (
                                     <div 
@@ -687,9 +730,16 @@ export default function SprintBoard({
                                       id={`card-${row.id}-${phase.key}-${index}`}
                                     >
                                       {/* Top Line: Classroom/Block Room Badge */}
-                                      <div className="flex items-center justify-end">
+                                      <div className="flex items-center justify-between gap-1">
+                                        {isMissing ? (
+                                          <span className="text-[8.5px] font-black text-amber-600 uppercase tracking-wider flex items-center gap-0.5">
+                                            <AlertTriangle size={10} className="shrink-0" /> Não Cadastrado
+                                          </span>
+                                        ) : (
+                                          <div />
+                                        )}
                                         <span className={`text-[8.5px] font-extrabold px-1.5 py-0.5 rounded ${colorPreset?.badge || 'bg-slate-200 text-slate-700'} shrink-0 truncate uppercase tracking-wider`}>
-                                          {selectedAtelie.block ? selectedAtelie.block : 'Inteli'}
+                                          {atelieObj.block}
                                         </span>
                                       </div>
 
@@ -701,37 +751,42 @@ export default function SprintBoard({
                                       {/* Ateliê Label - Main Focus */}
                                       <div className="flex items-center gap-1.5 mt-1.5 text-xs font-extrabold text-slate-800 bg-white/60 p-1.5 rounded border border-black/5">
                                         <Building2 size={13} className="shrink-0 text-slate-600" />
-                                        <span className="truncate">{selectedAtelie.name}</span>
+                                        <span className="truncate">{atelieObj.name}</span>
                                       </div>
 
                                       {/* Change Inline Selector Dropdown on Hover/Focus */}
                                       <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between gap-1">
                                         <select
-                                          value={selectedAtelieId}
+                                          value={selectedAtelie ? selectedAtelie.id : selectedAtelieId}
                                           onChange={(e) => handleCellAtelieChangeAtIndex(row.id, phase.key, index, e.target.value)}
                                           className="bg-transparent text-[10px] font-semibold outline-none text-slate-600 hover:text-slate-900 cursor-pointer max-w-[85px] truncate"
                                         >
+                                          {isMissing && (
+                                            <option value={selectedAtelieId} disabled className="text-slate-400 font-normal">
+                                              {atelieObj.name}
+                                            </option>
+                                          )}
                                           {atelies
                                             .filter((a) => {
-                                              const isCurrent = a.id === selectedAtelieId;
+                                              const isCurrent = a.id === (selectedAtelie ? selectedAtelie.id : selectedAtelieId);
                                               if (isCurrent) return true;
                                               if (selectedAtelieIds.length === 2) {
                                                 const otherIndex = 1 - index;
                                                 const otherId = selectedAtelieIds[otherIndex];
-                                                const otherAtelie = atelies.find(x => x.id === otherId);
+                                                const otherAtelie = findMatchingAtelie(otherId, atelies);
                                                 return otherAtelie && (otherAtelie.composableWith || []).includes(a.id);
                                               }
                                               return true;
                                             })
                                             .map((a) => {
                                               const isAllocatedElsewhere = otherRowsAllocatedIds.includes(a.id);
-                                              const isCurrent = a.id === selectedAtelieId;
+                                              const isCurrent = a.id === (selectedAtelie ? selectedAtelie.id : selectedAtelieId);
                                               
                                               // Calculate tentative capacity if changed to 'a'
                                               const otherAteliesCapacity = selectedAtelieIds
                                                 .filter((_, idx) => idx !== index)
                                                 .reduce((sum, id) => {
-                                                  const at = atelies.find(x => x.id === id);
+                                                  const at = findMatchingAtelie(id, atelies);
                                                   return sum + (at ? at.capacity : 0);
                                                 }, 0);
                                               const tentativeCapacity = otherAteliesCapacity + a.capacity;
@@ -796,7 +851,7 @@ export default function SprintBoard({
                                       {atelies
                                         .filter(a => !selectedAtelieIds.includes(a.id))
                                         .filter((a) => {
-                                          const firstAtelie = atelies.find(x => x.id === selectedAtelieIds[0]);
+                                          const firstAtelie = findMatchingAtelie(selectedAtelieIds[0], atelies);
                                           return firstAtelie && (firstAtelie.composableWith || []).includes(a.id);
                                         })
                                         .map((a) => {
@@ -804,7 +859,7 @@ export default function SprintBoard({
                                           
                                           // Calculate combined capacity
                                           const firstAtelieCapacity = selectedAtelieIds.reduce((sum, id) => {
-                                            const at = atelies.find(x => x.id === id);
+                                            const at = findMatchingAtelie(id, atelies);
                                             return sum + (at ? at.capacity : 0);
                                           }, 0);
                                           const combinedCapacity = firstAtelieCapacity + a.capacity;

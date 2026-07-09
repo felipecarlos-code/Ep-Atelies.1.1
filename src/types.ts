@@ -25,6 +25,7 @@ export interface Turma {
   courseModule?: string;            // 7 - Módulo do Curso (modulo_curso)
   classCode?: string;               // 8 - Código da turma (codigo_turma_c)
   uniqueClassId?: string;           // 9 - ID Único da Turma (ep_id_unico_da_turma)
+  epAtelie?: string[];              // HubSpot ep_atelie (array of Atelie IDs or names)
 }
 
 export interface Partner {

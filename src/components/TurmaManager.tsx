@@ -1,5 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { Turma, Partner } from '../types';
+import { Turma, Partner, Atelie } from '../types';
+import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { 
   Plus, 
   Trash2, 
@@ -208,6 +209,7 @@ function PartnerLogo({ partner }: { partner?: Partner }) {
 interface TurmaManagerProps {
   turmas: Turma[];
   partners?: Partner[]; // Linked partners
+  atelies?: Atelie[]; // All atelies
   onAddTurma: (turma: Omit<Turma, 'id'>) => void;
   onAddMultipleTurmas?: (turmas: Omit<Turma, 'id'>[]) => void;
   onUpdateTurma: (turma: Turma) => void;
@@ -218,6 +220,7 @@ interface TurmaManagerProps {
 export default function TurmaManager({
   turmas,
   partners = [],
+  atelies = [],
   onAddTurma,
   onAddMultipleTurmas,
   onUpdateTurma,
@@ -241,6 +244,7 @@ export default function TurmaManager({
   const [courseModule, setCourseModule] = useState('');
   const [classCode, setClassCode] = useState('');
   const [uniqueClassId, setUniqueClassId] = useState('');
+  const [epAtelie, setEpAtelie] = useState<string[]>([]);
   
   // Legacy standard fields for backwards compatibility
   const [course, setCourse] = useState('');
@@ -449,6 +453,7 @@ export default function TurmaManager({
     setCourseModule('');
     setClassCode('');
     setUniqueClassId('');
+    setEpAtelie([]);
     setCourse('');
     setPeriod('');
     setStudentCount('');
@@ -472,6 +477,7 @@ export default function TurmaManager({
     setCourseModule(turma.courseModule || '');
     setClassCode(turma.classCode || '');
     setUniqueClassId(turma.uniqueClassId || '');
+    setEpAtelie(turma.epAtelie || []);
     setCourse(cleanOrDetectCourse(turma.course, turma.courseModule, turma.name));
     setPeriod(turma.period || '');
     setStudentCount(turma.studentCount !== undefined && turma.studentCount !== null ? turma.studentCount : '');
@@ -502,6 +508,7 @@ export default function TurmaManager({
       course: cleanOrDetectCourse(course, courseModule, name),
       period: period || undefined,
       studentCount: studentCount !== '' ? Number(studentCount) : undefined,
+      epAtelie,
     };
 
     if (editingId) {
@@ -972,6 +979,52 @@ export default function TurmaManager({
             </div>
           </div>
 
+          {/* Campo Multi Ateliê (ep_atelie) */}
+          <div className="bg-slate-50/50 rounded-lg p-4 border border-slate-200/60">
+            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+              Ateliês Associados (ep_atelie)
+              <span className="text-[8px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-mono font-extrabold uppercase tracking-wider">Multi-Dados</span>
+            </label>
+            {atelies && atelies.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+                {atelies.map((a) => {
+                  const isSelected = epAtelie.includes(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setEpAtelie(prev => prev.filter(id => id !== a.id));
+                        } else {
+                          setEpAtelie(prev => [...prev, a.id]);
+                        }
+                      }}
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all text-left text-xs font-bold cursor-pointer select-none ${
+                        isSelected 
+                          ? 'bg-indigo-600/5 border-indigo-500 text-indigo-700 shadow-3xs' 
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}} // Handled by button click
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 pointer-events-none"
+                      />
+                      <div className="min-w-0">
+                        <span className="block truncate leading-tight">{a.name}</span>
+                        <span className="block text-[9px] text-slate-400 font-bold leading-none mt-1 uppercase tracking-wider">{a.block}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Nenhum ateliê cadastrado. Cadastre salas de aula na aba de "Ateliês" para que fiquem disponíveis para seleção aqui.</p>
+            )}
+          </div>
+
           {/* Descrição do Negócio */}
           <div>
             <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
@@ -1194,6 +1247,30 @@ export default function TurmaManager({
                         </strong>
                       </span>
                     </div>
+
+                    {/* Ateliês Associados (ep_atelie) */}
+                    {turma.epAtelie && turma.epAtelie.length > 0 && (
+                      <div className="flex flex-col gap-1 text-[11px] min-w-0 pt-2 border-t border-slate-50 mt-2">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                          <Tag size={10} /> Ateliês Associados:
+                        </span>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {turma.epAtelie.map((atelieIdOrName) => {
+                            const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies || []);
+                            const name = foundAtelie ? foundAtelie.name : atelieIdOrName;
+                            const block = foundAtelie ? ` (${foundAtelie.block})` : '';
+                            return (
+                              <span 
+                                key={atelieIdOrName}
+                                className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wide inline-block"
+                              >
+                                {name}{block}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {(turma.projectDescription || turma.description) && (

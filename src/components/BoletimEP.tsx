@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey } from '../types';
+import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { cleanOrDetectCourse } from './TurmaManager';
 import { 
   FileSpreadsheet, 
@@ -234,9 +235,9 @@ export default function BoletimEP({
       
       const atelieIdsStr = row.allocations[selectedPhase] || '';
       const allocatedAtelies = atelieIdsStr
-        .split(',')
-        .map((id) => atelies.find((a) => a.id === id.trim()))
-        .filter((a): a is Atelie => !!a);
+          .split(',')
+          .map((id) => findMatchingAtelie(id.trim(), atelies))
+          .filter((a): a is Atelie => !!a);
 
       const atelieNames = allocatedAtelies.map((a) => a.name);
       const atelieBlocks = Array.from(new Set(allocatedAtelies.map((a) => a.block)));

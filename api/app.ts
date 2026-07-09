@@ -1260,6 +1260,39 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
 
         let period = "";
 
+        let rawAtelieVal = "";
+        const keysToCheck = [
+          ...discoveredAtelieKeys,
+          "[EP] Ateliê",
+          "[ep] atelie",
+          "ep_atelie",
+          "ep_ateliê",
+          "_ep__ateli_",
+          "ep__atelie",
+          "atelie",
+          "ateliê"
+        ];
+        for (const key of keysToCheck) {
+          const val = props[key];
+          if (val && typeof val === "string" && val.trim().length > 0) {
+            rawAtelieVal = val.trim();
+            break;
+          }
+        }
+        
+        let epAtelie: string[] = [];
+        if (rawAtelieVal) {
+          const splitNames = rawAtelieVal.split(",").map(s => s.trim()).filter(Boolean);
+          epAtelie = splitNames.map(name => {
+            return `atelie-${name.toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]/g, "-")
+              .replace(/-+/g, "-")
+              .replace(/^-|-$/g, "")}`;
+          });
+        }
+
         return {
           id: dealId,
           name: dealName,
@@ -1274,7 +1307,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           applicationQuarter,
           courseModule,
           classCode,
-          uniqueClassId
+          uniqueClassId,
+          epAtelie
         };
       });
 

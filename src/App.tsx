@@ -1176,6 +1176,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
           <TurmaManager
             turmas={turmas}
             partners={partners}
+            atelies={atelies}
             onAddTurma={handleAddTurma}
             onAddMultipleTurmas={handleAddMultipleTurmas}
             onUpdateTurma={handleUpdateTurma}
