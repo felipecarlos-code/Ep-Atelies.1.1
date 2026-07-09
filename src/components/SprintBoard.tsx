@@ -41,8 +41,6 @@ export default function SprintBoard({
   const [filterPartnerId, setFilterPartnerId] = useState<string>('all');
   const [filterAtelieId, setFilterAtelieId] = useState<string>('all');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [activePartnerSearchRowId, setActivePartnerSearchRowId] = useState<string | null>(null);
-  const [partnerSearchText, setPartnerSearchText] = useState<string>('');
   const [activeTurmaSearchRowId, setActiveTurmaSearchRowId] = useState<string | null>(null);
   const [turmaSearchText, setTurmaSearchText] = useState<string>('');
 
@@ -132,17 +130,10 @@ export default function SprintBoard({
     if (row) {
       const selectedTurma = turmas.find((t) => t.id === turmaId);
       const updatedRow = { ...row, turmaId };
-      if (selectedTurma && selectedTurma.partnerId) {
-        updatedRow.partnerId = selectedTurma.partnerId;
+      if (selectedTurma) {
+        updatedRow.partnerId = selectedTurma.partnerId || '';
       }
       onUpdateRow(updatedRow);
-    }
-  };
-
-  const handleRowPartnerChange = (rowId: string, partnerId: string) => {
-    const row = rows.find((r) => r.id === rowId);
-    if (row) {
-      onUpdateRow({ ...row, partnerId });
     }
   };
 
@@ -313,7 +304,7 @@ export default function SprintBoard({
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden" id="sprints-table-container">
         <div 
           className="overflow-x-auto transition-all duration-200"
-          style={{ paddingBottom: (activeTurmaSearchRowId || activePartnerSearchRowId) ? '200px' : '0px' }}
+          style={{ paddingBottom: activeTurmaSearchRowId ? '200px' : '0px' }}
         >
           <table className="w-full text-left border-collapse table-fixed min-w-[2200px]">
             <thead>
@@ -355,7 +346,7 @@ export default function SprintBoard({
               ) : (
                 filteredRows.map((row) => {
                   const currentTurma = turmas.find((t) => t.id === row.turmaId);
-                  const currentPartner = partners.find((p) => p.id === row.partnerId);
+                  const currentPartner = partners.find((p) => p.id === (currentTurma ? currentTurma.partnerId : row.partnerId));
 
                   return (
                     <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
@@ -455,101 +446,32 @@ export default function SprintBoard({
                         </div>
                       </td>
 
-                      {/* PARTNER SELECTOR CELL */}
-                      <td className={`p-2 border-r border-slate-200 relative ${activePartnerSearchRowId === row.id ? 'z-30' : 'z-0'}`}>
-                        <div className="space-y-1">
-                          {activePartnerSearchRowId === row.id ? (
-                            <div className="relative">
-                              <input
-                                type="text"
-                                value={partnerSearchText}
-                                onChange={(e) => setPartnerSearchText(e.target.value)}
-                                placeholder="Digitar parceiro..."
-                                autoFocus
-                                className="w-full text-[10px] font-bold border border-indigo-600 rounded px-1.5 py-1 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none truncate"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Escape') {
-                                    setActivePartnerSearchRowId(null);
-                                    setPartnerSearchText('');
-                                  }
-                                }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActivePartnerSearchRowId(null);
-                                  setPartnerSearchText('');
-                                }}
-                                className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-                              >
-                                <X size={10} />
-                              </button>
-                              
-                              {/* Floating Filtered Dropdown List */}
-                              <div className="absolute left-0 right-0 mt-1 max-h-44 overflow-y-auto bg-white border border-slate-200 rounded shadow-md z-30 divide-y divide-slate-150">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleRowPartnerChange(row.id, '');
-                                    setActivePartnerSearchRowId(null);
-                                    setPartnerSearchText('');
-                                  }}
-                                  className="w-full text-left text-[10px] font-extrabold text-rose-600 bg-rose-50/40 px-2 py-1.5 hover:bg-rose-50 block truncate cursor-pointer"
-                                >
-                                  -- Sem Parceiro --
-                                </button>
-                                {partners
-                                  .filter((p) => p.name.toLowerCase().includes(partnerSearchText.toLowerCase()))
-                                  .map((p) => (
-                                    <button
-                                      key={p.id}
-                                      type="button"
-                                      onClick={() => {
-                                        handleRowPartnerChange(row.id, p.id);
-                                        setActivePartnerSearchRowId(null);
-                                        setPartnerSearchText('');
-                                      }}
-                                      className="w-full text-left text-[10px] font-bold px-2 py-1.5 hover:bg-indigo-50 text-slate-700 block truncate cursor-pointer"
-                                    >
-                                      {p.name}
-                                    </button>
-                                  ))}
-                                {partners.filter((p) => p.name.toLowerCase().includes(partnerSearchText.toLowerCase())).length === 0 && (
-                                  <div className="p-2 text-[9px] text-slate-400 italic">Nenhum encontrado</div>
-                                )}
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => {
-                                setActivePartnerSearchRowId(row.id);
-                                setPartnerSearchText('');
-                              }}
-                              className="w-full text-[10px] font-bold border border-slate-200 rounded px-1.5 py-1 bg-white text-slate-800 cursor-pointer flex justify-between items-center hover:border-indigo-500 hover:bg-slate-50/50"
-                              title="Clique para buscar parceiro pelo nome"
-                            >
-                              <span className="truncate pr-1">
-                                {currentPartner ? currentPartner.name : '🔍 Buscar parceiro...'}
-                              </span>
-                              <span className="text-[7px] text-slate-400">▼</span>
-                            </div>
-                          )}
-
-                          {currentPartner && (
-                            <div className="flex flex-col items-center gap-1 mt-1 p-1.5 bg-slate-50 rounded border border-slate-200/50 shadow-3xs">
-                              <img
-                                src={currentPartner.logoUrl}
-                                alt={currentPartner.name}
-                                className="w-10 h-10 object-contain rounded border border-slate-200 bg-white p-1 shadow-4xs shrink-0"
-                                referrerPolicy="no-referrer"
-                                onError={(e) => handleLogoError(e, currentPartner.name)}
-                              />
-                              <span className="text-[9px] font-black text-slate-700 truncate text-center max-w-[110px]" title={currentPartner.name}>
-                                {currentPartner.name}
-                              </span>
-                            </div>
-                          )}
-                        </div>
+                      {/* PARTNER CELL (Read-only, automatically brought from Business/Turma) */}
+                      <td className="p-2 border-r border-slate-200 bg-slate-50/20">
+                        {currentPartner ? (
+                          <div className="flex flex-col items-center gap-1.5 p-2 bg-white rounded-lg border border-slate-150 shadow-4xs">
+                            <img
+                              src={currentPartner.logoUrl}
+                              alt={currentPartner.name}
+                              className="w-12 h-12 object-contain rounded border border-slate-200 bg-white p-1 shadow-4xs shrink-0"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => handleLogoError(e, currentPartner.name)}
+                            />
+                            <span className="text-[10px] font-extrabold text-slate-800 text-center max-w-[150px] line-clamp-2 leading-tight" title={currentPartner.name}>
+                              {currentPartner.name}
+                            </span>
+                            <span className="text-[8px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded-sm shrink-0">
+                              Automático
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center p-3 border border-dashed border-slate-200 rounded-lg text-slate-400 bg-slate-50/50">
+                            <Building2 size={16} className="text-slate-300 mb-1" />
+                            <span className="text-[9px] font-bold text-center leading-snug">
+                              {currentTurma ? 'Sem parceiro vinculado' : 'Definido no negócio'}
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       {/* ATELIE LANE (From Business Registration / Cadastro de Negócios) */}
