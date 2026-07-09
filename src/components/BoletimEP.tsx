@@ -23,6 +23,7 @@ interface BoletimEPProps {
   turmas: Turma[];
   partners: Partner[];
   rows: AllocationRow[];
+  sprintDates: Record<string, string>;
   selectedYear: string;
   selectedQuarter: string;
 }
@@ -32,12 +33,20 @@ export default function BoletimEP({
   turmas,
   partners,
   rows,
+  sprintDates,
   selectedYear,
   selectedQuarter,
 }: BoletimEPProps) {
   const [selectedPhase, setSelectedPhase] = useState<PhaseKey>('sprint1');
   const [layoutMode, setLayoutMode] = useState<'ppt' | 'print'>('ppt');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    if (!year || !month || !day) return dateStr;
+    return `${day}/${month}/${year}`;
+  };
 
   const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement, Event>, partnerName: string, domain?: string) => {
     const target = e.currentTarget;
@@ -391,6 +400,16 @@ export default function BoletimEP({
                 <span className={`text-xs font-bold truncate leading-tight block ${isSelected ? 'text-white' : 'text-slate-800'}`}>
                   {p.label}
                 </span>
+                
+                {sprintDates[p.key] ? (
+                  <span className={`text-[10px] mt-1.5 font-mono font-medium block ${isSelected ? 'text-indigo-200' : 'text-indigo-600'}`}>
+                    📅 {formatDate(sprintDates[p.key])}
+                  </span>
+                ) : (
+                  <span className="text-[10px] mt-1.5 text-slate-400 font-mono italic block">
+                    Sem data
+                  </span>
+                )}
 
                 <div className="mt-1.5 flex justify-center">
                   <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-[#ff4545]' : 'bg-slate-300'}`}></span>
@@ -463,7 +482,7 @@ export default function BoletimEP({
                     {selectedYear} • {selectedQuarter}
                   </span>
                   <span className="font-mono text-[10px] text-[#90a5e5] font-extrabold uppercase tracking-wider">
-                    Fase: {activePhaseLabel}
+                    Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                   </span>
                 </div>
                 <h1 className="font-serif text-2xl font-black text-white mt-1.5 tracking-tight">
@@ -660,6 +679,10 @@ export default function BoletimEP({
               <h2 className="font-serif text-sm font-black text-[#ff4545] mt-3.5 uppercase tracking-widest print:text-[#ff4545]">
                 {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
               </h2>
+
+              <p className="font-mono text-xs font-black text-slate-700 mt-2 uppercase tracking-wide">
+                Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
+              </p>
               
               <div className="w-16 h-1 bg-[#ff4545] my-4"></div>
               

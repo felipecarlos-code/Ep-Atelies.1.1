@@ -15,14 +15,26 @@ import {
   Info,
   Copy,
   X,
-  Layers
+  Layers,
+  Calendar
 } from 'lucide-react';
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  if (!year || !month || !day) return dateStr;
+  return `${day}/${month}/${year}`;
+};
 
 interface SprintBoardProps {
   atelies: Atelie[];
   turmas: Turma[];
   partners: Partner[];
   rows: AllocationRow[];
+  sprintDates: Record<string, string>;
+  selectedYear: string;
+  selectedQuarter: string;
+  onUpdateSprintDates: (dates: Record<string, string>) => void;
   onAddRow: () => void;
   onUpdateRow: (row: AllocationRow) => void;
   onDeleteRow: (id: string) => void;
@@ -33,6 +45,10 @@ export default function SprintBoard({
   turmas,
   partners,
   rows,
+  sprintDates,
+  selectedYear,
+  selectedQuarter,
+  onUpdateSprintDates,
   onAddRow,
   onUpdateRow,
   onDeleteRow,
@@ -43,6 +59,7 @@ export default function SprintBoard({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [activeTurmaSearchRowId, setActiveTurmaSearchRowId] = useState<string | null>(null);
   const [turmaSearchText, setTurmaSearchText] = useState<string>('');
+  const [showDateConfig, setShowDateConfig] = useState<boolean>(false);
 
   const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement, Event>, partnerName: string, domain?: string) => {
     const target = e.currentTarget;
@@ -292,6 +309,18 @@ export default function SprintBoard({
 
         <div className="flex gap-2 items-center">
           <button
+            onClick={() => setShowDateConfig(!showDateConfig)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold text-xs border transition-all cursor-pointer shadow-3xs ${
+              showDateConfig 
+                ? 'bg-indigo-600 text-white border-indigo-700' 
+                : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+            }`}
+          >
+            <Calendar size={13} />
+            {showDateConfig ? "Ocultar Calendário" : "Datas das Sprints"}
+          </button>
+
+          <button
             onClick={onAddRow}
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-1.5 rounded transition-all shadow-2xs cursor-pointer"
           >
@@ -299,6 +328,55 @@ export default function SprintBoard({
           </button>
         </div>
       </div>
+
+      {showDateConfig && (
+        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4 transition-all duration-300">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-serif text-sm font-extrabold text-[#2e2640] flex items-center gap-1.5 uppercase tracking-wide">
+                <Calendar size={16} className="text-[#ff4545]" />
+                Calendário de Datas das Sprints
+              </h3>
+              <p className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider font-bold">
+                {selectedQuarter === 'Q1' ? '1º' : selectedQuarter === 'Q2' ? '2º' : selectedQuarter === 'Q3' ? '3º' : '4º'} Trimestre • {selectedYear}
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowDateConfig(false)}
+              className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
+            {PHASES.map((p) => (
+              <div key={p.key} className="bg-slate-50 border border-slate-100 rounded-md p-3 space-y-2 hover:border-slate-200 transition-all">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate" title={p.label}>
+                  {p.label}
+                </label>
+                <input
+                  type="date"
+                  value={sprintDates[p.key] || ''}
+                  onChange={(e) => {
+                    const updated = { ...sprintDates, [p.key]: e.target.value };
+                    onUpdateSprintDates(updated);
+                  }}
+                  className="w-full text-xs bg-white border border-slate-200 rounded p-1.5 focus:border-[#ff4545] focus:ring-1 focus:ring-[#ff4545]/20 outline-none font-medium text-slate-700 cursor-pointer"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-[#e6eaeb]/30 border border-slate-100 rounded p-3 text-[11px] text-slate-500 flex items-start gap-2 leading-relaxed">
+            <Info size={14} className="text-indigo-600 shrink-0 mt-0.5" />
+            <p>
+              As datas cadastradas acima são vinculadas automaticamente ao <strong>{selectedQuarter === 'Q1' ? '1º' : selectedQuarter === 'Q2' ? '2º' : selectedQuarter === 'Q3' ? '3º' : '4º'} trimestre de {selectedYear}</strong>. 
+              Elas aparecerão nos cabeçalhos e menus de navegação do <strong>Boletim EP</strong>, deixando o cronograma de sprints visível para toda a equipe acadêmica.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Main Allocations Table / Grid - with crisp geometric lines */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden" id="sprints-table-container">
@@ -320,14 +398,26 @@ export default function SprintBoard({
                   Ateliê
                 </th>
                 {/* Phase Columns */}
-                {PHASES.map((phase) => (
-                  <th key={phase.key} className="w-[230px] p-3.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200 last:border-r-0">
-                    <div className="flex flex-col">
-                      <span className="text-slate-800 font-bold">{phase.label}</span>
-                      <span className="text-[9px] text-slate-400 normal-case font-medium">Módulo Acadêmico</span>
-                    </div>
-                  </th>
-                ))}
+                {PHASES.map((phase) => {
+                  const dateStr = sprintDates[phase.key];
+                  const formatted = dateStr ? formatDate(dateStr) : null;
+                  return (
+                    <th key={phase.key} className="w-[230px] p-3.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200 last:border-r-0">
+                      <div className="flex flex-col">
+                        <span className="text-slate-800 font-bold">{phase.label}</span>
+                        {formatted ? (
+                          <span className="text-[9px] text-indigo-600 font-mono font-bold flex items-center gap-1 mt-0.5 normal-case">
+                            📅 {formatted}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-slate-400 italic normal-case font-medium mt-0.5">
+                            Data não definida
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
                 <th className="w-24 p-3.5 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
                   Ações
                 </th>

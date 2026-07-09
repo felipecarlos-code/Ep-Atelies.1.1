@@ -75,6 +75,18 @@ export default function App() {
     return localStorage.getItem('selected_quarter') || 'Q1';
   });
 
+  const [sprintDates, setSprintDates] = useState<Record<string, Record<string, string>>>(() => {
+    const saved = localStorage.getItem('sprint_dates_data');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {};
+  });
+
   const currentKey = `${selectedYear}_${selectedQuarter}`;
 
   // Helper to create an empty schedule
@@ -237,7 +249,8 @@ export default function App() {
             partners: dbPartners, 
             schedules: dbSchedules, 
             selectedYear: dbYear, 
-            selectedQuarter: dbQuarter 
+            selectedQuarter: dbQuarter,
+            sprintDates: dbSprintDates
           } = resData.data;
           if (dbAtelies) setAtelies(dbAtelies);
           if (dbTurmas) setTurmas(deduplicateArrayById(dbTurmas));
@@ -245,6 +258,7 @@ export default function App() {
           if (dbSchedules) setSchedules(dbSchedules);
           if (dbYear) setSelectedYear(dbYear);
           if (dbQuarter) setSelectedQuarter(dbQuarter);
+          if (dbSprintDates) setSprintDates(dbSprintDates);
         }
         return { success: true, message: "Conectado com sucesso!" };
       } else {
@@ -346,6 +360,10 @@ export default function App() {
     localStorage.setItem('selected_quarter', selectedQuarter);
   }, [selectedQuarter]);
 
+  useEffect(() => {
+    localStorage.setItem('sprint_dates_data', JSON.stringify(sprintDates));
+  }, [sprintDates]);
+
   // 2. Autosave to database on state change
   useEffect(() => {
     if (!initialLoadDone || !isDbConfigured) return;
@@ -362,7 +380,8 @@ export default function App() {
             partners, 
             schedules, 
             selectedYear, 
-            selectedQuarter 
+            selectedQuarter,
+            sprintDates
           })
         });
         
@@ -393,7 +412,7 @@ export default function App() {
     }, 1000); // 1-second debounce
 
     return () => clearTimeout(delayDebounceFn);
-  }, [atelies, turmas, partners, schedules, selectedYear, selectedQuarter, initialLoadDone, isDbConfigured, dbWarning]);
+  }, [atelies, turmas, partners, schedules, selectedYear, selectedQuarter, sprintDates, initialLoadDone, isDbConfigured, dbWarning]);
 
   const [syncToast, setSyncToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -410,7 +429,8 @@ export default function App() {
           partners, 
           schedules, 
           selectedYear, 
-          selectedQuarter 
+          selectedQuarter,
+          sprintDates
         })
       });
       
@@ -982,11 +1002,8 @@ export default function App() {
                 onChange={(e) => setSelectedYear(e.target.value)}
                 className="font-bold text-slate-800 bg-transparent border-none focus:outline-none focus:ring-0 cursor-pointer py-1 pr-1 outline-none text-xs"
               >
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
                 <option value="2026">2026</option>
                 <option value="2027">2027</option>
-                <option value="2028">2028</option>
               </select>
             </div>
 
@@ -1145,6 +1162,10 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             turmas={turmas}
             partners={partners}
             rows={rows}
+            sprintDates={sprintDates[currentKey] || {}}
+            selectedYear={selectedYear}
+            selectedQuarter={selectedQuarter}
+            onUpdateSprintDates={(dates) => setSprintDates(prev => ({ ...prev, [currentKey]: dates }))}
             onAddRow={handleAddRow}
             onUpdateRow={handleUpdateRow}
             onDeleteRow={handleDeleteRow}
@@ -1157,6 +1178,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             turmas={turmas}
             partners={partners}
             rows={rows}
+            sprintDates={sprintDates[currentKey] || {}}
             selectedYear={selectedYear}
             selectedQuarter={selectedQuarter}
           />
