@@ -26,6 +26,7 @@ export interface Turma {
   classCode?: string;               // 8 - Código da turma (codigo_turma_c)
   uniqueClassId?: string;           // 9 - ID Único da Turma (ep_id_unico_da_turma)
   epAtelie?: string[];              // HubSpot ep_atelie (array of Atelie IDs or names)
+  courseYear?: string;              // Ano do Curso (Auto-calculated from modulo_curso)
 }
 
 export interface Partner {

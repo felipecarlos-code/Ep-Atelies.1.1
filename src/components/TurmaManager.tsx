@@ -53,6 +53,51 @@ export function autoDetectCourse(text: string): string | null {
   return null;
 }
 
+export function extractModuleNumber(text: string): number | null {
+  if (!text) return null;
+  const upper = text.toUpperCase().trim();
+
+  // 1. Specific match for known keys, e.g., AMD3, CCMD12, ECMD04
+  const keyMatch = upper.match(/(?:ECMD|ESMD|SIMD|CCMD|AMD)\s*(\d+)/);
+  if (keyMatch) {
+    return parseInt(keyMatch[1], 10);
+  }
+
+  // 2. Generic match for letters followed by digits, e.g. "CLASS5", "X3"
+  const genericMatch = upper.match(/[A-Z]+(\d+)/);
+  if (genericMatch) {
+    return parseInt(genericMatch[1], 10);
+  }
+
+  // 3. Match explicit "Modulo X" or "Módulo X"
+  const modMatch = upper.match(/(?:MODULO|MÓDULO|MOD)\s*(\d+)/);
+  if (modMatch) {
+    return parseInt(modMatch[1], 10);
+  }
+
+  // 4. Try to find any standalone number that might be the module (except years)
+  const numbers = upper.match(/\b\d+\b/g);
+  if (numbers) {
+    for (const numStr of numbers) {
+      const num = parseInt(numStr, 10);
+      if (num >= 1 && num <= 16) {
+        return num; // Likely a module number if it's 1-16
+      }
+    }
+  }
+
+  return null;
+}
+
+export function getCourseYearFromModule(moduleNum: number | null): string {
+  if (moduleNum === null || isNaN(moduleNum)) return 'Não Identificado';
+  if (moduleNum >= 1 && moduleNum <= 4) return '1º Ano';
+  if (moduleNum >= 5 && moduleNum <= 8) return '2º Ano';
+  if (moduleNum >= 9 && moduleNum <= 12) return '3º Ano';
+  if (moduleNum >= 13 && moduleNum <= 16) return '4º Ano';
+  return 'Não Identificado';
+}
+
 export function cleanOrDetectCourse(courseRaw?: string, courseModuleRaw?: string, nameRaw?: string): string {
   const c = String(courseRaw || '').trim();
   const cm = String(courseModuleRaw || '').trim();
@@ -242,6 +287,7 @@ export default function TurmaManager({
   const [applicationYear, setApplicationYear] = useState('');
   const [applicationQuarter, setApplicationQuarter] = useState('Q1');
   const [courseModule, setCourseModule] = useState('');
+  const [courseYear, setCourseYear] = useState('');
   const [classCode, setClassCode] = useState('');
   const [uniqueClassId, setUniqueClassId] = useState('');
   const [epAtelie, setEpAtelie] = useState<string[]>([]);
@@ -399,6 +445,21 @@ export default function TurmaManager({
             }
           }
 
+          // Auto-detect course Year based on module
+          const extractedModNum = extractModuleNumber(String(rawModule).trim());
+          const detectedYear = getCourseYearFromModule(extractedModNum);
+
+          // Auto fill period/turno based on detected course year if not explicitly set
+          if (!periodVal) {
+            if (detectedYear === '1º Ano') {
+              periodVal = 'Manhã';
+            } else if (detectedYear === '2º Ano') {
+              periodVal = 'Tarde';
+            } else if (detectedYear === '3º Ano') {
+              periodVal = 'Manhã';
+            }
+          }
+
           newNegocios.push({
             name: nameStr,
             projectTitle: String(rawProjectTitle).trim(),
@@ -408,6 +469,7 @@ export default function TurmaManager({
             applicationYear: String(rawYear).trim(),
             applicationQuarter: String(rawQuarter).trim(),
             courseModule: String(rawModule).trim(),
+            courseYear: detectedYear !== 'Não Identificado' ? detectedYear : undefined,
             classCode: String(rawClassCode).trim(),
             uniqueClassId: String(rawUniqueId).trim(),
             course: detectedCourse || String(rawModule || 'Ciência da Computação').trim(),
@@ -451,6 +513,7 @@ export default function TurmaManager({
     setApplicationYear('');
     setApplicationQuarter('Q1');
     setCourseModule('');
+    setCourseYear('');
     setClassCode('');
     setUniqueClassId('');
     setEpAtelie([]);
@@ -475,11 +538,23 @@ export default function TurmaManager({
     setApplicationYear(turma.applicationYear || '');
     setApplicationQuarter(turma.applicationQuarter || 'Q1');
     setCourseModule(turma.courseModule || '');
+    setCourseYear(turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || '')));
     setClassCode(turma.classCode || '');
     setUniqueClassId(turma.uniqueClassId || '');
     setEpAtelie(turma.epAtelie || []);
     setCourse(cleanOrDetectCourse(turma.course, turma.courseModule, turma.name));
-    setPeriod(turma.period || '');
+    const calculatedYear = turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''));
+    let calculatedPeriod = turma.period || '';
+    if (!calculatedPeriod) {
+      if (calculatedYear === '1º Ano') {
+        calculatedPeriod = 'Manhã';
+      } else if (calculatedYear === '2º Ano') {
+        calculatedPeriod = 'Tarde';
+      } else if (calculatedYear === '3º Ano') {
+        calculatedPeriod = 'Manhã';
+      }
+    }
+    setPeriod(calculatedPeriod);
     setStudentCount(turma.studentCount !== undefined && turma.studentCount !== null ? turma.studentCount : '');
     setEditingId(turma.id);
     setIsEditing(true);
@@ -503,6 +578,7 @@ export default function TurmaManager({
       applicationYear: applicationYear.trim(),
       applicationQuarter,
       courseModule: courseModule.trim(),
+      courseYear: courseYear || getCourseYearFromModule(extractModuleNumber(courseModule)),
       classCode: classCode.trim(),
       uniqueClassId: uniqueClassId.trim(),
       course: cleanOrDetectCourse(course, courseModule, name),
@@ -869,6 +945,19 @@ export default function TurmaManager({
                   if (det) {
                     setCourse(det);
                   }
+                  // Auto detect Course Year ("Ano do Curso")
+                  const modNum = extractModuleNumber(val);
+                  const detYear = getCourseYearFromModule(modNum);
+                  setCourseYear(detYear);
+
+                  // Auto fill period/turno based on course year
+                  if (detYear === '1º Ano') {
+                    setPeriod('Manhã');
+                  } else if (detYear === '2º Ano') {
+                    setPeriod('Tarde');
+                  } else if (detYear === '3º Ano') {
+                    setPeriod('Manhã');
+                  }
                 }}
                 disabled={isEditingFromHubspot}
                 placeholder="Ex: 1AMD3 - LÓGICA PARA PREDIÇÃO..."
@@ -896,6 +985,22 @@ export default function TurmaManager({
                 <option value="Engenharia de Software">Engenharia de Software (ESMD)</option>
                 <option value="Sistemas da Informação">Sistemas da Informação (SIMD)</option>
               </select>
+            </div>
+
+            {/* Ano do Curso - De-Para inteligente */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                <span>Ano do Curso (De-Para Inteligente)</span>
+                <span className="text-[8px] bg-amber-50 text-amber-700 px-1 rounded font-mono font-bold lowercase">Não Editável</span>
+              </label>
+              <input
+                id="course-year-input"
+                type="text"
+                value={courseYear || getCourseYearFromModule(extractModuleNumber(courseModule))}
+                disabled
+                className="w-full text-xs border border-amber-200 rounded px-3 py-2 bg-amber-50/50 text-amber-800 font-extrabold outline-none transition-all cursor-not-allowed"
+                placeholder="Identificado pelo Módulo"
+              />
             </div>
 
             {/* 8 - Código da Turma */}
@@ -1198,6 +1303,19 @@ export default function TurmaManager({
                         </span>
                         <span className="font-bold text-slate-700 text-right truncate max-w-[65%] leading-normal inline-block" title={turma.courseModule || turma.course}>
                           {turma.courseModule || turma.course}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Ano do Curso */}
+                    {((turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''))) && 
+                      (turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''))) !== 'Não Identificado') && (
+                      <div className="flex items-center justify-between gap-2 text-[11px] min-w-0">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
+                          <GraduationCap size={10} className="text-amber-500" /> Ano do Curso:
+                        </span>
+                        <span className="font-bold text-amber-700 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5 text-right truncate max-w-[65%]" title={turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''))}>
+                          {turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''))}
                         </span>
                       </div>
                     )}

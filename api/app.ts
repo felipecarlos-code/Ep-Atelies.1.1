@@ -554,7 +554,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         ep_tri_de_aplicacao: "ep_tri_de_aplicacao",
         modulo_curso: "modulo_curso",
         codigo_turma_c: "codigo_turma_c",
-        ep_id_unico_da_turma: "ep_id_unico_da_turma"
+        ep_id_unico_da_turma: "ep_id_unico_da_turma",
+        period: "period"
       };
 
       try {
@@ -608,6 +609,9 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           const idUnicoKey = findProp(["ep_id_unico_da_turma", "id_unico_da_turma", "ep_id_unico"], [["id", "unico", "turma"], ["id", "único", "turma"], ["id", "turma"]]);
           if (idUnicoKey) resolvedKeys.ep_id_unico_da_turma = idUnicoKey;
 
+          const periodKey = findProp(["period", "periodo", "período", "turno", "ep_turno", "ep_periodo", "turno_letivo", "periodo_letivo", "turno_c", "periodo_c"], [["turno"], ["periodo"], ["período"], ["period"]]);
+          if (periodKey) resolvedKeys.period = periodKey;
+
           props.forEach((p: any) => {
             const label = String(p.label || "").toLowerCase();
             const name = String(p.name || "").toLowerCase();
@@ -631,6 +635,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             resolvedKeys.modulo_curso,
             resolvedKeys.codigo_turma_c,
             resolvedKeys.ep_id_unico_da_turma,
+            resolvedKeys.period,
             ...discoveredAtelieKeys
           ])).filter(Boolean);
         } else {
@@ -639,6 +644,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             "dealname", "pipeline", "createdate", "dealstage", "description",
             "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
             "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
+            "period", "periodo", "turno", "ep_turno", "ep_periodo",
             "ep_atelie", "atelie", "ateliê"
           ];
         }
@@ -648,6 +654,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           "dealname", "pipeline", "createdate", "dealstage", "description",
           "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
           "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
+          "period", "periodo", "turno", "ep_turno", "ep_periodo",
           "ep_atelie", "atelie", "ateliê"
         ];
       }
@@ -1258,8 +1265,6 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           }
         }
 
-        let period = "";
-
         let rawAtelieVal = "";
         const keysToCheck = [
           ...discoveredAtelieKeys,
@@ -1284,13 +1289,67 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         if (rawAtelieVal) {
           const splitNames = rawAtelieVal.split(",").map(s => s.trim()).filter(Boolean);
           epAtelie = splitNames.map(name => {
-            return `atelie-${name.toLowerCase()
+            return `atelie-${name.toLowerCase()}
               .normalize("NFD")
               .replace(/[\u0300-\u036f]/g, "")
               .replace(/[^a-z0-9]/g, "-")
               .replace(/-+/g, "-")
               .replace(/^-|-$/g, "")}`;
           });
+        }
+
+        const extractModuleNumber = (text: string): number | null => {
+          if (!text) return null;
+          const upper = text.toUpperCase().trim();
+          const keyMatch = upper.match(/(?:ECMD|ESMD|SIMD|CCMD|AMD)\s*(\d+)/);
+          if (keyMatch) return parseInt(keyMatch[1], 10);
+          const genericMatch = upper.match(/[A-Z]+(\d+)/);
+          if (genericMatch) return parseInt(genericMatch[1], 10);
+          const modMatch = upper.match(/(?:MODULO|MÓDULO|MOD)\s*(\d+)/);
+          if (modMatch) return parseInt(modMatch[1], 10);
+          const numbers = upper.match(/\b\d+\b/g);
+          if (numbers) {
+            for (const numStr of numbers) {
+              const num = parseInt(numStr, 10);
+              if (num >= 1 && num <= 16) return num;
+            }
+          }
+          return null;
+        };
+
+        const getCourseYearFromModule = (moduleNum: number | null): string => {
+          if (moduleNum === null || isNaN(moduleNum)) return 'Não Identificado';
+          if (moduleNum >= 1 && moduleNum <= 4) return '1º Ano';
+          if (moduleNum >= 5 && moduleNum <= 8) return '2º Ano';
+          if (moduleNum >= 9 && moduleNum <= 12) return '3º Ano';
+          if (moduleNum >= 13 && moduleNum <= 16) return '4º Ano';
+          return 'Não Identificado';
+        };
+
+        const extractedModule = extractModuleNumber(courseModule);
+        const courseYear = getCourseYearFromModule(extractedModule);
+
+        // 10 - Turno/Período
+        const rawPeriod = props[resolvedKeys.period] || "";
+        let period = "";
+        const periodStr = String(rawPeriod).trim().toLowerCase();
+        if (periodStr.includes("manhã") || periodStr.includes("manha")) {
+          period = "Manhã";
+        } else if (periodStr.includes("tarde")) {
+          period = "Tarde";
+        } else if (periodStr.includes("noite") || periodStr.includes("vespertino")) {
+          period = "Noite";
+        }
+
+        // Auto fill period/turno based on detected course year if not explicitly set in HubSpot
+        if (!period) {
+          if (courseYear === '1º Ano') {
+            period = 'Manhã';
+          } else if (courseYear === '2º Ano') {
+            period = 'Tarde';
+          } else if (courseYear === '3º Ano') {
+            period = 'Manhã';
+          }
         }
 
         return {
@@ -1308,7 +1367,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           courseModule,
           classCode,
           uniqueClassId,
-          epAtelie
+          epAtelie,
+          courseYear: courseYear !== 'Não Identificado' ? courseYear : undefined
         };
       });
 

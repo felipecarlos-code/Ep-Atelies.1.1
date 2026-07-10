@@ -154,16 +154,57 @@ export default function BoletimEP({
   // Parse Turma metadata to match official EP style
   const getEpMeta = (turma: Turma) => {
     const name = turma.name.toLowerCase();
+    const courseYear = String(turma.courseYear || '').toLowerCase();
+    
+    // Auto-detect year
+    let detectedYear: '1' | '2' | '3' | null = null;
+    if (courseYear.includes('1º') || courseYear.includes('1o') || courseYear.includes('1') || courseYear.includes('primeiro')) {
+      detectedYear = '1';
+    } else if (courseYear.includes('2º') || courseYear.includes('2o') || courseYear.includes('2') || courseYear.includes('segundo')) {
+      detectedYear = '2';
+    } else if (courseYear.includes('3º') || courseYear.includes('3o') || courseYear.includes('3') || courseYear.includes('terceiro')) {
+      detectedYear = '3';
+    } else {
+      // Try to extract from course module or name
+      const extractModuleNumber = (text: string): number | null => {
+        const upper = text.toUpperCase().trim();
+        const keyMatch = upper.match(/(?:ECMD|ESMD|SIMD|CCMD|AMD)\s*(\d+)/);
+        if (keyMatch) return parseInt(keyMatch[1], 10);
+        const genericMatch = upper.match(/[A-Z]+(\d+)/);
+        if (genericMatch) return parseInt(genericMatch[1], 10);
+        const modMatch = upper.match(/(?:MODULO|MÓDULO|MOD)\s*(\d+)/);
+        if (modMatch) return parseInt(modMatch[1], 10);
+        const numbers = upper.match(/\b\d+\b/g);
+        if (numbers) {
+          for (const numStr of numbers) {
+            const num = parseInt(numStr, 10);
+            if (num >= 1 && num <= 16) return num;
+          }
+        }
+        return null;
+      };
+      
+      const modFromModule = extractModuleNumber(turma.courseModule || '');
+      const modFromName = extractModuleNumber(turma.name);
+      const modNum = modFromModule !== null ? modFromModule : modFromName;
+      
+      if (modNum !== null) {
+        if (modNum >= 1 && modNum <= 4) detectedYear = '1';
+        else if (modNum >= 5 && modNum <= 8) detectedYear = '2';
+        else if (modNum >= 9 && modNum <= 12) detectedYear = '3';
+      }
+    }
+
     let title = 'PROJETO PRÁTICO';
     let subtitle = turma.course;
     let academicYear: '1' | '2' | '3' = '1';
 
-    // Detect Year & Module
-    if (name.includes('1º ano') || name.includes('1º')) {
+    // Detect Year & Module using name or detectedYear
+    if (name.includes('1º ano') || name.includes('1º') || detectedYear === '1') {
       title = '1º ANO - MÓD. 02';
       subtitle = 'APLICAÇÃO WEB';
       academicYear = '1';
-    } else if (name.includes('2º ano') || name.includes('2º')) {
+    } else if (name.includes('2º ano') || name.includes('2º') || detectedYear === '2') {
       let acronym = 'ES';
       if (name.includes('computação') || name.includes('comp')) acronym = 'EC';
       else if (name.includes('ciência') || name.includes('cc')) acronym = 'CC';
@@ -179,7 +220,7 @@ export default function BoletimEP({
       else if (acronym === 'CC') subtitle = 'Otimização e Pesquisa Operacional para Crédito';
       else if (acronym === 'SI') subtitle = 'Aplicação baseada em Processamento em Linguagem Natural';
       else if (acronym === 'ADM TECH') subtitle = 'Sistemas de Business Intelligence para tomada de decisão';
-    } else if (name.includes('3º ano') || name.includes('3º')) {
+    } else if (name.includes('3º ano') || name.includes('3º') || detectedYear === '3') {
       let acronym = 'ES';
       if (name.includes('computação') || name.includes('comp')) acronym = 'EC';
       else if (name.includes('ciência') || name.includes('cc')) acronym = 'CC';
@@ -232,7 +273,15 @@ export default function BoletimEP({
     }
   };
 
-  // Get active allocations for selected phase
+  // Helper to check if an allocation belongs to the morning shift
+  const isMorning = (alloc: any) => {
+    const period = String(alloc.turma?.period || '').toLowerCase();
+    if (period.includes('manhã') || period.includes('manha')) return true;
+    if (period.includes('tarde')) return false;
+    return alloc.academicYear === '1' || alloc.academicYear === '3';
+  };
+
+  // Get active allocations for selected phase sorted by Morning (1º & 3º Ano) first
   const activeAllocations = rows
     .filter((row) => {
       if (!row.turmaId) return false;
@@ -262,7 +311,18 @@ export default function BoletimEP({
         atelieColor,
         ...getEpMeta(turma),
       };
+    })
+    .sort((a, b) => {
+      const aMorning = isMorning(a);
+      const bMorning = isMorning(b);
+      if (aMorning && !bMorning) return -1;
+      if (!aMorning && bMorning) return 1;
+      // Preserve academicYear order (e.g. 1º Ano, then 3º Ano, then 2º Ano)
+      return a.academicYear.localeCompare(b.academicYear);
     });
+
+  const morningAllocations = activeAllocations.filter(alloc => isMorning(alloc));
+  const afternoonAllocations = activeAllocations.filter(alloc => !isMorning(alloc));
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
   const activePhaseLabel = activePhaseObj ? activePhaseObj.label : selectedPhase;
@@ -490,7 +550,7 @@ export default function BoletimEP({
                 </h1>
               </div>
               <div className="text-right pb-1">
-                <p className="font-mono text-[8px] text-slate-400 font-bold uppercase tracking-widest">Inteli Acadêmico</p>
+                <p className="font-mono text-[8px] text-slate-400 font-bold uppercase tracking-widest">Inteli</p>
                 <p className="text-[10px] text-slate-200 font-bold">1º e 3º Ano • 09h às 11h</p>
                 <p className="text-[10px] text-slate-200 font-bold mt-0.5">2º Ano • 14h às 16h</p>
               </div>
@@ -686,10 +746,6 @@ export default function BoletimEP({
               
               <div className="w-16 h-1 bg-[#ff4545] my-4"></div>
               
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider font-mono">
-                CADERNO OFICIAL DE DESAFIOS ACADÊMICOS & SOLUÇÕES DE ATELIÊS
-              </p>
-              
               <div className="flex justify-center gap-6 mt-3 text-[10px] text-slate-400 font-bold uppercase font-mono">
                 <span>Graduação 1º e 3º Ano — 09h às 11h</span>
                 <span className="text-slate-300">•</span>
@@ -697,118 +753,259 @@ export default function BoletimEP({
               </div>
             </div>
 
-            {/* List of Projects (Vertical Card Ensembles) */}
-            <div className="space-y-6">
-              {activeAllocations.map((alloc) => {
-                const seg = getSegmentStyle(alloc.academicYear);
-                
-                return (
-                  <div 
-                    key={alloc.rowId} 
-                    className="bg-[#e6eaeb]/10 border border-[#e6eaeb] rounded-lg overflow-hidden flex items-stretch hover:shadow-2xs transition-all relative break-inside-avoid"
-                  >
-                    {/* Left Frame: Corporate partner */}
-                    <div className="w-[120px] shrink-0 bg-[#e6eaeb]/25 border-r border-[#e6eaeb] p-3 flex flex-col justify-center items-center">
-                      {alloc.partner ? (
-                        <>
-                          <img
-                            src={alloc.partner.logoUrl}
-                            alt={alloc.partner.name}
-                            className="max-h-14 max-w-full object-contain mix-blend-multiply"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => handleLogoError(e, alloc.partner!.name)}
-                          />
-                          <span className="text-[7.5px] text-slate-500 font-bold mt-2 text-center truncate w-full" title={alloc.partner.name}>
-                            {alloc.partner.name}
-                          </span>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
-                          <HelpCircle size={20} className="text-slate-300" />
-                          <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right Frame: Project description styled per brand rules */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      {/* Colored Segment Badge Header Band */}
-                      <div className={`${seg.bg} px-4 py-1.5 flex justify-between items-center ${seg.text}`}>
-                        <span className="font-mono text-[9px] font-black uppercase tracking-wider">
-                          {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
-                        </span>
-                        <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
-                          {alloc.atelieBlocks.map(b => {
-                            const str = String(b).toUpperCase();
-                            return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
-                          }).join(' / ') || 'N/A'}
-                        </span>
-                      </div>
-
-                      {/* Card main text content */}
-                      <div className="p-4 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
-                            {seg.name}
-                          </span>
-                          <h3 className="font-serif font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
-                        </div>
-                        
-                        <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
-                          {alloc.subtitle}
-                        </p>
-                        {alloc.turma && (
-                          <div className="mt-1.5 flex items-center gap-1">
-                            <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
-                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
-                            </span>
-                          </div>
-                        )}
-                        <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
-                          {alloc.turma?.projectTitle || 'Sem título de projeto cadastrado para esta turma.'}
-                        </p>
-                      </div>
-
-                      {/* Bottom Meta */}
-                      <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
-                        <span className="truncate pr-4" title={alloc.turma?.name}>
-                          Turma: {alloc.turma?.name}
-                        </span>
-                        <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
-                          {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period}
-                        </span>
-                      </div>
-                    </div>
+            {/* List of Projects (Vertical Card Ensembles) sorted by Morning (1º & 3º Anos) first and separated nicely */}
+            <div className="space-y-8">
+              {/* PERÍODO DA MANHÃ (1º & 3º ANOS) */}
+              {morningAllocations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4">
+                    <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                      🌅 Período da Manhã (1º & 3º Anos)
+                    </span>
+                    <div className="h-px bg-[#2e2640]/10 flex-1"></div>
+                    <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                );
-              })}
+                  <div className="space-y-6">
+                    {morningAllocations.map((alloc) => {
+                      const seg = getSegmentStyle(alloc.academicYear);
+                      return (
+                        <div 
+                          key={alloc.rowId} 
+                          className="bg-[#e6eaeb]/10 border border-[#e6eaeb] rounded-lg overflow-hidden flex items-stretch hover:shadow-2xs transition-all relative break-inside-avoid"
+                        >
+                          {/* Left Frame: Corporate partner */}
+                          <div className="w-[120px] shrink-0 bg-[#e6eaeb]/25 border-r border-[#e6eaeb] p-3 flex flex-col justify-center items-center">
+                            {alloc.partner ? (
+                              <>
+                                <img
+                                  src={alloc.partner.logoUrl}
+                                  alt={alloc.partner.name}
+                                  className="max-h-14 max-w-full object-contain mix-blend-multiply"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => handleLogoError(e, alloc.partner!.name)}
+                                />
+                                <span className="text-[7.5px] text-slate-500 font-bold mt-2 text-center truncate w-full" title={alloc.partner.name}>
+                                  {alloc.partner.name}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
+                                <HelpCircle size={20} className="text-slate-300" />
+                                <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Frame: Project description */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            {/* Colored Segment Badge Header Band */}
+                            <div className={`${seg.bg} px-4 py-1.5 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                                {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
+                              </span>
+                              <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
+                                {alloc.atelieBlocks.map(b => {
+                                  const str = String(b).toUpperCase();
+                                  return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
+                                }).join(' / ') || 'N/A'}
+                              </span>
+                            </div>
+
+                            {/* Card main text content */}
+                            <div className="p-4 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                                  {seg.name}
+                                </span>
+                                <h3 className="font-serif font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
+                              </div>
+                              
+                              <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
+                                {alloc.subtitle}
+                              </p>
+                              {alloc.turma && (
+                                <div className="mt-1.5 flex items-center gap-1">
+                                  <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                                  </span>
+                                </div>
+                              )}
+                              <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
+                                {alloc.turma?.projectTitle || 'Sem título de projeto cadastrado para esta turma.'}
+                              </p>
+                            </div>
+
+                            {/* Bottom Meta */}
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
+                              <span className="truncate pr-4" title={alloc.turma?.name}>
+                                Turma: {alloc.turma?.name}
+                              </span>
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
+                                {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Manhã'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* PERÍODO DA TARDE (2º ANO) */}
+              {afternoonAllocations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4 pt-4">
+                    <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                      🌇 Período da Tarde (2º Ano)
+                    </span>
+                    <div className="h-px bg-[#2e2640]/10 flex-1"></div>
+                    <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">14h às 16h</span>
+                  </div>
+                  <div className="space-y-6">
+                    {afternoonAllocations.map((alloc) => {
+                      const seg = getSegmentStyle(alloc.academicYear);
+                      return (
+                        <div 
+                          key={alloc.rowId} 
+                          className="bg-[#e6eaeb]/10 border border-[#e6eaeb] rounded-lg overflow-hidden flex items-stretch hover:shadow-2xs transition-all relative break-inside-avoid"
+                        >
+                          {/* Left Frame: Corporate partner */}
+                          <div className="w-[120px] shrink-0 bg-[#e6eaeb]/25 border-r border-[#e6eaeb] p-3 flex flex-col justify-center items-center">
+                            {alloc.partner ? (
+                              <>
+                                <img
+                                  src={alloc.partner.logoUrl}
+                                  alt={alloc.partner.name}
+                                  className="max-h-14 max-w-full object-contain mix-blend-multiply"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => handleLogoError(e, alloc.partner!.name)}
+                                />
+                                <span className="text-[7.5px] text-slate-500 font-bold mt-2 text-center truncate w-full" title={alloc.partner.name}>
+                                  {alloc.partner.name}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
+                                <HelpCircle size={20} className="text-slate-300" />
+                                <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Frame: Project description */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            {/* Colored Segment Badge Header Band */}
+                            <div className={`${seg.bg} px-4 py-1.5 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                                {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
+                              </span>
+                              <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
+                                {alloc.atelieBlocks.map(b => {
+                                  const str = String(b).toUpperCase();
+                                  return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
+                                }).join(' / ') || 'N/A'}
+                              </span>
+                            </div>
+
+                            {/* Card main text content */}
+                            <div className="p-4 flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                                  {seg.name}
+                                </span>
+                                <h3 className="font-serif font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
+                              </div>
+                              
+                              <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
+                                {alloc.subtitle}
+                              </p>
+                              {alloc.turma && (
+                                <div className="mt-1.5 flex items-center gap-1">
+                                  <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                                  </span>
+                                </div>
+                              )}
+                              <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
+                                {alloc.turma?.projectTitle || 'Sem título de projeto cadastrado para esta turma.'}
+                              </p>
+                            </div>
+
+                            {/* Bottom Meta */}
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
+                              <span className="truncate pr-4" title={alloc.turma?.name}>
+                                Turma: {alloc.turma?.name}
+                              </span>
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
+                                {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Tarde'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Brand Chronogram / Timeline Graphics (p. 3) */}
             <div className="mt-12 pt-8 border-t-2 border-[#e6eaeb] break-inside-avoid">
               <h4 className="font-mono font-black text-[10px] text-center text-slate-400 uppercase tracking-widest mb-6">
-                Estrutura Cronológica do Módulo
+                Cronograma do módulo
               </h4>
 
               <div className="relative py-2">
-                {/* Horizontal line using institutional roxo */}
-                <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-[#e6eaeb] -translate-y-1/2"></div>
+                {/* Horizontal line using institutional roxo - connected behind the circles */}
+                <div className="absolute top-[14px] left-8 right-8 h-0.5 bg-[#e6eaeb]"></div>
                 
                 {/* Timeline checkpoints styled with coral accent dots */}
-                <div className="relative grid grid-cols-3 text-center">
+                <div className="relative grid grid-cols-4 text-center gap-2">
                   <div className="space-y-1.5">
                     <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
                     <div>
                       <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">Onboarding</h5>
                       <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Início do Módulo</p>
+                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                        {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : 'Sem data'}
+                      </p>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
+                    <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
+                    <div>
+                      <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">KickOff</h5>
+                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Kickoff</p>
+                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                        {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : 'Sem data'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 bg-[#e6eaeb]/20 p-2 rounded-md border border-dashed border-[#e6eaeb] relative z-10">
                     <div className="w-3 h-3 rounded-full bg-[#ff4545] border-2 border-white mx-auto shadow-sm relative z-10"></div>
                     <div>
-                      <h5 className="font-serif font-black text-[10px] text-[#ff4545] uppercase tracking-tight">Sprint Cycles</h5>
-                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Fases 1, 2, 3 e 4</p>
+                      <h5 className="font-serif font-black text-[10px] text-[#ff4545] uppercase tracking-tight">Sprint</h5>
+                      <div className="mt-1.5 space-y-0.5 font-mono text-[8px] text-slate-500 font-bold max-w-[130px] mx-auto text-left">
+                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
+                          <span>Sprint 1:</span>
+                          <span className="text-[#2e2640]">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : 'Sem data'}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
+                          <span>Sprint 2:</span>
+                          <span className="text-[#2e2640]">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : 'Sem data'}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
+                          <span>Sprint 3:</span>
+                          <span className="text-[#2e2640]">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : 'Sem data'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Sprint 4:</span>
+                          <span className="text-[#2e2640]">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : 'Sem data'}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -816,7 +1013,10 @@ export default function BoletimEP({
                     <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
                     <div>
                       <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">Apresentação</h5>
-                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Fim do Módulo / Demoday</p>
+                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Apresentação Final</p>
+                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                        {sprintDates['fim'] ? formatDate(sprintDates['fim']) : 'Sem data'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -825,7 +1025,7 @@ export default function BoletimEP({
 
             {/* Bottom printed footer watermark */}
             <div className="mt-12 pt-4 border-t border-slate-100 flex justify-between items-center text-[8px] text-slate-400 font-mono uppercase tracking-wider">
-              <span>Gerado em {new Date().toLocaleDateString('pt-BR')} • Inteli Acadêmico</span>
+              <span>Gerado em {new Date().toLocaleDateString('pt-BR')} • Inteli</span>
               <span>Inteli - Instituto de Tecnologia e Liderança</span>
             </div>
           </div>

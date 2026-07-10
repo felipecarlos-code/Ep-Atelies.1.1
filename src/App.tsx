@@ -32,7 +32,8 @@ import {
   CheckCircle2,
   XCircle,
   ExternalLink,
-  Copy
+  Copy,
+  ChevronDown
 } from 'lucide-react';
 
 function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
@@ -47,7 +48,52 @@ function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot'>('sprints');
+  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database'>('sprints');
+  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
+  const [isMobileAdminDropdownOpen, setIsMobileAdminDropdownOpen] = useState(false);
+
+  const renderInteliLogo = () => {
+    const CORAL = '#ff4545';
+    return (
+      <div className="flex items-center gap-2 select-none" id="brand-logo-frame">
+        <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
+            <g fill={CORAL}>
+              {/* Row 1 */}
+              <circle cx="50" cy="25" r="3.5" />
+              <circle cx="58" cy="27" r="3.2" />
+              <circle cx="66" cy="31" r="2.8" />
+              <circle cx="73" cy="37" r="2.2" />
+              {/* Row 2 */}
+              <circle cx="43" cy="33" r="4.0" />
+              <circle cx="51" cy="36" r="3.8" />
+              <circle cx="59" cy="41" r="3.4" />
+              <circle cx="66" cy="48" r="2.8" />
+              <circle cx="72" cy="56" r="2.0" />
+              {/* Row 3 */}
+              <circle cx="38" cy="44" r="4.2" />
+              <circle cx="45" cy="48" r="4.0" />
+              <circle cx="53" cy="54" r="3.6" />
+              <circle cx="60" cy="62" r="3.0" />
+              <circle cx="66" cy="71" r="2.2" />
+              {/* Row 4 */}
+              <circle cx="35" cy="57" r="4.0" />
+              <circle cx="41" cy="62" r="3.8" />
+              <circle cx="48" cy="69" r="3.4" />
+              <circle cx="54" cy="77" r="2.8" />
+              {/* Row 5 */}
+              <circle cx="36" cy="71" r="3.5" />
+              <circle cx="41" cy="77" r="3.2" />
+              <circle cx="46" cy="84" r="2.5" />
+            </g>
+          </svg>
+        </div>
+        <span className="font-sans font-black tracking-tight text-xl leading-none text-[#2e2640]">
+          inteli
+        </span>
+      </div>
+    );
+  };
 
   // Load from LocalStorage or fall back to preloaded sample defaults
   const [atelies, setAtelies] = useState<Atelie[]>(() => {
@@ -363,6 +409,50 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('sprint_dates_data', JSON.stringify(sprintDates));
   }, [sprintDates]);
+
+  // Handle click outside for Admin Dropdown
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const adminButton = document.getElementById('tab-admin');
+      const adminMenu = document.getElementById('admin-dropdown-menu');
+      if (
+        adminButton && 
+        !adminButton.contains(event.target as Node) && 
+        (!adminMenu || !adminMenu.contains(event.target as Node))
+      ) {
+        setIsAdminDropdownOpen(false);
+      }
+    };
+
+    if (isAdminDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isAdminDropdownOpen]);
+
+  // Handle click outside for Mobile Admin Dropdown
+  useEffect(() => {
+    const handleOutsideClickMobile = (event: MouseEvent) => {
+      const mobileAdminButton = document.getElementById('mobile-tab-admin');
+      const mobileAdminMenu = document.getElementById('mobile-admin-dropdown-menu');
+      if (
+        mobileAdminButton && 
+        !mobileAdminButton.contains(event.target as Node) && 
+        (!mobileAdminMenu || !mobileAdminMenu.contains(event.target as Node))
+      ) {
+        setIsMobileAdminDropdownOpen(false);
+      }
+    };
+
+    if (isMobileAdminDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClickMobile);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClickMobile);
+    };
+  }, [isMobileAdminDropdownOpen]);
 
   // 2. Autosave to database on state change
   useEffect(() => {
@@ -797,32 +887,34 @@ export default function App() {
       {/* Header Navigation matching Geometric Balance */}
       <header className="flex items-center justify-between px-6 sm:px-8 h-16 bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs" id="main-header">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-md flex items-center justify-center shadow-sm">
-            <div className="w-4 h-4 border-2 border-white rotate-45"></div>
-          </div>
-          <div>
-            <h1 className="text-base font-extrabold tracking-tight text-slate-800 leading-none">Sistema Ateliês</h1>
-            <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Inteli Acadêmico</span>
-          </div>
+          {renderInteliLogo()}
+          <div className="h-6 w-[1px] bg-slate-200 hidden md:block"></div>
+          <h1 className="text-sm font-black tracking-tight text-[#2e2640] uppercase leading-none hidden md:block">Sistema Ateliês</h1>
         </div>
 
         {/* Tab Navigation directly in Header for clean Geometric layout */}
-        <nav className="hidden xl:flex gap-2" id="header-nav">
+        <nav className="hidden xl:flex gap-2 items-center" id="header-nav">
           <button
             id="tab-sprints"
-            onClick={() => setActiveTab('sprints')}
+            onClick={() => {
+              setActiveTab('sprints');
+              setIsAdminDropdownOpen(false);
+            }}
             className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
               activeTab === 'sprints'
                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
             }`}
           >
-            Grade de Sprints
+            Sprints
           </button>
 
           <button
             id="tab-boletim"
-            onClick={() => setActiveTab('boletim')}
+            onClick={() => {
+              setActiveTab('boletim');
+              setIsAdminDropdownOpen(false);
+            }}
             className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
               activeTab === 'boletim'
                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
@@ -831,22 +923,13 @@ export default function App() {
           >
             Boletim EP
           </button>
-          
-          <button
-            id="tab-atelies"
-            onClick={() => setActiveTab('atelies')}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
-              activeTab === 'atelies'
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-          >
-            Cadastro Ateliês
-          </button>
 
           <button
             id="tab-turmas"
-            onClick={() => setActiveTab('turmas')}
+            onClick={() => {
+              setActiveTab('turmas');
+              setIsAdminDropdownOpen(false);
+            }}
             className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
               activeTab === 'turmas'
                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
@@ -858,7 +941,10 @@ export default function App() {
 
           <button
             id="tab-partners"
-            onClick={() => setActiveTab('partners')}
+            onClick={() => {
+              setActiveTab('partners');
+              setIsAdminDropdownOpen(false);
+            }}
             className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
               activeTab === 'partners'
                 ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
@@ -868,69 +954,94 @@ export default function App() {
             Parceiros
           </button>
 
-          <button
-            id="tab-hubspot"
-            onClick={() => setActiveTab('hubspot')}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-1.5 ${
-              activeTab === 'hubspot'
-                ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm'
-                : 'border-transparent text-amber-600 hover:text-amber-800 hover:bg-amber-50'
-            }`}
-          >
-            <Database size={13} />
-            HubSpot CRM
-          </button>
+          {/* Admin Dropdown tab matching deep teal color from diagram */}
+          <div className="relative">
+            <button
+              id="tab-admin"
+              onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-1.5 ${
+                ['atelies', 'hubspot', 'database'].includes(activeTab) || isAdminDropdownOpen
+                  ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              <span>Admin</span>
+              <ChevronDown size={14} className={`transition-transform duration-200 ${isAdminDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isAdminDropdownOpen && (
+              <div 
+                id="admin-dropdown-menu"
+                className="absolute right-0 mt-2 w-56 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
+              >
+                <button
+                  onClick={() => {
+                    setActiveTab('atelies');
+                    setIsAdminDropdownOpen(false);
+                  }}
+                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                    activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                  }`}
+                >
+                  Cadastro de Ateliê
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('hubspot');
+                    setIsAdminDropdownOpen(false);
+                  }}
+                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                    activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                  }`}
+                >
+                  Conexão CRM
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('database');
+                    setIsAdminDropdownOpen(false);
+                  }}
+                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                    activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                  }`}
+                >
+                  Conexão de banco de dados
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Database & Cloud Sync + Coordinator Profile */}
         <div className="flex items-center gap-4">
-          {/* Cloud Sync Status Indicator */}
+          {/* Minimalist Status Dot - Only the green/gray dot in everyone's view */}
           <button 
-            onClick={() => setShowDbHelp(true)}
-            title="Clique para ver o status detalhado da conexão com o banco de dados e guia de configuração no Vercel/Supabase"
-            className={`flex items-center gap-2 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer hover:scale-[1.03] active:scale-95 ${
-              isLoadingDb ? 'bg-amber-50 text-amber-700 border-amber-200 animate-pulse' :
-              isSavingDb ? 'bg-indigo-50 text-indigo-700 border-indigo-200 animate-pulse' :
-              isDbConfigured ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 
-              'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-            }`}
+            onClick={() => {
+              setActiveTab('database');
+              setIsAdminDropdownOpen(false);
+            }}
+            title={isDbConfigured ? `Sincronizado com o Supabase (${dbProvider}). Clique para ver detalhes.` : "Utilizando Armazenamento Local. Clique para conectar à nuvem."}
+            className="flex items-center justify-center hover:bg-slate-50 border border-slate-200/60 rounded-full transition-all cursor-pointer h-8 w-8"
           >
-            {isDbConfigured ? (
-              <Cloud size={12} className={isLoadingDb || isSavingDb ? 'animate-bounce' : ''} />
-            ) : (
-              <CloudOff size={12} />
-            )}
-            <span className="hidden md:inline">
-              {isLoadingDb ? 'Carregando Nuvem...' :
-               isSavingDb ? 'Salvando Alterações...' :
-               isDbConfigured ? `Sincronizado (${dbProvider || 'Nuvem'})` : 'Sem Conexão Nuvem'}
-            </span>
-            <span className="md:hidden">
-              {isLoadingDb ? 'Lendo...' :
-               isSavingDb ? 'Gravando...' :
-               isDbConfigured ? 'Sinc' : 'Local'}
+            <span className="relative flex h-2.5 w-2.5">
+              {isDbConfigured ? (
+                <>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </>
+              ) : (
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400"></span>
+              )}
             </span>
           </button>
 
-          {isDbConfigured && (
-            <button
-              onClick={handleForceDbSave}
-              disabled={isSavingDb || isLoadingDb}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-full transition-all cursor-pointer disabled:opacity-50"
-              title="Forçar salvamento imediato do estado atual para o Supabase"
-            >
-              <Database size={11} className={isSavingDb ? "animate-spin" : ""} />
-              <span>Salvar na Nuvem</span>
-            </button>
-          )}
-
           {/* Admin Coordinator Profile Badge */}
-          <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
+          <div className="flex items-center gap-3 border-l border-slate-200 pl-4 h-9">
             <div className="text-right hidden sm:block">
               <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest leading-none">Admin</p>
               <p className="text-xs font-semibold text-slate-700">Coordenação Geral</p>
             </div>
-            <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-full border-2 border-white shadow-xs flex items-center justify-center font-bold text-sm">
+            <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-full border-2 border-white shadow-xs flex items-center justify-center font-bold text-sm select-none">
               CG
             </div>
           </div>
@@ -938,9 +1049,16 @@ export default function App() {
       </header>
 
       {/* Mobile Tab Navigation */}
-      <div className="bg-white border-b border-slate-200 flex xl:hidden overflow-x-auto py-2 px-4 gap-2 scrollbar-none sticky top-16 z-20 shadow-2xs">
+      <div 
+        className={`bg-white border-b border-slate-200 flex xl:hidden py-2 px-4 gap-2 sticky top-16 z-20 shadow-2xs items-center ${
+          isMobileAdminDropdownOpen ? 'overflow-visible' : 'overflow-x-auto scrollbar-none'
+        }`}
+      >
         <button
-          onClick={() => setActiveTab('sprints')}
+          onClick={() => {
+            setActiveTab('sprints');
+            setIsMobileAdminDropdownOpen(false);
+          }}
           className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
             activeTab === 'sprints' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
           }`}
@@ -948,7 +1066,10 @@ export default function App() {
           Sprints
         </button>
         <button
-          onClick={() => setActiveTab('boletim')}
+          onClick={() => {
+            setActiveTab('boletim');
+            setIsMobileAdminDropdownOpen(false);
+          }}
           className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
             activeTab === 'boletim' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
           }`}
@@ -956,15 +1077,10 @@ export default function App() {
           Boletim EP
         </button>
         <button
-          onClick={() => setActiveTab('atelies')}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
-            activeTab === 'atelies' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          Ateliês
-        </button>
-        <button
-          onClick={() => setActiveTab('turmas')}
+          onClick={() => {
+            setActiveTab('turmas');
+            setIsMobileAdminDropdownOpen(false);
+          }}
           className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
             activeTab === 'turmas' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
           }`}
@@ -972,22 +1088,73 @@ export default function App() {
           Negócios
         </button>
          <button
-          onClick={() => setActiveTab('partners')}
+          onClick={() => {
+            setActiveTab('partners');
+            setIsMobileAdminDropdownOpen(false);
+          }}
           className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
             activeTab === 'partners' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
           }`}
         >
           Parceiros
         </button>
-        <button
-          onClick={() => setActiveTab('hubspot')}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer flex items-center gap-1 ${
-            activeTab === 'hubspot' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-amber-50 text-amber-700 border border-amber-100'
-          }`}
-        >
-          <Database size={11} />
-          HubSpot CRM
-        </button>
+
+        {/* Mobile Admin Dropdown */}
+        <div className="relative shrink-0">
+          <button
+            id="mobile-tab-admin"
+            onClick={() => setIsMobileAdminDropdownOpen(!isMobileAdminDropdownOpen)}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider cursor-pointer flex items-center gap-1 border ${
+              ['atelies', 'hubspot', 'database'].includes(activeTab) || isMobileAdminDropdownOpen
+                ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
+                : 'border-transparent bg-slate-100 text-slate-600'
+            }`}
+          >
+            <span>Admin</span>
+            <ChevronDown size={10} className={`transition-transform duration-200 ${isMobileAdminDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isMobileAdminDropdownOpen && (
+            <div 
+              id="mobile-admin-dropdown-menu"
+              className="absolute right-0 mt-2 w-52 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
+            >
+              <button
+                onClick={() => {
+                  setActiveTab('atelies');
+                  setIsMobileAdminDropdownOpen(false);
+                }}
+                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                  activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                }`}
+              >
+                Cadastro de Ateliê
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('hubspot');
+                  setIsMobileAdminDropdownOpen(false);
+                }}
+                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                  activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                }`}
+              >
+                Conexão CRM
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('database');
+                  setIsMobileAdminDropdownOpen(false);
+                }}
+                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                  activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                }`}
+              >
+                Conexão de banco de dados
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sub-Header / Tool Bar matching Geometric Balance */}
@@ -1033,19 +1200,6 @@ export default function App() {
               <span className="mx-1">•</span>
               <span>{partners.length} Parceiros</span>
             </div>
-
-            {/* Database Cloud Sync Status Indicator */}
-            {isDbConfigured ? (
-              <div className="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1.5 rounded border border-indigo-200/60 text-[11px] text-indigo-700 font-bold font-mono">
-                <span className={`w-1.5 h-1.5 rounded-full ${isSavingDb ? 'bg-amber-500 animate-pulse' : 'bg-indigo-600'}`}></span>
-                <span>{isLoadingDb ? 'Conectando Nuvem...' : isSavingDb ? 'Salvando...' : `Nuvem Ativa (${dbProvider || 'Banco'})`}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 bg-slate-100 px-2.5 py-1.5 rounded border border-slate-200/60 text-[11px] text-slate-500 font-medium">
-                <span className="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
-                <span>Armazenamento Local</span>
-              </div>
-            )}
           </div>
 
           {/* Toolbar Utility Buttons with Geometric aesthetic */}
@@ -1229,12 +1383,286 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             }}
           />
         )}
+
+        {activeTab === 'database' && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto overflow-hidden animate-fade-in" id="database-dashboard-view">
+            {/* Header */}
+            <div className="border-b border-slate-200 px-6 sm:px-8 py-5 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2.5">
+                <Database className="text-indigo-600" size={20} />
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 uppercase tracking-wider">
+                    Sincronização & Banco de Dados Supabase (Nuvem)
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Gerencie as conexões em nuvem, salve dados remotamente ou configure novas chaves.</p>
+                </div>
+              </div>
+              
+              {/* Cloud Sync Status Badge */}
+              <div className={`px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                isDbConfigured ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isDbConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                <span>{isDbConfigured ? 'Conectado e Sincronizado' : 'Modo Local Offline'}</span>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 sm:p-8 space-y-8">
+              {/* Status Banner */}
+              <div className="p-5 rounded-lg flex flex-col sm:flex-row items-start gap-4 border" style={{
+                backgroundColor: isDbConfigured ? '#ecfdf5' : '#f8fafc',
+                borderColor: isDbConfigured ? '#a7f3d0' : '#e2e8f0'
+              }}>
+                <div className={`p-2.5 rounded-full shrink-0 ${isDbConfigured ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}`}>
+                  {isDbConfigured ? <Cloud size={24} /> : <CloudOff size={24} />}
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                    Status de Operação: {isDbConfigured ? `Sincronizado via Nuvem (${dbProvider})` : 'Modo Local (LocalStorage)'}
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                    {isDbConfigured 
+                      ? 'Seus dados estão sendo guardados e sincronizados de forma segura e imediata em tempo real. Você pode acessar este painel de qualquer computador ou navegador sem perder seu progresso.'
+                      : 'O aplicativo está salvando as alterações de forma segura apenas neste navegador local. Se você limpar o cache ou trocar de computador, os dados voltarão ao estado padrão. Para conectá-lo permanentemente ao seu banco de dados Supabase, configure a conexão abaixo.'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Force Save / Sync section */}
+              {isDbConfigured && (
+                <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h5 className="text-xs font-bold text-indigo-950 uppercase tracking-wider">
+                      Salvar Manualmente na Nuvem
+                    </h5>
+                    <p className="text-xs text-indigo-700 leading-relaxed max-w-lg">
+                      O sistema salva suas alterações automaticamente, mas você pode forçar uma sincronização manual imediata do estado local se desejar.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleForceDbSave}
+                    disabled={isSavingDb || isLoadingDb}
+                    className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 border border-indigo-700 rounded transition-all cursor-pointer disabled:opacity-50 shadow-sm shrink-0"
+                    title="Forçar salvamento imediato do estado atual para o Supabase"
+                  >
+                    <Database size={14} className={isSavingDb ? "animate-spin" : ""} />
+                    <span>{isSavingDb ? "Salvando..." : "Sincronizar Agora"}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Two Column Layout for Diagnostics & Configuration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Connection Form */}
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
+                  <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-200/60 pb-2">
+                    <Database size={14} className="text-indigo-600" />
+                    Configurar Credenciais do Supabase
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Insira os dados do seu banco Supabase abaixo. As credenciais ficam salvas de forma segura em seu navegador para conectar imediatamente.
+                  </p>
+
+                  <form onSubmit={handleSaveCustomCredentials} className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        URL do Projeto (Project URL)
+                      </label>
+                      <input 
+                        type="url"
+                        placeholder="https://xxxx.supabase.co"
+                        value={inputSupabaseUrl}
+                        onChange={(e) => setInputSupabaseUrl(e.target.value)}
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Chave de API (anon public ou service_role)
+                      </label>
+                      <input 
+                        type="password"
+                        placeholder="eyJhbGciOi..."
+                        value={inputSupabaseKey}
+                        onChange={(e) => setInputSupabaseKey(e.target.value)}
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-900 focus:outline-none focus:border-indigo-500 font-mono"
+                        required
+                      />
+                    </div>
+
+                    {testResult && (
+                      <div className={`p-3 rounded text-xs leading-relaxed flex items-start gap-2 ${
+                        testResult.success 
+                          ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+                          : 'bg-rose-50 border border-rose-200 text-rose-800'
+                      }`}>
+                        <div className="mt-0.5 shrink-0">
+                          {testResult.success ? <CheckCircle2 size={14} className="text-emerald-700" /> : <XCircle size={14} className="text-rose-700" />}
+                        </div>
+                        <span className="font-semibold">{testResult.message}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2.5 pt-1">
+                      <button
+                        type="submit"
+                        disabled={isTestingConn}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isTestingConn ? "Conectando..." : "Salvar e Conectar"}
+                      </button>
+
+                      {(localStorage.getItem("custom_supabase_url") || localStorage.getItem("custom_supabase_key")) && (
+                        <button
+                          type="button"
+                          onClick={handleDisconnectDb}
+                          className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+                        >
+                          Desconectar
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                {/* Diagnostics Report */}
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
+                  <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-200/60 pb-2">
+                    <Database size={14} className="text-[#ff4545]" />
+                    Relatório Diagnóstico
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Verifique se o servidor está configurado corretamente com as variáveis ou conexão local.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div className="p-3 bg-white border border-slate-150 rounded flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700">Variável SUPABASE_URL:</span>
+                      <span className="flex items-center gap-1.5 font-bold">
+                        {dbDiagnostics?.hasSupabaseUrl ? (
+                          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-mono">
+                            <CheckCircle2 size={10} /> Configurado
+                          </span>
+                        ) : (
+                          <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-mono">
+                            <XCircle size={10} /> Ausente
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-white border border-slate-150 rounded flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700">Variável SUPABASE_KEY:</span>
+                      <span className="flex items-center gap-1.5 font-bold">
+                        {dbDiagnostics?.hasSupabaseKey ? (
+                          <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-mono">
+                            <CheckCircle2 size={10} /> Configurado
+                          </span>
+                        ) : (
+                          <span className="text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1 font-mono">
+                            <XCircle size={10} /> Ausente
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-white border border-slate-150 rounded flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700">Origem da Conexão:</span>
+                      <span className="font-bold text-slate-800 uppercase tracking-wider font-mono bg-slate-100 px-2 py-0.5 rounded text-[10px]">
+                        {dbDiagnostics?.provider || 'Nenhum'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-white border border-slate-150 rounded flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700">Ping do Banco de Dados:</span>
+                      <span className={`font-bold font-mono px-2 py-0.5 rounded text-[10px] ${dbDiagnostics?.isHealthy ? 'text-emerald-700 bg-emerald-50' : 'text-slate-500 bg-slate-100'}`}>
+                        {dbDiagnostics?.isHealthy ? ' Saudável (Online)' : ' Offline'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* SQL script and setup guide */}
+              <div className="border-t border-slate-200 pt-6 space-y-4">
+                <h4 className="text-xs font-bold text-slate-950 uppercase tracking-widest">
+                  Guia Prático: Como configurar as Tabelas do Supabase
+                </h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Para que a sincronização funcione perfeitamente, você deve criar a tabela no seu painel Supabase. Siga os passos:
+                </p>
+
+                <div className="space-y-4 text-xs text-slate-700 leading-relaxed">
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      1
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Acesse o painel Supabase e abra o SQL Editor</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        Entre no seu projeto no <a href="https://supabase.com" target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-0.5">Supabase <ExternalLink size={10} /></a>, localize o menu lateral esquerdo e clique no ícone do **SQL Editor** (um ícone de terminal com o símbolo `&gt;_`).
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-950 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      2
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Crie uma nova consulta (New Query) e cole o SQL abaixo:</strong>
+                      <pre className="mt-2.5 p-3.5 bg-slate-900 text-slate-200 font-mono text-[11px] rounded-md overflow-x-auto border border-slate-800 select-all shadow-inner relative group">
+{`CREATE TABLE app_state (
+  id TEXT PRIMARY KEY,
+  data JSONB NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Desabilitar RLS para permitir acesso de leitura/escrita com chave anon sem politicas complexas
+ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
+                      </pre>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`CREATE TABLE app_state (\n  id TEXT PRIMARY KEY,\n  data JSONB NOT NULL,\n  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL\n);\n\nALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`);
+                          alert('SQL copiado para a área de transferência!');
+                        }}
+                        className="mt-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-950 text-white rounded text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Copy size={12} />
+                        Copiar Script SQL
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-slate-900 text-white font-extrabold flex items-center justify-center text-[10px] shrink-0 mt-0.5">
+                      3
+                    </div>
+                    <div>
+                      <strong className="text-slate-900">Execute o comando</strong>
+                      <p className="mt-0.5 text-slate-600">
+                        Clique no botão **Run** no painel superior direito do editor SQL do Supabase. O banco de dados estará pronto para sincronizar imediatamente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Premium Footer */}
       <footer className="bg-slate-900 text-slate-400 py-6 mt-auto border-t border-slate-800 text-xs" id="main-footer">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p>© 2026 Controle de Ateliês e Sprints • Inteli Acadêmico</p>
+          <p>© 2026 Controle de Ateliês e Sprints • Inteli</p>
           <div className="flex items-center gap-4">
             <span className="text-gray-500">Desenvolvido para Gestão Avançada de Espaços e Desafios</span>
           </div>
