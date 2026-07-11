@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 // @ts-ignore
-import inteliCampusImg from '../assets/images/inteli_campus_original.jpg';
+import inteliCampusImg from '../assets/images/regenerated_image_1783795299073.jpg';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey } from '../types';
 import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { cleanOrDetectCourse } from './TurmaManager';
@@ -123,44 +123,83 @@ export default function BoletimEP({
   const CINZA_CLARO = '#e6eaeb';
   const CINZA_ESCURO = '#b2b6bf';
 
-  // Lowercase "inteli" signature logo with coral sphere
-  const renderInteliLogo = (isDark: boolean = false) => {
+  // Logo do Inteli - integrated text and floating sphere logo matching "logo inteli (3) (1)"
+  const renderInteliLogo = (isDark: boolean = false, size: 'sm' | 'md' | 'lg' = 'md') => {
+    const textColorClass = isDark ? 'text-white' : 'text-[#2e2640]';
+    
+    // sizing configurations
+    const sizeConfig = {
+      sm: {
+        text: 'text-lg',
+        dot: 'top-[3px] w-[3.5px] h-[3.5px]',
+        container: 'pt-3 pb-0.5',
+        cluster: 'top-[-26px] left-[-11px] w-[34px] h-[34px]'
+      },
+      md: {
+        text: 'text-2xl',
+        dot: 'top-[4px] w-[4.5px] h-[4.5px]',
+        container: 'pt-5 pb-1',
+        cluster: 'top-[-36px] left-[-14px] w-[46px] h-[46px]'
+      },
+      lg: {
+        text: 'text-4xl',
+        dot: 'top-[7px] w-[7px] h-[7px]',
+        container: 'pt-8 pb-2',
+        cluster: 'top-[-54px] left-[-22px] w-[70px] h-[70px]'
+      }
+    };
+
+    const cfg = sizeConfig[size];
+
     return (
-      <div className="flex items-center gap-2.5 select-none" id="brand-logo-frame">
-        <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
-          <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
-            <g fill={CORAL}>
-              {/* Row 1 */}
-              <circle cx="50" cy="25" r="3.5" />
-              <circle cx="58" cy="27" r="3.2" />
-              <circle cx="66" cy="31" r="2.8" />
-              <circle cx="73" cy="37" r="2.2" />
-              {/* Row 2 */}
-              <circle cx="43" cy="33" r="4.0" />
-              <circle cx="51" cy="36" r="3.8" />
-              <circle cx="59" cy="41" r="3.4" />
-              <circle cx="66" cy="48" r="2.8" />
-              <circle cx="72" cy="56" r="2.0" />
-              {/* Row 3 */}
-              <circle cx="38" cy="44" r="4.2" />
-              <circle cx="45" cy="48" r="4.0" />
-              <circle cx="53" cy="54" r="3.6" />
-              <circle cx="60" cy="62" r="3.0" />
-              <circle cx="66" cy="71" r="2.2" />
-              {/* Row 4 */}
-              <circle cx="35" cy="57" r="4.0" />
-              <circle cx="41" cy="62" r="3.8" />
-              <circle cx="48" cy="69" r="3.4" />
-              <circle cx="54" cy="77" r="2.8" />
-              {/* Row 5 */}
-              <circle cx="36" cy="71" r="3.5" />
-              <circle cx="41" cy="77" r="3.2" />
-              <circle cx="46" cy="84" r="2.5" />
-            </g>
-          </svg>
-        </div>
-        <span className={`font-sans font-black tracking-tight text-xl leading-none ${isDark ? 'text-white' : 'text-[#2e2640]'}`}>
-          inteli
+      <div className={`relative inline-flex items-end select-none ${cfg.container}`} id="brand-logo-frame">
+        {/* Wordmark in Manrope font */}
+        <span className={`font-sans font-extrabold tracking-tight leading-none ${cfg.text} ${textColorClass}`}>
+          {/* First "i" without standard dot - replaced with perfectly positioned Coral dot */}
+          <span className="relative inline-block">
+            ı
+            <span className={`absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full ${cfg.dot}`}></span>
+          </span>
+          ntel
+          {/* Second "i" with Coral dot and floating dot cluster sphere */}
+          <span className="relative inline-block">
+            ı
+            <span className={`absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full ${cfg.dot}`}></span>
+            
+            {/* Dotted cluster floating above and to the right */}
+            <div className={`absolute pointer-events-none ${cfg.cluster}`}>
+              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
+                <g fill="#ff4545">
+                  {/* Row 1 */}
+                  <circle cx="50" cy="25" r="3.5" />
+                  <circle cx="58" cy="27" r="3.2" />
+                  <circle cx="66" cy="31" r="2.8" />
+                  <circle cx="73" cy="37" r="2.2" />
+                  {/* Row 2 */}
+                  <circle cx="43" cy="33" r="4.0" />
+                  <circle cx="51" cy="36" r="3.8" />
+                  <circle cx="59" cy="41" r="3.4" />
+                  <circle cx="66" cy="48" r="2.8" />
+                  <circle cx="72" cy="56" r="2.0" />
+                  {/* Row 3 */}
+                  <circle cx="38" cy="44" r="4.2" />
+                  <circle cx="45" cy="48" r="4.0" />
+                  <circle cx="53" cy="54" r="3.6" />
+                  <circle cx="60" cy="62" r="3.0" />
+                  <circle cx="66" cy="71" r="2.2" />
+                  {/* Row 4 */}
+                  <circle cx="35" cy="57" r="4.0" />
+                  <circle cx="41" cy="62" r="3.8" />
+                  <circle cx="48" cy="69" r="3.4" />
+                  <circle cx="54" cy="77" r="2.8" />
+                  {/* Row 5 */}
+                  <circle cx="36" cy="71" r="3.5" />
+                  <circle cx="41" cy="77" r="3.2" />
+                  <circle cx="46" cy="84" r="2.5" />
+                </g>
+              </svg>
+            </div>
+          </span>
         </span>
       </div>
     );
@@ -452,7 +491,7 @@ export default function BoletimEP({
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {renderInteliLogo(true)}
           <div className="sm:border-l sm:border-white/20 sm:pl-4">
-            <h2 className="font-serif text-2xl font-extrabold tracking-tight leading-none text-white">BOLETIM EP</h2>
+            <h2 className="font-sans text-2xl font-extrabold tracking-tight leading-none text-white">BOLETIM EP</h2>
             <p className="font-mono text-[10px] text-[#ff4545] mt-1.5 uppercase tracking-widest font-bold">
               {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE • {selectedYear}
             </p>
@@ -527,7 +566,7 @@ export default function BoletimEP({
                 </span>
                 
                 {sprintDates[p.key] ? (
-                  <span className={`text-[10px] mt-1.5 font-mono font-medium block ${isSelected ? 'text-indigo-200' : 'text-indigo-600'}`}>
+                  <span className={`text-[10px] mt-1.5 font-mono font-semibold block ${isSelected ? 'text-slate-200' : 'text-[#066d73]'}`}>
                     📅 {formatDate(sprintDates[p.key])}
                   </span>
                 ) : (
@@ -548,7 +587,7 @@ export default function BoletimEP({
       {/* Action Toolbar buttons */}
       <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className="font-serif text-sm font-bold text-[#2e2640]">Fase Ativa:</span>
+          <span className="font-sans text-sm font-bold text-[#2e2640]">Fase Ativa:</span>
           <span className="font-mono text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-[#ff4545]/10 text-[#ff4545] border border-[#ff4545]/20">
             {activePhaseLabel}
           </span>
@@ -578,7 +617,7 @@ export default function BoletimEP({
       {activeAllocations.length === 0 && (
         <div className="bg-white border border-[#e6eaeb] rounded-lg p-16 text-center text-slate-500 shadow-3xs">
           <HelpCircle className="mx-auto text-slate-300 mb-2.5" size={44} />
-          <h3 className="font-serif text-base font-extrabold text-[#2e2640] uppercase tracking-wider">Sem alocações nesta fase</h3>
+          <h3 className="font-sans text-base font-extrabold text-[#2e2640] uppercase tracking-wider">Sem alocações nesta fase</h3>
           <p className="text-xs text-slate-400 mt-1.5 max-w-md mx-auto leading-relaxed font-sans">
             Nenhuma turma possui ateliês alocados na fase <strong>{activePhaseLabel}</strong>. 
             Vá até a aba do <strong>Quadro de Sprints</strong> para vincular as turmas aos seus respectivos ateliês.
@@ -610,7 +649,7 @@ export default function BoletimEP({
                     Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                   </span>
                 </div>
-                <h1 className="font-serif text-2xl font-black text-white mt-1.5 tracking-tight uppercase">
+                <h1 className="font-sans text-2xl font-black text-white mt-1.5 tracking-tight uppercase">
                   BOLETIM EP
                 </h1>
               </div>
@@ -688,13 +727,13 @@ export default function BoletimEP({
                         </div>
 
                         {/* Title & Technical Subtitle */}
-                        <h3 className="font-serif font-black text-xs text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
+                        <h3 className="font-sans font-black text-xs text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
                         <p className="font-mono text-[9px] text-[#ff4545] font-bold mt-0.5 uppercase tracking-wide truncate">
                           {alloc.subtitle}
                         </p>
                         {alloc.turma && (
                           <div className="mt-1 flex items-center gap-1">
-                            <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                               Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                             </span>
                           </div>
@@ -822,11 +861,11 @@ export default function BoletimEP({
                 {renderInteliLogo(false)}
               </div>
 
-              <h1 className="font-serif font-black text-4xl text-[#2e2640] tracking-tight leading-none print:text-[#2e2640]">
+              <h1 className="font-sans font-black text-4xl text-[#2e2640] tracking-tight leading-none print:text-[#2e2640]">
                 BOLETIM EP
               </h1>
               
-              <h2 className="font-serif text-sm font-black text-[#ff4545] mt-3.5 uppercase tracking-widest print:text-[#ff4545]">
+              <h2 className="font-sans text-sm font-black text-[#ff4545] mt-3.5 uppercase tracking-widest print:text-[#ff4545]">
                 {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
               </h2>
 
@@ -928,7 +967,7 @@ export default function BoletimEP({
                                 <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                <h3 className="font-serif font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
+                                <h3 className="font-sans font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
                               </div>
                               
                               <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
@@ -936,7 +975,7 @@ export default function BoletimEP({
                               </p>
                               {alloc.turma && (
                                 <div className="mt-1.5 flex items-center gap-1">
-                                  <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
                                 </div>
@@ -1021,7 +1060,7 @@ export default function BoletimEP({
                                 <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                <h3 className="font-serif font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
+                                <h3 className="font-sans font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
                               </div>
                               
                               <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
@@ -1029,7 +1068,7 @@ export default function BoletimEP({
                               </p>
                               {alloc.turma && (
                                 <div className="mt-1.5 flex items-center gap-1">
-                                  <span className="inline-block bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
                                 </div>

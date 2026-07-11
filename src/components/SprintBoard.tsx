@@ -511,7 +511,7 @@ export default function SprintBoard({
         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4 transition-all duration-300">
           <div className="flex justify-between items-center border-b border-slate-100 pb-3">
             <div>
-              <h3 className="font-serif text-sm font-extrabold text-[#2e2640] flex items-center gap-1.5 uppercase tracking-wide">
+              <h3 className="font-sans text-sm font-extrabold text-[#2e2640] flex items-center gap-1.5 uppercase tracking-wide">
                 <Calendar size={16} className="text-[#ff4545]" />
                 Calendário de Datas das Sprints
               </h3>
