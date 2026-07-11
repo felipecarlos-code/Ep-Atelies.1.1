@@ -1323,6 +1323,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             onAddRow={handleAddRow}
             onUpdateRow={handleUpdateRow}
             onDeleteRow={handleDeleteRow}
+            onUpdateAllRows={updateActiveRows}
           />
         )}
 

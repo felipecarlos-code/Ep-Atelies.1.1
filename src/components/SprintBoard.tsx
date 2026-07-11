@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey, PRESET_COLORS } from '../types';
 import { findMatchingAtelie } from '../utils/atelieMatcher';
+import { getFriendlyStageName } from './TurmaManager';
 import { 
   Building2, 
   Users, 
@@ -38,6 +39,7 @@ interface SprintBoardProps {
   onAddRow: () => void;
   onUpdateRow: (row: AllocationRow) => void;
   onDeleteRow: (id: string) => void;
+  onUpdateAllRows?: (updater: AllocationRow[] | ((prev: AllocationRow[]) => AllocationRow[])) => void;
 }
 
 export default function SprintBoard({
@@ -52,6 +54,7 @@ export default function SprintBoard({
   onAddRow,
   onUpdateRow,
   onDeleteRow,
+  onUpdateAllRows,
 }: SprintBoardProps) {
   const [filterTurmaId, setFilterTurmaId] = useState<string>('all');
   const [filterPartnerId, setFilterPartnerId] = useState<string>('all');
@@ -60,6 +63,109 @@ export default function SprintBoard({
   const [activeTurmaSearchRowId, setActiveTurmaSearchRowId] = useState<string | null>(null);
   const [turmaSearchText, setTurmaSearchText] = useState<string>('');
   const [showDateConfig, setShowDateConfig] = useState<boolean>(false);
+  const [importResult, setImportResult] = useState<{ count: number; text: string } | null>(null);
+
+  // Helper to normalize strings for comparison (removes accents, spaces, special chars)
+  const normalizeStr = (str?: string) => {
+    if (!str) return '';
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "");
+  };
+
+  const isStageAllowed = (dealstage?: string): boolean => {
+    if (!dealstage) return false;
+    
+    // Allowed phases requested by the user:
+    // - Pré-Projeto
+    // - Projeto
+    // - Envio de Protótipos
+    // - Publicação de Protótipos
+    // - Patente
+    // - Concluído
+    const allowedStages = [
+      'Pré-Projeto',
+      'Projeto',
+      'Envio de Protótipos',
+      'Publicação de Protótipos',
+      'Patente',
+      'Concluído'
+    ];
+
+    const normalizedStage = normalizeStr(dealstage);
+    
+    return allowedStages.some(allowed => {
+      const normAllowed = normalizeStr(allowed);
+      if (normalizedStage === normAllowed) return true;
+      
+      const friendly = getFriendlyStageName(dealstage);
+      if (normalizeStr(friendly) === normAllowed) return true;
+      
+      return false;
+    });
+  };
+
+  // 1. Filter matching turmas/deals according to the rules:
+  //    - applicationYear == selectedYear
+  //    - applicationQuarter == selectedQuarter
+  //    - dealstage is one of the allowed stages
+  const matchingTurmas = turmas.filter((t) => {
+    const yearMatch = t.applicationYear && String(t.applicationYear).trim() === String(selectedYear).trim();
+    const quarterMatch = t.applicationQuarter && String(t.applicationQuarter).trim() === String(selectedQuarter).trim();
+    const stageMatch = isStageAllowed(t.dealstage);
+    return yearMatch && quarterMatch && stageMatch;
+  });
+
+  // 2. Identify which ones are NOT already present in current sprint rows (by turmaId)
+  const existingTurmaIds = new Set(rows.map(r => r.turmaId).filter(Boolean));
+  const missingMatchingTurmas = matchingTurmas.filter(t => !existingTurmaIds.has(t.id));
+  const newMatchingDealsCount = missingMatchingTurmas.length;
+
+  // 3. Import function
+  const handleAutoImportDeals = () => {
+    if (missingMatchingTurmas.length === 0) {
+      setImportResult({
+        count: 0,
+        text: `Nenhum novo negócio encontrado para ${selectedYear} / ${selectedQuarter} nas fases especificadas.`
+      });
+      setTimeout(() => setImportResult(null), 4000);
+      return;
+    }
+
+    // Create new rows
+    const newAllocationRows: AllocationRow[] = missingMatchingTurmas.map((t, idx) => ({
+      id: `row-auto-${Date.now()}-${t.id}-${idx}`,
+      turmaId: t.id,
+      partnerId: t.partnerId || '',
+      allocations: {
+        inicio: '',
+        kickoff: '',
+        sprint1: '',
+        sprint2: '',
+        sprint3: '',
+        sprint4: '',
+        fim: '',
+      },
+    }));
+
+    if (onUpdateAllRows) {
+      onUpdateAllRows((prev) => {
+        // We do NOT delete any existing rows that have been populated/configured.
+        // We filter out only those completely empty rows (to keep it neat), and append the new ones.
+        const populatedRows = prev.filter(r => r.turmaId || r.partnerId || Object.values(r.allocations).some(Boolean));
+        return [...populatedRows, ...newAllocationRows];
+      });
+
+      setImportResult({
+        count: missingMatchingTurmas.length,
+        text: `Sucesso! Vinculados ${missingMatchingTurmas.length} novos negócios automaticamente na visão de sprints.`
+      });
+      setTimeout(() => setImportResult(null), 5000);
+    }
+  };
 
   const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement, Event>, partnerName: string, domain?: string) => {
     const target = e.currentTarget;
@@ -320,6 +426,17 @@ export default function SprintBoard({
             {showDateConfig ? "Ocultar Calendário" : "Datas das Sprints"}
           </button>
 
+          {onUpdateAllRows && (
+            <button
+              onClick={handleAutoImportDeals}
+              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-1.5 rounded transition-all shadow-2xs cursor-pointer"
+              title={`Sincronizar automaticamente os Negócios correspondentes a ${selectedYear} ${selectedQuarter} nas fases de aplicação`}
+            >
+              <Sparkles size={13} className="text-emerald-200 animate-pulse" />
+              Vincular Negócios ({newMatchingDealsCount})
+            </button>
+          )}
+
           <button
             onClick={onAddRow}
             className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-4 py-1.5 rounded transition-all shadow-2xs cursor-pointer"
@@ -328,6 +445,49 @@ export default function SprintBoard({
           </button>
         </div>
       </div>
+
+      {/* Import Feedback Alert Toast */}
+      {importResult && (
+        <div className={`p-3 rounded-lg flex items-center gap-2 text-xs font-bold transition-all shadow-3xs ${
+          importResult.count > 0 
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800' 
+            : 'bg-amber-50 border border-amber-200 text-amber-800'
+        }`}>
+          <Sparkles size={15} className={importResult.count > 0 ? 'text-emerald-600' : 'text-amber-600'} />
+          <span>{importResult.text}</span>
+          <button 
+            onClick={() => setImportResult(null)}
+            className="ml-auto text-slate-400 hover:text-slate-600 font-bold text-sm cursor-pointer px-1"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Smart Unlinked Deals Alert Banner */}
+      {newMatchingDealsCount > 0 && (
+        <div className="bg-gradient-to-r from-emerald-50/60 to-teal-50/60 border border-emerald-200/80 rounded-xl p-3.5 flex flex-wrap gap-4 items-center justify-between shadow-3xs">
+          <div className="flex items-center gap-3 min-w-[280px]">
+            <div className="p-2 bg-emerald-100 text-emerald-800 rounded-lg shrink-0">
+              <Sparkles size={16} className="text-emerald-700 animate-pulse" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-900">
+                Negócios Qualificados Disponíveis ({selectedYear} {selectedQuarter})
+              </p>
+              <p className="text-[10px] text-emerald-700 mt-0.5">
+                Existem <strong className="font-extrabold">{newMatchingDealsCount}</strong> negócios no banco de dados correspondentes ao ano e trimestre desta Sprint que ainda não foram vinculados na visão.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleAutoImportDeals}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded shadow-2xs transition-all cursor-pointer whitespace-nowrap flex items-center gap-1"
+          >
+            <Check size={11} /> Vincular {newMatchingDealsCount} Negócio{newMatchingDealsCount > 1 ? 's' : ''}
+          </button>
+        </div>
+      )}
 
       {showDateConfig && (
         <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm space-y-4 transition-all duration-300">
