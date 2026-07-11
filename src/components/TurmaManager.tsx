@@ -1419,21 +1419,17 @@ export default function TurmaManager({
                     )}
                   </div>
 
-                  {turma.epDescricaoCurta && (
+                  {turma.epDescricaoCurta ? (
                     <div className="mt-4 pt-3 border-t border-slate-100">
                       <span className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest block mb-1">[EP] Descrição Curta do Projeto:</span>
                       <p className="text-xs text-slate-700 leading-normal font-semibold line-clamp-3" title={turma.epDescricaoCurta}>
                         {turma.epDescricaoCurta}
                       </p>
                     </div>
-                  )}
-
-                  {(turma.projectDescription || turma.description) && (
+                  ) : (
                     <div className="mt-4 pt-3 border-t border-slate-100">
-                      <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block mb-1">Descrição Completa / Escopo:</span>
-                      <p className="text-xs text-slate-500 leading-normal font-medium line-clamp-3" title={turma.projectDescription || turma.description}>
-                        {turma.projectDescription || turma.description}
-                      </p>
+                      <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">[EP] Descrição Curta do Projeto:</span>
+                      <p className="text-xs text-slate-400 italic">Sem descrição curta do projeto cadastrada.</p>
                     </div>
                   )}
                 </div>

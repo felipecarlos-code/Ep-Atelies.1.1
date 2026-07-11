@@ -701,16 +701,13 @@ export default function BoletimEP({
                         )}
 
                         {/* Description */}
-                        <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-2 line-clamp-3" title={alloc.turma?.projectTitle}>
-                          {alloc.turma?.projectTitle || 'Nenhum título de projeto cadastrado para esta turma.'}
+                        <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-2 line-clamp-3" title={alloc.turma?.epDescricaoCurta}>
+                          {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                         </p>
                       </div>
 
                       {/* Info footer */}
-                      <div className="flex items-center justify-between text-[8px] text-slate-400 font-extrabold mt-2 pt-1.5 border-t border-slate-100">
-                        <span className="truncate max-w-[120px] font-semibold" title={alloc.turma?.name}>
-                          {alloc.turma?.name}
-                        </span>
+                      <div className="flex items-center justify-end text-[8px] text-slate-400 font-extrabold mt-2 pt-1.5 border-t border-slate-100">
                         <span className="font-mono uppercase text-[#066d73]">
                           {alloc.turma?.studentCount || 0} alunos • {alloc.turma?.period}
                         </span>
@@ -875,7 +872,7 @@ export default function BoletimEP({
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4">
                     <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
-                      🌅 Período da Manhã (1º & 3º Anos)
+                      Período da Manhã (1º & 3º Anos)
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">09h às 11h</span>
@@ -945,15 +942,12 @@ export default function BoletimEP({
                                 </div>
                               )}
                               <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
-                                {alloc.turma?.projectTitle || 'Sem título de projeto cadastrado para esta turma.'}
+                                {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="truncate pr-4" title={alloc.turma?.name}>
-                                Turma: {alloc.turma?.name}
-                              </span>
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
                                 {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Manhã'}
                               </span>
@@ -971,7 +965,7 @@ export default function BoletimEP({
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4 pt-4">
                     <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
-                      🌇 Período da Tarde (2º Ano)
+                      Período da Tarde (2º Ano)
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">14h às 16h</span>
@@ -1041,15 +1035,12 @@ export default function BoletimEP({
                                 </div>
                               )}
                               <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
-                                {alloc.turma?.projectTitle || 'Sem título de projeto cadastrado para esta turma.'}
+                                {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-between items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="truncate pr-4" title={alloc.turma?.name}>
-                                Turma: {alloc.turma?.name}
-                              </span>
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
                                 {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Tarde'}
                               </span>

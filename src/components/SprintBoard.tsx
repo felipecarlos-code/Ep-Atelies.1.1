@@ -325,6 +325,18 @@ export default function SprintBoard({
     }
   };
 
+  const handleReplicateAteliesToSprints = (rowId: string, atelieIds: string[]) => {
+    const row = rows.find((r) => r.id === rowId);
+    if (row) {
+      const valueToCopy = atelieIds.join(',');
+      const updatedAllocations = { ...row.allocations };
+      PHASES.forEach((phase) => {
+        updatedAllocations[phase.key] = valueToCopy;
+      });
+      onUpdateRow({ ...row, allocations: updatedAllocations });
+    }
+  };
+
   // Get only the Turmas, Partners, and Atelies that are actually present/allocated in the current rows
   const activeTurmaIds = new Set(rows.map((r) => r.turmaId).filter(Boolean));
   const activePartnerIds = new Set(rows.map((r) => r.partnerId).filter(Boolean));
@@ -337,9 +349,15 @@ export default function SprintBoard({
     });
   });
 
-  const activeTurmas = turmas.filter((t) => activeTurmaIds.has(t.id));
-  const activePartners = partners.filter((p) => activePartnerIds.has(p.id));
-  const activeAtelies = atelies.filter((a) => activeAtelieIds.has(a.id));
+  const activeTurmas = turmas
+    .filter((t) => activeTurmaIds.has(t.id))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const activePartners = partners
+    .filter((p) => activePartnerIds.has(p.id))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  const activeAtelies = atelies
+    .filter((a) => activeAtelieIds.has(a.id))
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
   // Filtering rows
   const filteredRows = rows.filter((row) => {
@@ -723,24 +741,38 @@ export default function SprintBoard({
 
                       {/* ATELIE LANE (From Business Registration / Cadastro de Negócios) */}
                       <td className="p-2 border-r border-slate-200 bg-slate-50/10 text-xs">
-                        <div className="flex flex-wrap gap-1 max-h-[120px] overflow-y-auto">
-                          {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 ? (
-                            currentTurma.epAtelie.map((atelieIdOrName) => {
-                              const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies);
-                              const name = foundAtelie ? foundAtelie.name : atelieIdOrName;
-                              const block = foundAtelie ? ` (${foundAtelie.block})` : '';
-                              return (
-                                <span 
-                                  key={atelieIdOrName}
-                                  className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[9px] uppercase tracking-wide truncate max-w-full block"
-                                  title={`${name}${block}`}
-                                >
-                                  {name}{block}
-                                </span>
-                              );
-                            })
-                          ) : (
-                            <span className="text-[10px] text-slate-400 italic">Nenhum ateliê</span>
+                        <div className="flex flex-col gap-2 justify-between h-full min-h-[90px]">
+                          <div className="flex flex-wrap gap-1 max-h-[120px] overflow-y-auto">
+                            {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 ? (
+                              currentTurma.epAtelie.map((atelieIdOrName) => {
+                                const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies);
+                                const name = foundAtelie ? foundAtelie.name : atelieIdOrName;
+                                const block = foundAtelie ? ` (${foundAtelie.block})` : '';
+                                return (
+                                  <span 
+                                    key={atelieIdOrName}
+                                    className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[9px] uppercase tracking-wide truncate max-w-full block"
+                                    title={`${name}${block}`}
+                                  >
+                                    {name}{block}
+                                  </span>
+                                );
+                              })
+                            ) : (
+                              <span className="text-[10px] text-slate-400 italic">Nenhum ateliê</span>
+                            )}
+                          </div>
+                          
+                          {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleReplicateAteliesToSprints(row.id, currentTurma.epAtelie!)}
+                              className="w-full mt-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 border border-indigo-200 rounded py-1 px-1.5 flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                              title="Alocar este ateliê em todas as fases / sprints desta linha"
+                            >
+                              <Copy size={9} />
+                              Replicar nas Sprints
+                            </button>
                           )}
                         </div>
                       </td>
