@@ -818,7 +818,7 @@ export default function BoletimEP({
           >
             
             {/* Header Poster conforming to Boletim EP */}
-            <div className="relative text-center border-b-[3px] border-[#2e2640] pb-6 mb-8 flex flex-col items-center">
+            <div className="relative text-center pb-2 flex flex-col items-center">
 
               
               <div className="mb-4">
@@ -853,6 +853,18 @@ export default function BoletimEP({
                 <span>Graduação 1º e 3º Ano — 09h às 11h</span>
                 <span className="text-slate-300">•</span>
                 <span>Graduação 2º Ano — 14h às 16h</span>
+              </div>
+            </div>
+
+            {/* Delicate section divider */}
+            <div className="relative flex items-center justify-center my-8">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-slate-200/60"></div>
+              </div>
+              <div className="relative bg-white px-4 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
+                <span>✦</span>
+                <span>✦</span>
+                <span>✦</span>
               </div>
             </div>
 
@@ -1052,82 +1064,145 @@ export default function BoletimEP({
             </div>
 
             {/* Brand Chronogram / Timeline Graphics (p. 3) */}
-            <div className="mt-12 pt-8 border-t-2 border-[#e6eaeb] break-inside-avoid">
-              <h4 className="font-mono font-black text-[10px] text-center text-slate-400 uppercase tracking-widest mb-6">
-                Cronograma do módulo
-              </h4>
+            <div className="mt-12 pt-8 border-t border-slate-200/80 break-inside-avoid">
+              <div className="text-center mb-8">
+                <h4 className="font-sans font-bold text-xs text-[#2e2640] uppercase tracking-wider">
+                  Cronograma do modulo
+                </h4>
+              </div>
 
-              <div className="relative py-2">
-                {/* Horizontal line using institutional roxo - connected behind the circles */}
-                <div className="absolute top-[14px] left-8 right-8 h-0.5 bg-[#e6eaeb]"></div>
+              {/* Symmetrical Milestone Stepper */}
+              <div className="relative mb-8 px-4">
+                {/* Horizontal progress-like line */}
+                <div className="absolute top-[18px] left-12 right-12 h-[2px] bg-slate-100"></div>
                 
-                {/* Timeline checkpoints styled with coral accent dots */}
-                <div className="relative grid grid-cols-4 text-center gap-2">
-                  <div className="space-y-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
+                <div className="relative grid grid-cols-4 text-center gap-4">
+                  {/* Milestone 1: Onboarding */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      </div>
+                    </div>
                     <div>
-                      <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">Onboarding</h5>
-                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Início do Módulo</p>
-                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">1. Onboarding</h5>
+                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
                         {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : 'Sem data'}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
+                  {/* Milestone 2: KickOff */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      </div>
+                    </div>
                     <div>
-                      <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">KickOff</h5>
-                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Kickoff</p>
-                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">2. Kick-Off</h5>
+                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
                         {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : 'Sem data'}
-                      </p>
+                      </span>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 bg-[#e6eaeb]/20 p-2 rounded-md border border-dashed border-[#e6eaeb] relative z-10">
-                    <div className="w-3 h-3 rounded-full bg-[#ff4545] border-2 border-white mx-auto shadow-sm relative z-10"></div>
+                  {/* Milestone 3: Sprints */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-[#ff4545]/10 border border-[#ff4545]/30 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#ff4545]"></div>
+                      </div>
+                    </div>
                     <div>
-                      <h5 className="font-serif font-black text-[10px] text-[#ff4545] uppercase tracking-tight">Sprint</h5>
-                      <div className="mt-1.5 space-y-0.5 font-mono text-[8px] text-slate-500 font-bold max-w-[130px] mx-auto text-left">
-                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
-                          <span>Sprint 1:</span>
-                          <span className="text-[#2e2640]">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : 'Sem data'}</span>
+                      <h5 className="font-sans font-bold text-[10px] text-[#ff4545]">3. Sprints</h5>
+                      
+                      <div className="mt-2 space-y-1 bg-[#ff4545]/5 border border-[#ff4545]/10 rounded-lg p-2 text-left max-w-[140px] mx-auto shadow-3xs">
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                          <span className="text-slate-400 font-semibold">Sprint 1</span>
+                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
                         </div>
-                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
-                          <span>Sprint 2:</span>
-                          <span className="text-[#2e2640]">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : 'Sem data'}</span>
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                          <span className="text-slate-400 font-semibold">Sprint 2</span>
+                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
                         </div>
-                        <div className="flex justify-between border-b border-slate-200/50 pb-0.5">
-                          <span>Sprint 3:</span>
-                          <span className="text-[#2e2640]">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : 'Sem data'}</span>
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                          <span className="text-slate-400 font-semibold">Sprint 3</span>
+                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Sprint 4:</span>
-                          <span className="text-[#2e2640]">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : 'Sem data'}</span>
+                        <div className="flex justify-between items-center text-[8px] font-mono">
+                          <span className="text-slate-400 font-semibold">Sprint 4</span>
+                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : '—'}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#2e2640] border-2 border-white mx-auto shadow-sm relative z-10"></div>
+                  {/* Milestone 4: Apresentação */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      </div>
+                    </div>
                     <div>
-                      <h5 className="font-serif font-black text-[10px] text-[#2e2640] uppercase tracking-tight">Apresentação</h5>
-                      <p className="font-mono text-[8px] text-slate-400 uppercase font-semibold">Apresentação Final</p>
-                      <p className="font-mono text-[9px] text-slate-600 font-bold mt-1">
+                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">4. Apresentação Final</h5>
+                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
                         {sprintDates['fim'] ? formatDate(sprintDates['fim']) : 'Sem data'}
-                      </p>
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Bottom printed footer watermark */}
-            <div className="mt-12 pt-4 border-t border-slate-100 flex justify-between items-center text-[8px] text-slate-400 font-mono uppercase tracking-wider">
-              <span>Gerado em {new Date().toLocaleDateString('pt-BR')} • Inteli</span>
-              <span>Inteli - Instituto de Tecnologia e Liderança</span>
+            {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
+            <div className="mt-12 bg-[#2e2640] rounded-xl py-6 px-10 flex items-center justify-center gap-6 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
+              <div className="flex items-center gap-3">
+                <span className="font-sans font-bold tracking-tight text-3xl leading-none">
+                  inteli
+                </span>
+                <div className="relative w-10 h-10 flex items-center justify-center shrink-0 -mt-2">
+                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
+                    <g fill="#ff4545">
+                      {/* Row 1 */}
+                      <circle cx="50" cy="25" r="3.5" />
+                      <circle cx="58" cy="27" r="3.2" />
+                      <circle cx="66" cy="31" r="2.8" />
+                      <circle cx="73" cy="37" r="2.2" />
+                      {/* Row 2 */}
+                      <circle cx="43" cy="33" r="4.0" />
+                      <circle cx="51" cy="36" r="3.8" />
+                      <circle cx="59" cy="41" r="3.4" />
+                      <circle cx="66" cy="48" r="2.8" />
+                      <circle cx="72" cy="56" r="2.0" />
+                      {/* Row 3 */}
+                      <circle cx="38" cy="44" r="4.2" />
+                      <circle cx="45" cy="48" r="4.0" />
+                      <circle cx="53" cy="54" r="3.6" />
+                      <circle cx="60" cy="62" r="3.0" />
+                      <circle cx="66" cy="71" r="2.2" />
+                      {/* Row 4 */}
+                      <circle cx="35" cy="57" r="4.0" />
+                      <circle cx="41" cy="62" r="3.8" />
+                      <circle cx="48" cy="69" r="3.4" />
+                      <circle cx="54" cy="77" r="2.8" />
+                      {/* Row 5 */}
+                      <circle cx="36" cy="71" r="3.5" />
+                      <circle cx="41" cy="77" r="3.2" />
+                      <circle cx="46" cy="84" r="2.5" />
+                    </g>
+                  </svg>
+                </div>
+              </div>
+              
+              <div className="h-8 w-px bg-white/20"></div>
+              
+              <div className="text-[8px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
+                <p>Instituto de</p>
+                <p>Tecnologia</p>
+                <p>e Liderança</p>
+              </div>
             </div>
           </div>
         </div>
