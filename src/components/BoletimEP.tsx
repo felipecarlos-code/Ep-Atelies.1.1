@@ -786,7 +786,7 @@ export default function BoletimEP({
           id="boletim-print-section"
         >
           
-          <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium">
+          <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium print-hidden">
             <Info size={16} className="text-[#ff4545] shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold">Diretrizes de Impressão Oficial - Boletim EP</p>
@@ -797,7 +797,10 @@ export default function BoletimEP({
           </div>
 
           {/* Printable Sheet Canvas Wrapper */}
-          <div className="bg-white p-6 md:p-10 rounded-lg border border-slate-200 max-w-4xl mx-auto shadow-2xs print:border-none print:p-0">
+          <div 
+            id="printable-sheet-canvas"
+            className="bg-white p-6 md:p-10 rounded-lg border border-slate-200 max-w-4xl mx-auto shadow-2xs print:border-none print:p-0"
+          >
             
             {/* Header Poster conforming to Boletim EP */}
             <div className="relative text-center border-b-[3px] border-[#2e2640] pb-6 mb-8 flex flex-col items-center">
@@ -1114,16 +1117,27 @@ export default function BoletimEP({
         </div>
       )}
 
-      {/* Global CSS for physical paper print optimization */}
+       {/* Global CSS for physical paper print optimization */}
       <style>{`
         @media print {
+          @page {
+            margin: 0 !important; /* Removes browser default headers and footers (URL, page numbers, date) */
+          }
+          
+          body {
+            margin: 1.2cm !important; /* Elegant printable area margins */
+            background-color: white !important;
+          }
+
           /* Hide non-printable elements */
           body * {
             visibility: hidden;
           }
+          
           #boletim-print-section, #boletim-print-section * {
             visibility: visible;
           }
+          
           #boletim-print-section {
             display: block !important;
             position: absolute !important;
@@ -1136,10 +1150,30 @@ export default function BoletimEP({
             padding: 0 !important;
             margin: 0 !important;
           }
+          
+          /* Hide print instruction directives card */
+          .print-hidden, .print-hidden * {
+            display: none !important;
+            visibility: hidden !important;
+          }
+
+          /* Strip outer card borders and shadows in the printable sheet canvas container */
+          #printable-sheet-canvas {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+            border-radius: 0 !important;
+          }
+
           /* Eliminate all outside UI chrome from print */
           header, nav, #sub-header-bar, .flex.justify-between.items-center.gap-3, button, select {
             display: none !important;
           }
+          
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
