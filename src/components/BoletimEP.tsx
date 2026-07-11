@@ -43,6 +43,21 @@ export default function BoletimEP({
   const [layoutMode, setLayoutMode] = useState<'ppt' | 'print'>('ppt');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
+  const [campusImgSrc, setCampusImgSrc] = useState(inteliCampusImg);
+  const [campusFallbackIndex, setCampusFallbackIndex] = useState(0);
+
+  const campusFallbacks = [
+    '/inteli_campus_original.jpg',
+    'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1200&auto=format&fit=crop'
+  ];
+
+  const handleCampusError = () => {
+    if (campusFallbackIndex < campusFallbacks.length) {
+      setCampusImgSrc(campusFallbacks[campusFallbackIndex]);
+      setCampusFallbackIndex(prev => prev + 1);
+    }
+  };
+
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
     const [year, month, day] = dateStr.split('-');
@@ -824,10 +839,11 @@ export default function BoletimEP({
 
               <div className="mt-3 w-full max-w-md overflow-hidden rounded-lg border border-slate-100 shadow-xs">
                 <img 
-                  src={inteliCampusImg} 
+                  src={campusImgSrc} 
                   alt="Inteli Campus" 
                   className="w-full h-44 object-cover hover:scale-102 transition-transform duration-300"
                   referrerPolicy="no-referrer"
+                  onError={handleCampusError}
                 />
               </div>
               
