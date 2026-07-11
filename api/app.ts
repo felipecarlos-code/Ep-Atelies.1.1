@@ -555,7 +555,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         modulo_curso: "modulo_curso",
         codigo_turma_c: "codigo_turma_c",
         ep_id_unico_da_turma: "ep_id_unico_da_turma",
-        period: "period"
+        period: "period",
+        ep_descricao_curta_do_projeto: "ep_descricao_curta_do_projeto"
       };
 
       try {
@@ -612,6 +613,9 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           const periodKey = findProp(["period", "periodo", "período", "turno", "ep_turno", "ep_periodo", "turno_letivo", "periodo_letivo", "turno_c", "periodo_c"], [["turno"], ["periodo"], ["período"], ["period"]]);
           if (periodKey) resolvedKeys.period = periodKey;
 
+          const descCurtaKey = findProp(["ep_descricao_curta_do_projeto", "descricao_curta_do_projeto", "descricao_curta"], [["descricao", "curta", "projeto"], ["descrição", "curta", "projeto"], ["descricao", "curta"], ["descrição", "curta"]]);
+          if (descCurtaKey) resolvedKeys.ep_descricao_curta_do_projeto = descCurtaKey;
+
           props.forEach((p: any) => {
             const label = String(p.label || "").toLowerCase();
             const name = String(p.name || "").toLowerCase();
@@ -636,6 +640,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             resolvedKeys.codigo_turma_c,
             resolvedKeys.ep_id_unico_da_turma,
             resolvedKeys.period,
+            resolvedKeys.ep_descricao_curta_do_projeto,
             ...discoveredAtelieKeys
           ])).filter(Boolean);
         } else {
@@ -645,7 +650,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
             "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
             "period", "periodo", "turno", "ep_turno", "ep_periodo",
-            "ep_atelie", "atelie", "ateliê"
+            "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto"
           ];
         }
       } catch (propsErr: any) {
@@ -655,7 +660,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
           "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
           "period", "periodo", "turno", "ep_turno", "ep_periodo",
-          "ep_atelie", "atelie", "ateliê"
+          "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto"
         ];
       }
 
@@ -1203,6 +1208,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
 
         // 3 - Descrição do Negocio (description)
         const description = props.description || "";
+        const epDescricaoCurta = props[resolvedKeys.ep_descricao_curta_do_projeto] || "";
 
         // 4 - Empresa (Fazer o link com a empresa cadastrada dentro da nossa aplicação)
         let linkedPartnerId = "";
@@ -1239,7 +1245,25 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         const applicationYear = props[resolvedKeys.ep_ano_de_aplicacao] || "";
 
         // 6 - Trimestre de Aplicação (ep_tri_de_aplicacao)
-        const applicationQuarter = props[resolvedKeys.ep_tri_de_aplicacao] || "";
+        const rawQuarter = props[resolvedKeys.ep_tri_de_aplicacao] || "";
+        const normalizeQuarter = (val: any): string => {
+          if (!val) return "Q1";
+          const str = String(val).trim().toUpperCase();
+          if (str === "Q1" || str === "Q2" || str === "Q3" || str === "Q4") {
+            return str;
+          }
+          if (/\b1\b|1º|1O|PRIMEIRO|FIRST|T1|Q1|TRIMESTRE\s*1/i.test(str)) return "Q1";
+          if (/\b2\b|2º|2O|SEGUNDO|SECOND|T2|Q2|TRIMESTRE\s*2/i.test(str)) return "Q2";
+          if (/\b3\b|3º|3O|TERCEIRO|THIRD|T3|Q3|TRIMESTRE\s*3/i.test(str)) return "Q3";
+          if (/\b4\b|4º|4O|QUARTO|FOURTH|T4|Q4|TRIMESTRE\s*4/i.test(str)) return "Q4";
+          
+          if (str.includes("PRIMEIRO") || str.includes("FIRST") || str.includes("T1") || str.includes("1")) return "Q1";
+          if (str.includes("SEGUNDO") || str.includes("SECOND") || str.includes("T2") || str.includes("2")) return "Q2";
+          if (str.includes("TERCEIRO") || str.includes("THIRD") || str.includes("T3") || str.includes("3")) return "Q3";
+          if (str.includes("QUARTO") || str.includes("FOURTH") || str.includes("T4") || str.includes("4")) return "Q4";
+          return "Q1";
+        };
+        const applicationQuarter = normalizeQuarter(rawQuarter);
 
         // 7 - Módulo do Curso (modulo_curso)
         const courseModule = props[resolvedKeys.modulo_curso] || "";
@@ -1270,6 +1294,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           ...discoveredAtelieKeys,
           "[EP] Ateliê",
           "[ep] atelie",
+          "EP_atelie",
           "ep_atelie",
           "ep_ateliê",
           "_ep__ateli_",
@@ -1277,19 +1302,34 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           "atelie",
           "ateliê"
         ];
+        
         for (const key of keysToCheck) {
-          const val = props[key];
-          if (val && typeof val === "string" && val.trim().length > 0) {
-            rawAtelieVal = val.trim();
-            break;
+          const matchedKey = Object.keys(props).find(k => k.toLowerCase() === key.toLowerCase());
+          if (matchedKey) {
+            const val = props[matchedKey];
+            if (val && typeof val === "string" && val.trim().length > 0) {
+              rawAtelieVal = val.trim();
+              break;
+            }
+          }
+        }
+
+        // Wildcard fallback search for any key containing 'atelie' or 'ateli'
+        if (!rawAtelieVal) {
+          const matchedKey = Object.keys(props).find(k => k.toLowerCase().includes("atelie") || k.toLowerCase().includes("ateli"));
+          if (matchedKey) {
+            const val = props[matchedKey];
+            if (val && typeof val === "string" && val.trim().length > 0) {
+              rawAtelieVal = val.trim();
+            }
           }
         }
         
         let epAtelie: string[] = [];
         if (rawAtelieVal) {
-          const splitNames = rawAtelieVal.split(",").map(s => s.trim()).filter(Boolean);
+          const splitNames = rawAtelieVal.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
           epAtelie = splitNames.map(name => {
-            return `atelie-${name.toLowerCase()}
+            return `atelie-${name.toLowerCase()
               .normalize("NFD")
               .replace(/[\u0300-\u036f]/g, "")
               .replace(/[^a-z0-9]/g, "-")
@@ -1357,10 +1397,11 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           name: dealName,
           course,
           period,
-          projectDescription: description,
+          projectDescription: epDescricaoCurta || description,
           dealstage,
           projectTitle,
           description,
+          epDescricaoCurta,
           partnerId: linkedPartnerId,
           applicationYear,
           applicationQuarter,
@@ -1382,6 +1423,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           ...discoveredAtelieKeys,
           "[EP] Ateliê",
           "[ep] atelie",
+          "EP_atelie",
           "ep_atelie",
           "ep_ateliê",
           "_ep__ateli_",
@@ -1391,16 +1433,30 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         ];
 
         for (const key of keysToCheck) {
-          const val = deal.properties[key];
-          if (val && typeof val === "string" && val.trim().length > 0) {
-            rawAtelieVal = val.trim();
-            break;
+          const matchedKey = Object.keys(deal.properties).find(k => k.toLowerCase() === key.toLowerCase());
+          if (matchedKey) {
+            const val = deal.properties[matchedKey];
+            if (val && typeof val === "string" && val.trim().length > 0) {
+              rawAtelieVal = val.trim();
+              break;
+            }
+          }
+        }
+
+        // Wildcard fallback search for any key containing 'atelie' or 'ateli'
+        if (!rawAtelieVal) {
+          const matchedKey = Object.keys(deal.properties).find(k => k.toLowerCase().includes("atelie") || k.toLowerCase().includes("ateli"));
+          if (matchedKey) {
+            const val = deal.properties[matchedKey];
+            if (val && typeof val === "string" && val.trim().length > 0) {
+              rawAtelieVal = val.trim();
+            }
           }
         }
 
         if (rawAtelieVal) {
-          // Split by commas in case multiple Ateliês are comma-separated in the deal field
-          const splitNames = rawAtelieVal.split(",").map(s => s.trim()).filter(Boolean);
+          // Split by commas or semicolons in case multiple Ateliês are comma-separated or semicolon-separated in the deal field
+          const splitNames = rawAtelieVal.split(/[,;]+/).map(s => s.trim()).filter(Boolean);
           splitNames.forEach(name => {
             uniqueAtelieNames.add(name);
           });

@@ -19,6 +19,7 @@ export interface Turma {
   dealstage?: string;               // 1 - Etapa de Negócios (dealstage)
   projectTitle?: string;            // 2 - Titulo do Projeto (titulo_projeto_c)
   description?: string;             // 3 - Descrição do Negocio (description)
+  epDescricaoCurta?: string;        // [EP] Descrição Curta do Projeto (ep_descricao_curta_do_projeto)
   partnerId?: string;               // 4 - Empresa (Fazer o link com a empresa cadastrada dentro da nossa aplicação)
   applicationYear?: string;         // 5 - Ano de Aplicação do Módulo (ep_ano_de_aplicacao)
   applicationQuarter?: string;      // 6 - Trimestre de Aplicação (ep_tri_de_aplicacao)

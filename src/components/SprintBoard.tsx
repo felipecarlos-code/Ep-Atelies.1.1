@@ -550,9 +550,6 @@ export default function SprintBoard({
                             <span className="text-[10px] font-extrabold text-slate-800 text-center max-w-[150px] line-clamp-2 leading-tight" title={currentPartner.name}>
                               {currentPartner.name}
                             </span>
-                            <span className="text-[8px] font-bold text-indigo-600 uppercase tracking-wider bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded-sm shrink-0">
-                              Automático
-                            </span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center p-3 border border-dashed border-slate-200 rounded-lg text-slate-400 bg-slate-50/50">

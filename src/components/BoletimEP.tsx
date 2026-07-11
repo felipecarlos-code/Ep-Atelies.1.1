@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+// @ts-ignore
+import inteliCampusImg from '../assets/images/inteli_campus_original.jpg';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey } from '../types';
 import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { cleanOrDetectCourse } from './TurmaManager';
@@ -364,18 +366,66 @@ export default function BoletimEP({
     XLSX.writeFile(wb, `boletim_ep_${selectedYear}_${selectedQuarter}_${selectedPhase}.xlsx`);
   };
 
-  // Trigger print dialog
+  // Trigger print dialog with dynamic document title for perfect PDF filename suggestion
   const handlePrint = () => {
-    window.print();
+    const originalLayout = layoutMode;
+    const originalTitle = document.title;
+    
+    // Force layout mode to print so that the DOM section is active and fully rendered
+    setLayoutMode('print');
+    document.title = `Boletim EP - ${selectedYear} - ${selectedQuarter} - ${activePhaseLabel}`;
+    
+    setTimeout(() => {
+      try {
+        window.print();
+      } catch (err) {
+        console.error('Error printing:', err);
+      } finally {
+        setTimeout(() => {
+          setLayoutMode(originalLayout);
+          document.title = originalTitle;
+        }, 150);
+      }
+    }, 150);
   };
 
   // Slide pages size configuration
   const itemsPerSlide = 4;
-  const totalSlides = Math.ceil(activeAllocations.length / itemsPerSlide) || 1;
-  const slideAllocations = activeAllocations.slice(
-    currentSlideIndex * itemsPerSlide,
-    (currentSlideIndex + 1) * itemsPerSlide
-  );
+  
+  interface SlideData {
+    period: 'manhã' | 'tarde';
+    allocations: typeof activeAllocations;
+  }
+
+  const slides: SlideData[] = [];
+
+  // Morning slides
+  for (let i = 0; i < morningAllocations.length; i += itemsPerSlide) {
+    slides.push({
+      period: 'manhã',
+      allocations: morningAllocations.slice(i, i + itemsPerSlide),
+    });
+  }
+
+  // Afternoon slides
+  for (let i = 0; i < afternoonAllocations.length; i += itemsPerSlide) {
+    slides.push({
+      period: 'tarde',
+      allocations: afternoonAllocations.slice(i, i + itemsPerSlide),
+    });
+  }
+
+  // If no slides at all, create an empty one so we don't break
+  if (slides.length === 0) {
+    slides.push({
+      period: 'manhã',
+      allocations: [],
+    });
+  }
+
+  const totalSlides = slides.length;
+  const activeSlide = slides[currentSlideIndex] || slides[0] || { period: 'manhã', allocations: [] };
+  const slideAllocations = activeSlide.allocations;
 
   return (
     <div className="space-y-6 font-sans text-slate-800" id="boletim-ep-container">
@@ -545,8 +595,8 @@ export default function BoletimEP({
                     Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                   </span>
                 </div>
-                <h1 className="font-serif text-2xl font-black text-white mt-1.5 tracking-tight">
-                  BOLETIM EP <span className="font-light text-slate-300">| Caderno de Desafios</span>
+                <h1 className="font-serif text-2xl font-black text-white mt-1.5 tracking-tight uppercase">
+                  BOLETIM EP
                 </h1>
               </div>
               <div className="text-right pb-1">
@@ -556,8 +606,25 @@ export default function BoletimEP({
               </div>
             </div>
 
+            {/* Period Separator Banner inside the Slide */}
+            <div className="relative flex items-center gap-2 mt-4 z-10">
+              {activeSlide.period === 'manhã' ? (
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#89cea5] bg-[#89cea5]/10 border border-[#89cea5]/20 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse-subtle">
+                  🌅 Período da Manhã (1º & 3º Anos)
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#90a5e5] bg-[#90a5e5]/10 border border-[#90a5e5]/20 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse-subtle">
+                  🌇 Período da Tarde (2º Ano)
+                </span>
+              )}
+              <div className="h-px bg-white/10 flex-1"></div>
+              <span className="font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                {activeSlide.period === 'manhã' ? '09h às 11h' : '14h às 16h'}
+              </span>
+            </div>
+
             {/* Slide Grid Body (4-column bento grids aligned to segment ratios) */}
-            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 my-6 flex-1 items-center z-10">
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 my-4 flex-1 items-center z-10">
               {slideAllocations.map((alloc) => {
                 const seg = getSegmentStyle(alloc.academicYear);
                 
@@ -600,8 +667,7 @@ export default function BoletimEP({
                           </span>
                           <span className="text-[8.5px] font-mono font-bold text-slate-500">
                             {alloc.atelieBlocks.map(b => {
-                              const str = String(b).toUpperCase();
-                              return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
+                              return String(b).toUpperCase().replace('BLOCO', '').trim();
                             }).join(' / ') || 'N/A'}
                           </span>
                         </div>
@@ -655,8 +721,14 @@ export default function BoletimEP({
 
             {/* Slide Footer */}
             <div className="relative border-t border-white/10 pt-4 flex items-center justify-between z-10">
-              <span className="text-[9px] text-slate-300 font-bold font-mono">
-                Página {currentSlideIndex * itemsPerSlide + 1}-{Math.min((currentSlideIndex + 1) * itemsPerSlide, activeAllocations.length)} de {activeAllocations.length} Projetos
+              <span className="text-[9px] text-slate-300 font-bold font-mono flex items-center gap-2">
+                <span>Slide {currentSlideIndex + 1} de {totalSlides}</span>
+                <span className="text-white/20">•</span>
+                <span className="uppercase text-slate-200">
+                  {activeSlide.period === 'manhã' ? 'Período da Manhã (1º & 3º Anos)' : 'Período da Tarde (2º Ano)'}
+                </span>
+                <span className="text-white/20">•</span>
+                <span>{activeSlide.allocations.length} Projetos</span>
               </span>
 
               {/* Nav buttons */}
@@ -708,8 +780,11 @@ export default function BoletimEP({
       )}
 
       {/* RENDER MODE: PRINT LAYOUT (A4 PORTRAIT) */}
-      {layoutMode === 'print' && activeAllocations.length > 0 && (
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6" id="boletim-print-section">
+      {activeAllocations.length > 0 && (
+        <div 
+          className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print' ? 'block' : 'hidden print:block'}`} 
+          id="boletim-print-section"
+        >
           
           <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium">
             <Info size={16} className="text-[#ff4545] shrink-0 mt-0.5" />
@@ -743,6 +818,15 @@ export default function BoletimEP({
               <p className="font-mono text-xs font-black text-slate-700 mt-2 uppercase tracking-wide">
                 Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
               </p>
+
+              <div className="mt-3 w-full max-w-md overflow-hidden rounded-lg border border-slate-100 shadow-xs">
+                <img 
+                  src={inteliCampusImg} 
+                  alt="Inteli Campus" 
+                  className="w-full h-44 object-cover hover:scale-102 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
               
               <div className="w-16 h-1 bg-[#ff4545] my-4"></div>
               
@@ -805,8 +889,7 @@ export default function BoletimEP({
                               </span>
                               <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
-                                  const str = String(b).toUpperCase();
-                                  return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
+                                  return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
                               </span>
                             </div>
@@ -902,8 +985,7 @@ export default function BoletimEP({
                               </span>
                               <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
-                                  const str = String(b).toUpperCase();
-                                  return str.startsWith('BLOCO') ? str : `BLOCO ${str}`;
+                                  return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
                               </span>
                             </div>
@@ -1043,18 +1125,19 @@ export default function BoletimEP({
             visibility: visible;
           }
           #boletim-print-section {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
             background: white !important;
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;
             margin: 0 !important;
           }
-          /* Eliminate alerts or switches from print */
-          .bg-amber-50, .flex.justify-between.items-center.gap-3, #boletim-ep-container > div:first-child, #boletim-ep-container > div:nth-child(2) {
+          /* Eliminate all outside UI chrome from print */
+          header, nav, #sub-header-bar, .flex.justify-between.items-center.gap-3, button, select {
             display: none !important;
           }
           * {

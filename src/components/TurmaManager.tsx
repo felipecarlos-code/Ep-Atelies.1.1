@@ -282,6 +282,7 @@ export default function TurmaManager({
   const [name, setName] = useState('');
   const [projectTitle, setProjectTitle] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [epDescricaoCurta, setEpDescricaoCurta] = useState('');
   const [dealstage, setDealstage] = useState('');
   const [partnerId, setPartnerId] = useState('');
   const [applicationYear, setApplicationYear] = useState('');
@@ -508,6 +509,7 @@ export default function TurmaManager({
     setName('');
     setProjectTitle('');
     setProjectDescription('');
+    setEpDescricaoCurta('');
     setDealstage('');
     setPartnerId('');
     setApplicationYear('');
@@ -533,6 +535,7 @@ export default function TurmaManager({
     setName(turma.name);
     setProjectTitle(turma.projectTitle || '');
     setProjectDescription(turma.projectDescription || turma.description || '');
+    setEpDescricaoCurta(turma.epDescricaoCurta || '');
     setDealstage(turma.dealstage || '');
     setPartnerId(turma.partnerId || '');
     setApplicationYear(turma.applicationYear || '');
@@ -573,6 +576,7 @@ export default function TurmaManager({
       projectTitle: projectTitle.trim(),
       projectDescription: trimmedDesc,
       description: trimmedDesc,
+      epDescricaoCurta: epDescricaoCurta.trim(),
       dealstage: dealstage.trim(),
       partnerId,
       applicationYear: applicationYear.trim(),
@@ -817,7 +821,7 @@ export default function TurmaManager({
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3.5 text-xs text-amber-800 flex items-start gap-2.5 shadow-3xs animate-fade-in">
               <Database size={16} className="text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">Negócio integrado com o HubSpot CRM.</span> As informações principais do negócio foram sincronizadas automaticamente e estão bloqueadas para edição local a fim de manter a consistência de dados. O Período Letivo e a Qtd de Alunos podem ser ajustados localmente.
+                <span className="font-bold">Negócio integrado com o HubSpot CRM.</span> As informações principais do negócio (incluindo Turno e Ateliês Associados) foram sincronizadas automaticamente e estão bloqueadas para edição local a fim de manter a consistência de dados. O Período Letivo (Ano/Trimestre/Sprint) e a Qtd de Alunos podem ser ajustados localmente.
               </div>
             </div>
           )}
@@ -1051,7 +1055,8 @@ export default function TurmaManager({
               <select
                 value={period}
                 onChange={(e) => setPeriod(e.target.value as any)}
-                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
+                disabled={isEditingFromHubspot}
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 <option value="">Selecione o Turno (Em branco)</option>
                 <option value="Manhã">Manhã</option>
@@ -1098,24 +1103,31 @@ export default function TurmaManager({
                     <button
                       key={a.id}
                       type="button"
+                      disabled={isEditingFromHubspot}
                       onClick={() => {
+                        if (isEditingFromHubspot) return;
                         if (isSelected) {
                           setEpAtelie(prev => prev.filter(id => id !== a.id));
                         } else {
                           setEpAtelie(prev => [...prev, a.id]);
                         }
                       }}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all text-left text-xs font-bold cursor-pointer select-none ${
-                        isSelected 
-                          ? 'bg-indigo-600/5 border-indigo-500 text-indigo-700 shadow-3xs' 
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                      className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all text-left text-xs font-bold select-none ${
+                        isEditingFromHubspot
+                          ? isSelected
+                            ? 'bg-indigo-50 border-indigo-300 text-indigo-700 opacity-90 cursor-not-allowed'
+                            : 'bg-slate-50 border-slate-200 text-slate-300 opacity-45 cursor-not-allowed'
+                          : isSelected 
+                            ? 'bg-indigo-600/5 border-indigo-500 text-indigo-700 shadow-3xs cursor-pointer' 
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 cursor-pointer'
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={isSelected}
+                        disabled={isEditingFromHubspot}
                         onChange={() => {}} // Handled by button click
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 pointer-events-none"
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 pointer-events-none disabled:opacity-50"
                       />
                       <div className="min-w-0">
                         <span className="block truncate leading-tight">{a.name}</span>
@@ -1130,10 +1142,26 @@ export default function TurmaManager({
             )}
           </div>
 
+          {/* [EP] Descrição Curta do Projeto */}
+          <div>
+            <label className="block text-[10px] font-extrabold text-indigo-600 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+              <span>[EP] Descrição Curta do Projeto (ep_descricao_curta_do_projeto)</span>
+              {isEditingFromHubspot && <span className="text-[8px] bg-amber-50 text-amber-700 px-1 rounded font-mono font-bold lowercase">HubSpot Sincronizado</span>}
+            </label>
+            <textarea
+              value={epDescricaoCurta}
+              onChange={(e) => setEpDescricaoCurta(e.target.value)}
+              disabled={isEditingFromHubspot}
+              placeholder="Descrição curta do projeto sincronizada do HubSpot..."
+              rows={2}
+              className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all resize-none font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed"
+            />
+          </div>
+
           {/* Descrição do Negócio */}
           <div>
             <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
-              Descrição do Negócio / Escopo do Desafio
+              Descrição Completa / Escopo do Desafio
             </label>
             <textarea
               value={projectDescription}
@@ -1391,9 +1419,18 @@ export default function TurmaManager({
                     )}
                   </div>
 
+                  {turma.epDescricaoCurta && (
+                    <div className="mt-4 pt-3 border-t border-slate-100">
+                      <span className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest block mb-1">[EP] Descrição Curta do Projeto:</span>
+                      <p className="text-xs text-slate-700 leading-normal font-semibold line-clamp-3" title={turma.epDescricaoCurta}>
+                        {turma.epDescricaoCurta}
+                      </p>
+                    </div>
+                  )}
+
                   {(turma.projectDescription || turma.description) && (
                     <div className="mt-4 pt-3 border-t border-slate-100">
-                      <span className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest block mb-1">Descrição do Escopo:</span>
+                      <span className="text-[9px] font-extrabold text-slate-500 uppercase tracking-widest block mb-1">Descrição Completa / Escopo:</span>
                       <p className="text-xs text-slate-500 leading-normal font-medium line-clamp-3" title={turma.projectDescription || turma.description}>
                         {turma.projectDescription || turma.description}
                       </p>
