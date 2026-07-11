@@ -1378,7 +1378,23 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             partners={partners}
             onSyncData={({ atelies: syncedAtelies, turmas: syncedTurmas, partners: syncedPartners }) => {
               setAtelies(syncedAtelies);
-              setTurmas(deduplicateArrayById(syncedTurmas));
+              
+              // Preservar propriedades locais editadas pelos usuários, especialmente studentCount
+              setTurmas((prevTurmas) => {
+                const merged = syncedTurmas.map((synced) => {
+                  const existing = prevTurmas.find((t) => t.id === synced.id);
+                  if (existing) {
+                    return {
+                      ...synced,
+                      // Preservar studentCount se ele existir localmente e o valor sincronizado não contiver um novo valor numérico válido
+                      studentCount: synced.studentCount !== undefined ? synced.studentCount : existing.studentCount,
+                    };
+                  }
+                  return synced;
+                });
+                return deduplicateArrayById(merged);
+              });
+
               setPartners(deduplicateArrayById(syncedPartners));
             }}
           />
