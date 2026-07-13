@@ -401,7 +401,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
     res.json({ url: googleAuthUrl });
   });
 
-  app.get(["/auth/google/callback", "/auth/google/callback/"], async (req, res) => {
+  app.get(["/auth/google/callback", "/auth/google/callback/", "/api/auth/google/callback", "/api/auth/google/callback/"], async (req, res) => {
     const { code, error } = req.query;
     
     if (error) {

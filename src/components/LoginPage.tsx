@@ -62,7 +62,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setLoading(true);
 
     try {
-      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      const redirectUri = `${window.location.origin}/api/auth/google/callback`;
       const res = await fetch(`/api/auth/google/url?redirect_uri=${encodeURIComponent(redirectUri)}`);
       
       if (!res.ok) {
@@ -215,7 +215,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 Esta ferramenta utiliza <strong>Google OAuth 2.0</strong>. Se for o administrador do Workspace, registre estas informações no seu Google Cloud Console:
               </p>
               <div className="bg-white border border-slate-200/60 rounded p-2 text-[10.5px] font-mono select-all overflow-x-auto break-all">
-                {window.location.origin}/auth/google/callback
+                {window.location.origin}/api/auth/google/callback
               </div>
               <p className="text-[10px] leading-tight text-slate-400">
                 Configure as variáveis <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">GOOGLE_CLIENT_ID</code> e <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">GOOGLE_CLIENT_SECRET</code> no seu painel de configurações.
