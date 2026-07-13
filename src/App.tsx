@@ -15,6 +15,7 @@ import HubSpotSync from './components/HubSpotSync';
 import BoletimEP from './components/BoletimEP';
 import UserManager from './components/UserManager';
 import LoginPage from './components/LoginPage';
+import NpsReport from './components/NpsReport';
 
 import { 
   CalendarRange, 
@@ -51,9 +52,11 @@ function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database' | 'users'>('sprints');
+  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database' | 'users' | 'nps_report'>('sprints');
   const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
   const [isMobileAdminDropdownOpen, setIsMobileAdminDropdownOpen] = useState(false);
+  const [isReportsDropdownOpen, setIsReportsDropdownOpen] = useState(false);
+  const [isMobileReportsDropdownOpen, setIsMobileReportsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   // Authentication & Access Control States
@@ -487,7 +490,7 @@ export default function App() {
         id: `user-admin-${Date.now()}`,
         name: currentUser.name,
         email: currentUser.email.toLowerCase(),
-        allowedTabs: ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users'],
+        allowedTabs: ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users', 'nps_report'],
         isAdmin: true
       };
       setUsers([firstAdmin]);
@@ -507,7 +510,7 @@ export default function App() {
   useEffect(() => {
     if (currentUser && currentUserReg) {
       if (!hasAccessToTab(activeTab)) {
-        const allowed = ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users']
+        const allowed = ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users', 'nps_report']
           .find(t => hasAccessToTab(t));
         if (allowed) {
           setActiveTab(allowed as any);
@@ -559,6 +562,50 @@ export default function App() {
       document.removeEventListener('mousedown', handleOutsideClickMobile);
     };
   }, [isMobileAdminDropdownOpen]);
+
+  // Handle click outside for Reports Dropdown
+  useEffect(() => {
+    const handleOutsideClickReports = (event: MouseEvent) => {
+      const reportsButton = document.getElementById('tab-reports');
+      const reportsMenu = document.getElementById('reports-dropdown-menu');
+      if (
+        reportsButton && 
+        !reportsButton.contains(event.target as Node) && 
+        (!reportsMenu || !reportsMenu.contains(event.target as Node))
+      ) {
+        setIsReportsDropdownOpen(false);
+      }
+    };
+
+    if (isReportsDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClickReports);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClickReports);
+    };
+  }, [isReportsDropdownOpen]);
+
+  // Handle click outside for Mobile Reports Dropdown
+  useEffect(() => {
+    const handleOutsideClickMobileReports = (event: MouseEvent) => {
+      const mobileReportsButton = document.getElementById('mobile-tab-reports');
+      const mobileReportsMenu = document.getElementById('mobile-reports-dropdown-menu');
+      if (
+        mobileReportsButton && 
+        !mobileReportsButton.contains(event.target as Node) && 
+        (!mobileReportsMenu || !mobileReportsMenu.contains(event.target as Node))
+      ) {
+        setIsMobileReportsDropdownOpen(false);
+      }
+    };
+
+    if (isMobileReportsDropdownOpen) {
+      document.addEventListener('mousedown', handleOutsideClickMobileReports);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClickMobileReports);
+    };
+  }, [isMobileReportsDropdownOpen]);
 
   // 2. Autosave to database on state change
   useEffect(() => {
@@ -1048,6 +1095,7 @@ export default function App() {
               onClick={() => {
                 setActiveTab('sprints');
                 setIsAdminDropdownOpen(false);
+                setIsReportsDropdownOpen(false);
               }}
               className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
                 activeTab === 'sprints'
@@ -1065,6 +1113,7 @@ export default function App() {
               onClick={() => {
                 setActiveTab('boletim');
                 setIsAdminDropdownOpen(false);
+                setIsReportsDropdownOpen(false);
               }}
               className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
                 activeTab === 'boletim'
@@ -1082,6 +1131,7 @@ export default function App() {
               onClick={() => {
                 setActiveTab('turmas');
                 setIsAdminDropdownOpen(false);
+                setIsReportsDropdownOpen(false);
               }}
               className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
                 activeTab === 'turmas'
@@ -1099,6 +1149,7 @@ export default function App() {
               onClick={() => {
                 setActiveTab('partners');
                 setIsAdminDropdownOpen(false);
+                setIsReportsDropdownOpen(false);
               }}
               className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
                 activeTab === 'partners'
@@ -1108,6 +1159,45 @@ export default function App() {
             >
               Parceiros
             </button>
+          )}
+
+          {hasAccessToTab('nps_report') && (
+            <div className="relative">
+              <button
+                id="tab-reports"
+                onClick={() => {
+                  setIsReportsDropdownOpen(!isReportsDropdownOpen);
+                  setIsAdminDropdownOpen(false);
+                }}
+                className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-1.5 ${
+                  ['nps_report'].includes(activeTab) || isReportsDropdownOpen
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+                }`}
+              >
+                <span>Relatórios</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isReportsDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isReportsDropdownOpen && (
+                <div 
+                  id="reports-dropdown-menu"
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 animate-fade-in border border-slate-200 overflow-hidden flex flex-col"
+                >
+                  <button
+                    onClick={() => {
+                      setActiveTab('nps_report');
+                      setIsReportsDropdownOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      activeTab === 'nps_report' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    NPS (Satisfação)
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Admin Dropdown tab matching deep teal color from diagram */}
@@ -1289,7 +1379,7 @@ export default function App() {
       {/* Mobile Tab Navigation */}
       <div 
         className={`bg-white border-b border-slate-200 flex xl:hidden py-2 px-4 gap-2 sticky top-16 z-20 shadow-2xs items-center ${
-          isMobileAdminDropdownOpen ? 'overflow-visible' : 'overflow-x-auto scrollbar-none'
+          isMobileAdminDropdownOpen || isMobileReportsDropdownOpen ? 'overflow-visible' : 'overflow-x-auto scrollbar-none'
         }`}
       >
         {hasAccessToTab('sprints') && (
@@ -1297,6 +1387,7 @@ export default function App() {
             onClick={() => {
               setActiveTab('sprints');
               setIsMobileAdminDropdownOpen(false);
+              setIsMobileReportsDropdownOpen(false);
             }}
             className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
               activeTab === 'sprints' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
@@ -1310,6 +1401,7 @@ export default function App() {
             onClick={() => {
               setActiveTab('boletim');
               setIsMobileAdminDropdownOpen(false);
+              setIsMobileReportsDropdownOpen(false);
             }}
             className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
               activeTab === 'boletim' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
@@ -1323,6 +1415,7 @@ export default function App() {
             onClick={() => {
               setActiveTab('turmas');
               setIsMobileAdminDropdownOpen(false);
+              setIsMobileReportsDropdownOpen(false);
             }}
             className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
               activeTab === 'turmas' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
@@ -1336,6 +1429,7 @@ export default function App() {
             onClick={() => {
               setActiveTab('partners');
               setIsMobileAdminDropdownOpen(false);
+              setIsMobileReportsDropdownOpen(false);
             }}
             className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
               activeTab === 'partners' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
@@ -1345,12 +1439,54 @@ export default function App() {
           </button>
         )}
 
+        {hasAccessToTab('nps_report') && (
+          <div className="relative shrink-0">
+            <button
+              id="mobile-tab-reports"
+              onClick={() => {
+                setIsMobileReportsDropdownOpen(!isMobileReportsDropdownOpen);
+                setIsMobileAdminDropdownOpen(false);
+              }}
+              className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider cursor-pointer flex items-center gap-1 border ${
+                ['nps_report'].includes(activeTab) || isMobileReportsDropdownOpen
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                  : 'border-transparent bg-slate-100 text-slate-600'
+              }`}
+            >
+              <span>Relatórios</span>
+              <ChevronDown size={10} className={`transition-transform duration-200 ${isMobileReportsDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isMobileReportsDropdownOpen && (
+              <div 
+                id="mobile-reports-dropdown-menu"
+                className="absolute right-0 mt-2 w-44 bg-white rounded shadow-lg z-50 animate-fade-in border border-slate-200 overflow-hidden flex flex-col"
+              >
+                <button
+                  onClick={() => {
+                    setActiveTab('nps_report');
+                    setIsMobileReportsDropdownOpen(false);
+                  }}
+                  className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                    activeTab === 'nps_report' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  NPS
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Mobile Admin Dropdown */}
         {(hasAccessToTab('atelies') || hasAccessToTab('hubspot') || hasAccessToTab('database') || hasAccessToTab('users')) && (
           <div className="relative shrink-0">
             <button
               id="mobile-tab-admin"
-              onClick={() => setIsMobileAdminDropdownOpen(!isMobileAdminDropdownOpen)}
+              onClick={() => {
+                setIsMobileAdminDropdownOpen(!isMobileAdminDropdownOpen);
+                setIsMobileReportsDropdownOpen(false);
+              }}
               className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider cursor-pointer flex items-center gap-1 border ${
                 ['atelies', 'hubspot', 'database', 'users'].includes(activeTab) || isMobileAdminDropdownOpen
                   ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
@@ -1951,6 +2087,14 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             onUpdateUser={handleUpdateUser}
             onDeleteUser={handleDeleteUser}
             currentUserEmail={currentUser ? currentUser.email : null}
+          />
+        )}
+
+        {activeTab === 'nps_report' && (
+          <NpsReport
+            turmas={turmas}
+            partners={partners}
+            atelies={atelies}
           />
         )}
       </main>

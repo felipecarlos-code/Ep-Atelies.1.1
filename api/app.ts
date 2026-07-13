@@ -276,6 +276,145 @@ export function createExpressApp() {
     return res.status(200).json({ success: false, error: "Database not configured.", diagnostics });
   });
 
+  // Dynamic NPS analysis and AI report suggestions endpoint
+  app.post("/api/nps/analyze", async (req, res) => {
+    res.setHeader("Connection", "close");
+    const { turmas = [], partners = [], atelies = [] } = req.body;
+
+    // 1. Process data locally for statistics and fallback
+    const parsedTurmas = turmas.map((t: any) => {
+      let npsVal: number | null = null;
+      if (t.epNps) {
+        const clean = String(t.epNps).replace("%", "").trim();
+        const parsed = parseFloat(clean);
+        if (!isNaN(parsed)) {
+          npsVal = parsed;
+        }
+      }
+      return {
+        ...t,
+        npsNumeric: npsVal
+      };
+    });
+
+    const activeNpsTurmas = parsedTurmas.filter((t: any) => t.npsNumeric !== null);
+    
+    // Stats computation
+    let overallNps = 0;
+    if (activeNpsTurmas.length > 0) {
+      overallNps = activeNpsTurmas.reduce((sum: number, t: any) => sum + t.npsNumeric!, 0) / activeNpsTurmas.length;
+    }
+
+    // Group by Course
+    const courseStats: Record<string, { sum: number; count: number; avg: number }> = {};
+    // Group by Partner
+    const partnerStats: Record<string, { name: string; sum: number; count: number; avg: number }> = {};
+    
+    // Build partner lookup
+    const partnerMap = new Map<string, string>(partners.map((p: any) => [p.id as string, p.name as string]));
+
+    activeNpsTurmas.forEach((t: any) => {
+      // Course
+      const courseName = t.course || "Não Especificado";
+      if (!courseStats[courseName]) {
+        courseStats[courseName] = { sum: 0, count: 0, avg: 0 };
+      }
+      courseStats[courseName].sum += t.npsNumeric!;
+      courseStats[courseName].count += 1;
+
+      // Partner
+      if (t.partnerId) {
+        const pName = partnerMap.get(t.partnerId) || "Parceiro Desconhecido";
+        if (!partnerStats[t.partnerId]) {
+          partnerStats[t.partnerId] = { name: pName, sum: 0, count: 0, avg: 0 };
+        }
+        partnerStats[t.partnerId].sum += t.npsNumeric!;
+        partnerStats[t.partnerId].count += 1;
+      }
+    });
+
+    // Finalize averages
+    Object.keys(courseStats).forEach(c => {
+      courseStats[c].avg = Math.round((courseStats[c].sum / courseStats[c].count) * 10) / 10;
+    });
+    Object.keys(partnerStats).forEach(pId => {
+      partnerStats[pId].avg = Math.round((partnerStats[pId].sum / partnerStats[pId].count) * 10) / 10;
+    });
+
+    // Format local fallback
+    const courseStatsList = Object.entries(courseStats).map(([course, stats]) => `- **${course}**: Média NPS de ${stats.avg} (${stats.count} projeto(s))`);
+    const partnerStatsList = Object.entries(partnerStats).map(([_, stats]) => `- **${stats.name}**: Média NPS de ${stats.avg} (${stats.count} projeto(s))`);
+    
+    const localAnalysis = `### Resumo Executivo (Análise Local)
+Atualmente, temos **${activeNpsTurmas.length}** negócios com notas de NPS registradas, de um total de **${turmas.length}** turmas.
+
+- **NPS Geral Médio**: ${activeNpsTurmas.length > 0 ? overallNps.toFixed(1) : "N/A"}
+- **Desempenho por Curso**:
+${courseStatsList.length > 0 ? courseStatsList.join("\n") : "  *Nenhum dado por curso disponível.*"}
+
+- **Desempenho por Parceiro**:
+${partnerStatsList.length > 0 ? partnerStatsList.join("\n") : "  *Nenhum dado por parceiro disponível.*"}
+
+### Sugestão de Relatório Estratégico
+Como coordenador, para potencializar os resultados de NPS dos projetos do Inteli, sugerimos a criação e acompanhamento de dois novos painéis estruturados de relatórios:
+1. **Painel de Alinhamento de Expectativas com Parceiros**:
+   - Cruza a nota de NPS final com os feedbacks intermediários coletados nas Sprints.
+   - Identifica desvios de escopo precocemente (Sprint 2/3) antes do encerramento.
+2. **Relatório de Correlação Ateliê vs. NPS**:
+   - Analisa quais Ateliês físicos (ou metodologias) geram os maiores índices de promotores de satisfação.
+   - Permite replicar boas práticas de infraestrutura e mentoria entre turmas.`;
+
+    // 2. Try Gemini if available
+    if (aiClient) {
+      try {
+        const prompt = `Você é um Analista de Dados e Coordenador Acadêmico sênior do Inteli (Instituto de Tecnologia e Liderança).
+Analise o seguinte conjunto de dados de NPS (Net Promoter Score) de projetos acadêmicos desenvolvidos em parceria com empresas do mercado.
+
+DADOS DA PLATAFORMA:
+- NPS Médio Geral: ${overallNps.toFixed(1)}
+- Número de Projetos com NPS: ${activeNpsTurmas.length} de ${turmas.length}
+- Distribuição por Curso: ${JSON.stringify(courseStats)}
+- Distribuição por Parceiro: ${JSON.stringify(partnerStats)}
+
+PROJETOS RELEVANTES:
+${activeNpsTurmas.map((t: any) => `- Projeto "${t.projectTitle || t.name}" | Curso: ${t.course} | Parceiro: ${partnerMap.get(t.partnerId) || "Não informado"} | NPS: ${t.epNps}`).join("\n")}
+
+Com base nesses dados, gere um relatório executivo de altíssimo nível em Markdown (em português brasileiro), estruturado da seguinte forma:
+
+1. **Análise Executiva do NPS**: Um diagnóstico aprofundado e perspicaz dos dados apresentados. Discuta a média geral, destaque os cursos ou parceiros com maior engajamento e explique o que isso indica sobre as entregas dos alunos.
+2. **Destaques de Sucesso (Promotores)**: Identifique de 1 a 3 projetos/parceiros que são os grandes "Promotores" de satisfação deste ciclo e por que essa relação funcionou tão bem.
+3. **Pontos de Atenção e Riscos (Detratores/Passivos)**: Aponte quais cursos ou parceiros correm risco de insatisfação ou estão abaixo da meta ideal (idealmente NPS acima de 70 ou 75).
+4. **💡 SUGESTÃO DE NOVO RELATÓRIO**: Faça uma recomendação inovadora e extremamente prática de um *novo tipo de relatório ou cruzamento de dados* que a plataforma deveria oferecer no futuro para ajudar a coordenação a prever notas de NPS baixas ou identificar problemas de relacionamento antes do fim do semestre.
+5. **Plano de Ação Sugerido**: Liste 3 ações imediatas, práticas e claras para a coordenação acadêmica aplicar junto às equipes de alunos ou com as empresas parceiras.
+
+Mantenha o tom profissional, encorajador, focado em dados e soluções estratégicas. Não use cabeçalhos h1 (use h2 e h3 para encaixar bem no layout).`;
+
+        const response = await aiClient.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: prompt,
+        });
+
+        const text = response.text;
+        if (text) {
+          return res.json({
+            success: true,
+            analysis: text,
+            isAi: true
+          });
+        }
+      } catch (err: any) {
+        console.error("[Gemini API Error] Failed to generate NPS analysis:", err);
+      }
+    }
+
+    // Return local fallback if no AI or if AI failed
+    return res.json({
+      success: true,
+      analysis: localAnalysis,
+      isAi: false
+    });
+  });
+
   // Proxy endpoint to search for brand logos and domains via Clearbit Autocomplete and Gemini Fallback
   app.get("/api/logo/search", async (req, res) => {
     const query = req.query.query;
