@@ -66,3 +66,12 @@ export const PRESET_COLORS = [
   { name: 'Orange', value: '#f97316', bg: 'bg-orange-50 border-orange-200 text-orange-700', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-800' },
   { name: 'Teal', value: '#14b8a6', bg: 'bg-teal-50 border-teal-200 text-teal-700', text: 'text-teal-700', badge: 'bg-teal-100 text-teal-800' },
 ];
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  allowedTabs: string[]; // List of tabs the user can access
+  isAdmin: boolean;      // Admin user can configure others
+}
+

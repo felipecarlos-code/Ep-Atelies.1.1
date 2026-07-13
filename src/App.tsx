@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-import { Atelie, Turma, Partner, AllocationRow, PhaseKey } from './types';
+import { Atelie, Turma, Partner, AllocationRow, PhaseKey, AppUser } from './types';
 import { 
   DEFAULT_ATELIES, 
   DEFAULT_TURMAS, 
@@ -13,6 +13,8 @@ import TurmaManager from './components/TurmaManager';
 import PartnerManager from './components/PartnerManager';
 import HubSpotSync from './components/HubSpotSync';
 import BoletimEP from './components/BoletimEP';
+import UserManager from './components/UserManager';
+import LoginPage from './components/LoginPage';
 
 import { 
   CalendarRange, 
@@ -33,7 +35,8 @@ import {
   XCircle,
   ExternalLink,
   Copy,
-  ChevronDown
+  ChevronDown,
+  ShieldAlert
 } from 'lucide-react';
 
 function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
@@ -48,9 +51,21 @@ function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database'>('sprints');
+  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database' | 'users'>('sprints');
   const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
   const [isMobileAdminDropdownOpen, setIsMobileAdminDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+
+  // Authentication & Access Control States
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string; picture?: string } | null>(() => {
+    const saved = localStorage.getItem('logged_in_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const [users, setUsers] = useState<AppUser[]>(() => {
+    const saved = localStorage.getItem('app_users_data');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   const renderInteliLogo = () => {
     return (
@@ -308,7 +323,8 @@ export default function App() {
             schedules: dbSchedules, 
             selectedYear: dbYear, 
             selectedQuarter: dbQuarter,
-            sprintDates: dbSprintDates
+            sprintDates: dbSprintDates,
+            users: dbUsers
           } = resData.data;
           if (dbAtelies) setAtelies(dbAtelies);
           if (dbTurmas) setTurmas(deduplicateArrayById(dbTurmas));
@@ -317,6 +333,10 @@ export default function App() {
           if (dbYear) setSelectedYear(dbYear);
           if (dbQuarter) setSelectedQuarter(dbQuarter);
           if (dbSprintDates) setSprintDates(dbSprintDates);
+          if (dbUsers) {
+            setUsers(dbUsers);
+            localStorage.setItem('app_users_data', JSON.stringify(dbUsers));
+          }
         }
         return { success: true, message: "Conectado com sucesso!" };
       } else {
@@ -422,6 +442,80 @@ export default function App() {
     localStorage.setItem('sprint_dates_data', JSON.stringify(sprintDates));
   }, [sprintDates]);
 
+  // Sync users list to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('app_users_data', JSON.stringify(users));
+  }, [users]);
+
+  // Auth & User Management Handlers
+  const handleAddUser = (user: Omit<AppUser, 'id'>) => {
+    const newUser: AppUser = {
+      ...user,
+      id: `user-${Date.now()}`
+    };
+    setUsers([...users, newUser]);
+  };
+
+  const handleUpdateUser = (updatedUser: AppUser) => {
+    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+  };
+
+  const handleDeleteUser = (id: string) => {
+    setUsers(users.filter(u => u.id !== id));
+  };
+
+  const handleLoginSuccess = (user: { name: string; email: string; picture?: string }) => {
+    setCurrentUser(user);
+    localStorage.setItem('logged_in_user', JSON.stringify(user));
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('logged_in_user');
+    setActiveTab('sprints');
+  };
+
+  // Find current logged-in user in registered list
+  const currentUserReg = currentUser 
+    ? users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase())
+    : null;
+
+  // Auto-seed first user if list is empty, making them Super Admin
+  useEffect(() => {
+    if (currentUser && users.length === 0) {
+      const firstAdmin: AppUser = {
+        id: `user-admin-${Date.now()}`,
+        name: currentUser.name,
+        email: currentUser.email.toLowerCase(),
+        allowedTabs: ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users'],
+        isAdmin: true
+      };
+      setUsers([firstAdmin]);
+    }
+  }, [currentUser, users.length]);
+
+  // Access Control Policy Checker
+  const hasAccessToTab = (tab: string): boolean => {
+    if (!currentUser) return false;
+    if (users.length === 0) return true; // Empty database bypass during seeding
+    if (!currentUserReg) return false;
+    if (currentUserReg.isAdmin) return true;
+    return currentUserReg.allowedTabs?.includes(tab) || false;
+  };
+
+  // Redirect users if they navigate to an unauthorized tab
+  useEffect(() => {
+    if (currentUser && currentUserReg) {
+      if (!hasAccessToTab(activeTab)) {
+        const allowed = ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users']
+          .find(t => hasAccessToTab(t));
+        if (allowed) {
+          setActiveTab(allowed as any);
+        }
+      }
+    }
+  }, [activeTab, currentUser, currentUserReg]);
+
   // Handle click outside for Admin Dropdown
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -483,7 +577,8 @@ export default function App() {
             schedules, 
             selectedYear, 
             selectedQuarter,
-            sprintDates
+            sprintDates,
+            users
           })
         });
         
@@ -514,7 +609,7 @@ export default function App() {
     }, 1000); // 1-second debounce
 
     return () => clearTimeout(delayDebounceFn);
-  }, [atelies, turmas, partners, schedules, selectedYear, selectedQuarter, sprintDates, initialLoadDone, isDbConfigured, dbWarning]);
+  }, [atelies, turmas, partners, schedules, selectedYear, selectedQuarter, sprintDates, users, initialLoadDone, isDbConfigured, dbWarning]);
 
   const [syncToast, setSyncToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
@@ -532,7 +627,8 @@ export default function App() {
           schedules, 
           selectedYear, 
           selectedQuarter,
-          sprintDates
+          sprintDates,
+          users
         })
       });
       
@@ -893,6 +989,46 @@ export default function App() {
     }
   };
 
+  // 1. Unauthenticated view -> Render LoginPage
+  if (!currentUser) {
+    return (
+      <LoginPage 
+        onLoginSuccess={handleLoginSuccess}
+        currentUserEmail={null}
+      />
+    );
+  }
+
+  // 2. Authenticated but not registered whitelisted user -> Render Access Denied View
+  if (users.length > 0 && !currentUserReg) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-6 shadow-sm">
+          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto">
+            <ShieldAlert size={32} />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-slate-800">Acesso Não Autorizado</h2>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Sua conta Google (<strong className="text-slate-700">{currentUser.email}</strong>) não está cadastrada nesta plataforma.
+            </p>
+            <p className="text-xs text-slate-400">
+              Por favor, solicite ao administrador da coordenação que cadastre seu e-mail no Controle de Acessos.
+            </p>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full bg-slate-800 hover:bg-slate-950 text-white font-bold text-xs uppercase tracking-wider py-2.5 rounded-lg transition-all cursor-pointer"
+          >
+            Fazer Logout / Trocar de Conta
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 antialiased font-sans flex flex-col">
       
@@ -906,122 +1042,153 @@ export default function App() {
 
         {/* Tab Navigation directly in Header for clean Geometric layout */}
         <nav className="hidden xl:flex gap-2 items-center" id="header-nav">
-          <button
-            id="tab-sprints"
-            onClick={() => {
-              setActiveTab('sprints');
-              setIsAdminDropdownOpen(false);
-            }}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
-              activeTab === 'sprints'
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-          >
-            Sprints
-          </button>
-
-          <button
-            id="tab-boletim"
-            onClick={() => {
-              setActiveTab('boletim');
-              setIsAdminDropdownOpen(false);
-            }}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
-              activeTab === 'boletim'
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-          >
-            Boletim EP
-          </button>
-
-          <button
-            id="tab-turmas"
-            onClick={() => {
-              setActiveTab('turmas');
-              setIsAdminDropdownOpen(false);
-            }}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
-              activeTab === 'turmas'
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-          >
-            Negócios
-          </button>
-
-          <button
-            id="tab-partners"
-            onClick={() => {
-              setActiveTab('partners');
-              setIsAdminDropdownOpen(false);
-            }}
-            className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
-              activeTab === 'partners'
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-          >
-            Parceiros
-          </button>
-
-          {/* Admin Dropdown tab matching deep teal color from diagram */}
-          <div className="relative">
+          {hasAccessToTab('sprints') && (
             <button
-              id="tab-admin"
-              onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
-              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-1.5 ${
-                ['atelies', 'hubspot', 'database'].includes(activeTab) || isAdminDropdownOpen
-                  ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
+              id="tab-sprints"
+              onClick={() => {
+                setActiveTab('sprints');
+                setIsAdminDropdownOpen(false);
+              }}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                activeTab === 'sprints'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
                   : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
               }`}
             >
-              <span>Admin</span>
-              <ChevronDown size={14} className={`transition-transform duration-200 ${isAdminDropdownOpen ? 'rotate-180' : ''}`} />
+              Sprints
             </button>
+          )}
 
-            {isAdminDropdownOpen && (
-              <div 
-                id="admin-dropdown-menu"
-                className="absolute right-0 mt-2 w-56 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
+          {hasAccessToTab('boletim') && (
+            <button
+              id="tab-boletim"
+              onClick={() => {
+                setActiveTab('boletim');
+                setIsAdminDropdownOpen(false);
+              }}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                activeTab === 'boletim'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              Boletim EP
+            </button>
+          )}
+
+          {hasAccessToTab('turmas') && (
+            <button
+              id="tab-turmas"
+              onClick={() => {
+                setActiveTab('turmas');
+                setIsAdminDropdownOpen(false);
+              }}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                activeTab === 'turmas'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              Negócios
+            </button>
+          )}
+
+          {hasAccessToTab('partners') && (
+            <button
+              id="tab-partners"
+              onClick={() => {
+                setActiveTab('partners');
+                setIsAdminDropdownOpen(false);
+              }}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                activeTab === 'partners'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              Parceiros
+            </button>
+          )}
+
+          {/* Admin Dropdown tab matching deep teal color from diagram */}
+          {(hasAccessToTab('atelies') || hasAccessToTab('hubspot') || hasAccessToTab('database') || hasAccessToTab('users')) && (
+            <div className="relative">
+              <button
+                id="tab-admin"
+                onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
+                className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border flex items-center gap-1.5 ${
+                  ['atelies', 'hubspot', 'database', 'users'].includes(activeTab) || isAdminDropdownOpen
+                    ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
+                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+                }`}
               >
-                <button
-                  onClick={() => {
-                    setActiveTab('atelies');
-                    setIsAdminDropdownOpen(false);
-                  }}
-                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
-                    activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                  }`}
+                <span>Admin</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isAdminDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isAdminDropdownOpen && (
+                <div 
+                  id="admin-dropdown-menu"
+                  className="absolute right-0 mt-2 w-56 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
                 >
-                  Cadastro de Ateliê
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('hubspot');
-                    setIsAdminDropdownOpen(false);
-                  }}
-                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
-                    activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                  }`}
-                >
-                  Conexão CRM
-                </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('database');
-                    setIsAdminDropdownOpen(false);
-                  }}
-                  className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                    activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                  }`}
-                >
-                  Conexão de banco de dados
-                </button>
-              </div>
-            )}
-          </div>
+                  {hasAccessToTab('atelies') && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('atelies');
+                        setIsAdminDropdownOpen(false);
+                      }}
+                      className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                        activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                      }`}
+                    >
+                      Cadastro de Ateliê
+                    </button>
+                  )}
+                  {hasAccessToTab('hubspot') && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('hubspot');
+                        setIsAdminDropdownOpen(false);
+                      }}
+                      className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                        activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                      }`}
+                    >
+                      Conexão CRM
+                    </button>
+                  )}
+                  {hasAccessToTab('database') && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('database');
+                        setIsAdminDropdownOpen(false);
+                      }}
+                      className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                        hasAccessToTab('users') ? 'border-b border-[#145d70]' : ''
+                      } ${
+                        activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                      }`}
+                    >
+                      Conexão de banco de dados
+                    </button>
+                  )}
+                  {hasAccessToTab('users') && (
+                    <button
+                      onClick={() => {
+                        setActiveTab('users');
+                        setIsAdminDropdownOpen(false);
+                      }}
+                      className={`w-full text-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                        activeTab === 'users' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                      }`}
+                    >
+                      Controle de Acessos
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* Database & Cloud Sync + Coordinator Profile */}
@@ -1048,14 +1215,73 @@ export default function App() {
           </button>
 
           {/* Admin Coordinator Profile Badge */}
-          <div className="flex items-center gap-3 border-l border-slate-200 pl-4 h-9">
-            <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest leading-none">Admin</p>
-              <p className="text-xs font-semibold text-slate-700">Coordenação Geral</p>
-            </div>
-            <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-full border-2 border-white shadow-xs flex items-center justify-center font-bold text-sm select-none">
-              CG
-            </div>
+          <div className="relative flex items-center pl-4 border-l border-slate-200">
+            <button
+              onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+              className="flex items-center gap-3 h-9 text-left cursor-pointer group focus:outline-none"
+              title="Menu do Usuário"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-[9px] font-extrabold text-indigo-600 uppercase tracking-widest leading-none">
+                  {currentUserReg?.isAdmin ? 'ADMINISTRADOR' : 'MEMBRO'}
+                </p>
+                <p className="text-xs font-bold text-slate-700 leading-tight group-hover:text-indigo-600 transition-colors">
+                  {currentUser.name}
+                </p>
+              </div>
+              {currentUser.picture ? (
+                <img 
+                  src={currentUser.picture} 
+                  alt={currentUser.name}
+                  className="w-9 h-9 rounded-full border border-slate-200 group-hover:border-indigo-400 transition-colors object-cover shadow-2xs"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-indigo-100 text-indigo-700 rounded-full border border-indigo-200 shadow-2xs flex items-center justify-center font-bold text-sm select-none uppercase">
+                  {currentUser.name.slice(0, 2)}
+                </div>
+              )}
+            </button>
+
+            {isProfileDropdownOpen && (
+              <div 
+                className="absolute right-0 top-11 w-64 bg-white rounded-xl shadow-lg border border-slate-200 p-4 z-50 animate-fade-in flex flex-col space-y-3"
+                onMouseLeave={() => setIsProfileDropdownOpen(false)}
+              >
+                <div className="border-b border-slate-100 pb-2.5">
+                  <span className="text-xs font-bold text-slate-800 block truncate">{currentUser.name}</span>
+                  <span className="text-[11px] text-slate-400 block truncate">{currentUser.email}</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Acessos Disponíveis:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {currentUserReg?.isAdmin ? (
+                      <span className="bg-[#0f4c5c]/10 text-[#0f4c5c] text-[9.5px] font-bold px-1.5 py-0.5 rounded">
+                        Acesso Total (Admin)
+                      </span>
+                    ) : currentUserReg?.allowedTabs && currentUserReg.allowedTabs.length > 0 ? (
+                      currentUserReg.allowedTabs.map(tab => (
+                        <span key={tab} className="bg-slate-100 text-slate-600 text-[9px] font-medium px-1 py-0.5 rounded uppercase">
+                          {tab}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="bg-rose-50 text-rose-600 text-[9.5px] font-bold px-1.5 py-0.5 rounded">
+                        Sem abas liberadas
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] uppercase tracking-wider py-2 rounded-lg transition-all cursor-pointer border border-rose-100 text-center flex items-center justify-center gap-1"
+                >
+                  Sair da Conta
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -1066,107 +1292,138 @@ export default function App() {
           isMobileAdminDropdownOpen ? 'overflow-visible' : 'overflow-x-auto scrollbar-none'
         }`}
       >
-        <button
-          onClick={() => {
-            setActiveTab('sprints');
-            setIsMobileAdminDropdownOpen(false);
-          }}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
-            activeTab === 'sprints' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          Sprints
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('boletim');
-            setIsMobileAdminDropdownOpen(false);
-          }}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
-            activeTab === 'boletim' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          Boletim EP
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('turmas');
-            setIsMobileAdminDropdownOpen(false);
-          }}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
-            activeTab === 'turmas' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          Negócios
-        </button>
-         <button
-          onClick={() => {
-            setActiveTab('partners');
-            setIsMobileAdminDropdownOpen(false);
-          }}
-          className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
-            activeTab === 'partners' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
-          }`}
-        >
-          Parceiros
-        </button>
-
-        {/* Mobile Admin Dropdown */}
-        <div className="relative shrink-0">
+        {hasAccessToTab('sprints') && (
           <button
-            id="mobile-tab-admin"
-            onClick={() => setIsMobileAdminDropdownOpen(!isMobileAdminDropdownOpen)}
-            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider cursor-pointer flex items-center gap-1 border ${
-              ['atelies', 'hubspot', 'database'].includes(activeTab) || isMobileAdminDropdownOpen
-                ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
-                : 'border-transparent bg-slate-100 text-slate-600'
+            onClick={() => {
+              setActiveTab('sprints');
+              setIsMobileAdminDropdownOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
+              activeTab === 'sprints' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
             }`}
           >
-            <span>Admin</span>
-            <ChevronDown size={10} className={`transition-transform duration-200 ${isMobileAdminDropdownOpen ? 'rotate-180' : ''}`} />
+            Sprints
           </button>
+        )}
+        {hasAccessToTab('boletim') && (
+          <button
+            onClick={() => {
+              setActiveTab('boletim');
+              setIsMobileAdminDropdownOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
+              activeTab === 'boletim' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            Boletim EP
+          </button>
+        )}
+        {hasAccessToTab('turmas') && (
+          <button
+            onClick={() => {
+              setActiveTab('turmas');
+              setIsMobileAdminDropdownOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
+              activeTab === 'turmas' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            Negócios
+          </button>
+        )}
+        {hasAccessToTab('partners') && (
+          <button
+            onClick={() => {
+              setActiveTab('partners');
+              setIsMobileAdminDropdownOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
+              activeTab === 'partners' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            Parceiros
+          </button>
+        )}
 
-          {isMobileAdminDropdownOpen && (
-            <div 
-              id="mobile-admin-dropdown-menu"
-              className="absolute right-0 mt-2 w-52 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
+        {/* Mobile Admin Dropdown */}
+        {(hasAccessToTab('atelies') || hasAccessToTab('hubspot') || hasAccessToTab('database') || hasAccessToTab('users')) && (
+          <div className="relative shrink-0">
+            <button
+              id="mobile-tab-admin"
+              onClick={() => setIsMobileAdminDropdownOpen(!isMobileAdminDropdownOpen)}
+              className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider cursor-pointer flex items-center gap-1 border ${
+                ['atelies', 'hubspot', 'database', 'users'].includes(activeTab) || isMobileAdminDropdownOpen
+                  ? 'bg-[#0f4c5c] text-white border-[#0f4c5c] shadow-xs'
+                  : 'border-transparent bg-slate-100 text-slate-600'
+              }`}
             >
-              <button
-                onClick={() => {
-                  setActiveTab('atelies');
-                  setIsMobileAdminDropdownOpen(false);
-                }}
-                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
-                  activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                }`}
+              <span>Admin</span>
+              <ChevronDown size={10} className={`transition-transform duration-200 ${isMobileAdminDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isMobileAdminDropdownOpen && (
+              <div 
+                id="mobile-admin-dropdown-menu"
+                className="absolute right-0 mt-2 w-52 bg-[#0f4c5c] rounded shadow-lg z-50 animate-fade-in border border-[#0b3a47] overflow-hidden flex flex-col"
               >
-                Cadastro de Ateliê
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('hubspot');
-                  setIsMobileAdminDropdownOpen(false);
-                }}
-                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
-                  activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                }`}
-              >
-                Conexão CRM
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab('database');
-                  setIsMobileAdminDropdownOpen(false);
-                }}
-                className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                  activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
-                }`}
-              >
-                Conexão de banco de dados
-              </button>
-            </div>
-          )}
-        </div>
+                {hasAccessToTab('atelies') && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('atelies');
+                      setIsMobileAdminDropdownOpen(false);
+                    }}
+                    className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                      activeTab === 'atelies' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                    }`}
+                  >
+                    Cadastro de Ateliê
+                  </button>
+                )}
+                {hasAccessToTab('hubspot') && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('hubspot');
+                      setIsMobileAdminDropdownOpen(false);
+                    }}
+                    className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer border-b border-[#145d70] ${
+                      activeTab === 'hubspot' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                    }`}
+                  >
+                    Conexão CRM
+                  </button>
+                )}
+                {hasAccessToTab('database') && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('database');
+                      setIsMobileAdminDropdownOpen(false);
+                    }}
+                    className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      hasAccessToTab('users') ? 'border-b border-[#145d70]' : ''
+                    } ${
+                      activeTab === 'database' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                    }`}
+                  >
+                    Conexão de banco de dados
+                  </button>
+                )}
+                {hasAccessToTab('users') && (
+                  <button
+                    onClick={() => {
+                      setActiveTab('users');
+                      setIsMobileAdminDropdownOpen(false);
+                    }}
+                    className={`w-full text-center px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      activeTab === 'users' ? 'bg-[#155e75] text-white' : 'text-[#e2f1f5] hover:bg-[#155e75]/60 hover:text-white'
+                    }`}
+                  >
+                    Controle de Acessos
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sub-Header / Tool Bar matching Geometric Balance */}
@@ -1685,6 +1942,16 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
 
             </div>
           </div>
+        )}
+
+        {activeTab === 'users' && (
+          <UserManager
+            users={users}
+            onAddUser={handleAddUser}
+            onUpdateUser={handleUpdateUser}
+            onDeleteUser={handleDeleteUser}
+            currentUserEmail={currentUser ? currentUser.email : null}
+          />
         )}
       </main>
 

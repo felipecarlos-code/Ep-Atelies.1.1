@@ -370,6 +370,150 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
     res.json({ success: true, data: suggestions });
   });
 
+  // Google OAuth Authentication Endpoints
+  app.get("/api/auth/google/status", (req, res) => {
+    res.json({
+      configured: !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID || null
+    });
+  });
+
+  app.get("/api/auth/google/url", (req, res) => {
+    const client_id = process.env.GOOGLE_CLIENT_ID || "";
+    const redirect_uri = req.query.redirect_uri as string;
+
+    if (!client_id) {
+      return res.status(400).json({ error: "GOOGLE_CLIENT_ID não está configurado no servidor (.env)." });
+    }
+    if (!redirect_uri) {
+      return res.status(400).json({ error: "redirect_uri é obrigatório." });
+    }
+
+    const params = new URLSearchParams({
+      client_id,
+      redirect_uri,
+      response_type: "code",
+      scope: "openid email profile",
+      prompt: "consent",
+    });
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+    res.json({ url: googleAuthUrl });
+  });
+
+  app.get(["/auth/google/callback", "/auth/google/callback/"], async (req, res) => {
+    const { code, error } = req.query;
+    
+    if (error) {
+      return res.send(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error: "${error}" }, '*');
+                window.close();
+              } else {
+                window.location.href = '/';
+              }
+            </script>
+            <p>Erro na autenticação: ${error}</p>
+          </body>
+        </html>
+      `);
+    }
+
+    if (!code) {
+      return res.status(400).send("Código de autenticação ausente.");
+    }
+
+    const client_id = process.env.GOOGLE_CLIENT_ID || "";
+    const client_secret = process.env.GOOGLE_CLIENT_SECRET || "";
+    
+    // Build redirect_uri dynamically based on the current request
+    const protocol = req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const host = req.headers["x-forwarded-host"] || req.headers.host;
+    const redirect_uri = `${protocol}://${host}${req.path}`;
+    
+    try {
+      // Exchange code for tokens
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code: code as string,
+          client_id,
+          client_secret,
+          redirect_uri,
+          grant_type: "authorization_code"
+        })
+      });
+
+      if (!tokenRes.ok) {
+        const errorText = await tokenRes.text();
+        throw new Error(`Google token exchange failed: ${errorText}`);
+      }
+
+      const tokens = await tokenRes.json();
+      const accessToken = tokens.access_token;
+
+      // Fetch user profile from Google UserInfo endpoint
+      const userProfileRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!userProfileRes.ok) {
+        throw new Error(`Failed to fetch user profile from Google: ${userProfileRes.statusText}`);
+      }
+
+      const userProfile = await userProfileRes.json();
+      
+      const safeName = String(userProfile.name || "").replace(/"/g, '\\"');
+      const safeEmail = String(userProfile.email || "").replace(/"/g, '\\"');
+      const safePicture = String(userProfile.picture || "").replace(/"/g, '\\"');
+
+      res.send(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ 
+                  type: 'GOOGLE_AUTH_SUCCESS', 
+                  user: {
+                    name: "${safeName}",
+                    email: "${safeEmail}",
+                    picture: "${safePicture}"
+                  }
+                }, '*');
+                window.close();
+              } else {
+                window.location.href = '/';
+              }
+            </script>
+            <p>Autenticado com sucesso. Esta janela fechará automaticamente...</p>
+          </body>
+        </html>
+      `);
+    } catch (err: any) {
+      console.error("Erro no callback do Google OAuth:", err);
+      const safeError = String(err.message || err).replace(/"/g, '\\"');
+      res.send(`
+        <html>
+          <body>
+            <script>
+              if (window.opener) {
+                window.opener.postMessage({ type: 'GOOGLE_AUTH_FAILURE', error: "${safeError}" }, '*');
+                window.close();
+              } else {
+                window.location.href = '/';
+              }
+            </script>
+            <p>Erro ao processar login: ${safeError}</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
   // Helper to resolve HubSpot Access Token
   const getHubSpotToken = (req: express.Request): string | undefined => {
     const headerToken = req.headers["x-hubspot-token"];
