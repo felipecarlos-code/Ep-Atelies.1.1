@@ -37,9 +37,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   // Listen for message events from the OAuth Popup window
   useEffect(() => {
     const handleOAuthMessage = (event: MessageEvent) => {
-      // Security check: validate origin matches standard app domain or localhost
+      // Security check: validate origin matches standard app domain, vercel, localhost, or current origin
       const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+      if (!origin.endsWith('.run.app') && !origin.endsWith('.vercel.app') && !origin.includes('localhost') && origin !== window.location.origin) {
         return;
       }
 
