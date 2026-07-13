@@ -243,13 +243,15 @@ export default function SprintBoard({
   
 
   
-  // Track conflicts: map of `${phaseKey}-${atelieId}` -> count of allocations
+  // Track conflicts: map of `${phaseKey}-${atelieId}-${period}` -> count of allocations
   const getAtelieUsageMap = () => {
-    const usage: Record<string, string[]> = {}; // "phase-atelieId" -> Array of Turma names
+    const usage: Record<string, string[]> = {}; // "phase-atelieId-period" -> Array of Turma names
     
     rows.forEach((row) => {
       const turma = turmas.find((t) => t.id === row.turmaId);
       if (!turma) return;
+      
+      const periodKey = (turma.period || '').trim().toLowerCase() || 'unspecified';
       
       Object.entries(row.allocations).forEach(([phase, atelieIdsStr]) => {
         if (!atelieIdsStr) return;
@@ -257,7 +259,7 @@ export default function SprintBoard({
         ids.forEach((atelieId) => {
           const matchedAtelie = findMatchingAtelie(atelieId, atelies);
           const resolvedId = matchedAtelie ? matchedAtelie.id : atelieId;
-          const key = `${phase}-${resolvedId}`;
+          const key = `${phase}-${resolvedId}-${periodKey}`;
           if (!usage[key]) {
             usage[key] = [];
           }
@@ -1018,9 +1020,10 @@ export default function SprintBoard({
                                     color: 'Rose'
                                   };
 
-                                  // Check for conflicts using resolved ID
+                                  // Check for conflicts using resolved ID and period
                                   const resolvedId = selectedAtelie ? selectedAtelie.id : selectedAtelieId;
-                                  const conflictKey = `${phase.key}-${resolvedId}`;
+                                  const periodKey = (currentTurma?.period || '').trim().toLowerCase() || 'unspecified';
+                                  const conflictKey = `${phase.key}-${resolvedId}-${periodKey}`;
                                   const sharingTurmas = usageMap[conflictKey] || [];
                                   const hasConflict = sharingTurmas.length > 1;
 
