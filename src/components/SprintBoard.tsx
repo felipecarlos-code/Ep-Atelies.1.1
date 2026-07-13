@@ -886,11 +886,11 @@ export default function SprintBoard({
                             <button
                               type="button"
                               onClick={() => handleReplicateAteliesToSprints(row.id, currentTurma.epAtelie!)}
-                              className={`w-full mt-1 bg-indigo-700 hover:bg-indigo-800 text-white border border-indigo-800 rounded ${isCompact ? 'py-0.5 px-1 text-[7px]' : 'py-1 px-1.5 text-[8px]'} font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xs`}
+                              className={`w-full mt-1 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 rounded ${isCompact ? 'py-0.5 px-1 text-[7px]' : 'py-1 px-1.5 text-[8px]'} font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-4xs flex items-center justify-center gap-1`}
                               title="Alocar este ateliê em todas as fases / sprints desta linha"
                             >
-                              <Copy size={isCompact ? 8 : 9} />
-                              {isCompact ? "Replicar" : "Replicar nas Sprints"}
+                              <Copy size={isCompact ? 8 : 9} className="text-slate-400 shrink-0" />
+                              <span className="truncate">{isCompact ? "Replicar" : "Replicar nas Sprints"}</span>
                             </button>
                           )}
                         </div>
@@ -1211,10 +1211,10 @@ export default function SprintBoard({
                                   <div className="pt-1.5 border-t border-slate-100 flex justify-center">
                                     <button
                                       onClick={() => handlePropagateAllocations(row.id, phase.key)}
-                                      className={`w-full text-white bg-indigo-700 hover:bg-indigo-800 font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1 border border-indigo-800 rounded transition-all cursor-pointer shadow-xs ${isCompact ? 'text-[7.5px] py-0.5' : 'text-[9px] py-1.5'}`}
+                                      className={`w-full text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1 border border-slate-200 hover:border-slate-300 rounded transition-all cursor-pointer shadow-4xs ${isCompact ? 'text-[7.5px] py-0.5' : 'text-[9px] py-1.5'}`}
                                       title="Replicar este(s) Ateliê(s) para todas as próximas Sprints desta linha"
                                     >
-                                      <Copy size={isCompact ? 8 : 10} />
+                                      <Copy size={isCompact ? 8 : 10} className="text-slate-400" />
                                       {isCompact ? "Clonar" : "Clonar p/ Próximas"}
                                     </button>
                                   </div>
