@@ -64,6 +64,7 @@ export default function SprintBoard({
   const [turmaSearchText, setTurmaSearchText] = useState<string>('');
   const [showDateConfig, setShowDateConfig] = useState<boolean>(false);
   const [importResult, setImportResult] = useState<{ count: number; text: string } | null>(null);
+  const [isCompact, setIsCompact] = useState<boolean>(true);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -488,7 +489,19 @@ export default function SprintBoard({
           )}
         </div>
 
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            onClick={() => setIsCompact(!isCompact)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold text-xs border transition-all cursor-pointer shadow-3xs ${
+              isCompact 
+                ? 'bg-[#066d73] text-white border-[#066d73]' 
+                : 'bg-teal-50 hover:bg-teal-100 text-[#066d73] border-teal-200'
+            }`}
+            title="Alternar entre visualização compacta (sem rolagem) e estendida"
+          >
+            <span>{isCompact ? "🔎 Ver Detalhado (Grade Larga)" : "📱 Ver Compacto (Sem Rolagem)"}</span>
+          </button>
+
           <button
             onClick={() => setShowDateConfig(!showDateConfig)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded font-bold text-xs border transition-all cursor-pointer shadow-3xs ${
@@ -668,17 +681,17 @@ export default function SprintBoard({
           className="overflow-x-auto transition-all duration-200"
           style={{ paddingBottom: activeTurmaSearchRowId ? '200px' : '0px' }}
         >
-          <table className="w-full text-left border-collapse table-fixed min-w-[2200px]">
+          <table className={`w-full text-left border-collapse table-fixed transition-all duration-300 ${isCompact ? 'min-w-[1300px]' : 'min-w-[2200px]'}`}>
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 {/* Fixed Headers with subtle geometric border and shade */}
-                <th className="w-[185px] p-2.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-20 border-r border-slate-200">
+                <th className={`${isCompact ? 'w-[125px] p-1.5' : 'w-[185px] p-2.5'} text-[10px] font-extrabold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50 z-20 border-r border-slate-200`}>
                   Negócio
                 </th>
-                <th className="w-[185px] p-2.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200">
+                <th className={`${isCompact ? 'w-[115px] p-1.5' : 'w-[185px] p-2.5'} text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200`}>
                   Parceiro
                 </th>
-                <th className="w-[160px] p-2.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200">
+                <th className={`${isCompact ? 'w-[105px] p-1.5' : 'w-[160px] p-2.5'} text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200`}>
                   Ateliê
                 </th>
                 {/* Phase Columns */}
@@ -686,23 +699,23 @@ export default function SprintBoard({
                   const dateStr = sprintDates[phase.key];
                   const formatted = dateStr ? formatDate(dateStr) : null;
                   return (
-                    <th key={phase.key} className="w-[230px] p-3.5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200 last:border-r-0">
+                    <th key={phase.key} className={`${isCompact ? 'w-[115px] p-1.5' : 'w-[230px] p-3.5'} text-[10px] font-extrabold text-slate-500 uppercase tracking-wider border-r border-slate-200 last:border-r-0`}>
                       <div className="flex flex-col">
-                        <span className="text-slate-800 font-bold">{phase.label}</span>
+                        <span className="text-slate-800 font-bold truncate">{phase.label}</span>
                         {formatted ? (
-                          <span className="text-[9px] text-indigo-600 font-mono font-bold flex items-center gap-1 mt-0.5 normal-case">
-                            📅 {formatted}
+                          <span className={`${isCompact ? 'text-[7.5px]' : 'text-[9px]'} text-indigo-600 font-mono font-bold flex items-center gap-0.5 mt-0.5 normal-case`}>
+                            📅 {isCompact ? formatted.split('/').slice(0, 2).join('/') : formatted}
                           </span>
                         ) : (
-                          <span className="text-[9px] text-slate-400 italic normal-case font-medium mt-0.5">
-                            Data não definida
+                          <span className="text-[8.5px] text-slate-400 italic normal-case font-medium mt-0.5 truncate">
+                            {isCompact ? 'Sem data' : 'Data não definida'}
                           </span>
                         )}
                       </div>
                     </th>
                   );
                 })}
-                <th className="w-24 p-3.5 text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <th className={`${isCompact ? 'w-[60px] p-1.5' : 'w-24 p-3.5'} text-center text-[10px] font-extrabold text-slate-500 uppercase tracking-wider`}>
                   Ações
                 </th>
               </tr>
@@ -725,7 +738,7 @@ export default function SprintBoard({
                   return (
                     <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
                       {/* TURMA SELECTOR CELL (Sticky column) */}
-                      <td className={`p-2 sticky left-0 bg-white hover:bg-slate-50/90 transition-colors border-r border-slate-200 shadow-2xs ${activeTurmaSearchRowId === row.id ? 'z-30' : 'z-10'}`}>
+                      <td className={`${isCompact ? 'p-1' : 'p-2'} sticky left-0 bg-white hover:bg-slate-50/90 transition-colors border-r border-slate-200 shadow-2xs ${activeTurmaSearchRowId === row.id ? 'z-30' : 'z-10'}`}>
                         <div className="space-y-1">
                           {activeTurmaSearchRowId === row.id ? (
                             <div className="relative">
@@ -733,9 +746,9 @@ export default function SprintBoard({
                                 type="text"
                                 value={turmaSearchText}
                                 onChange={(e) => setTurmaSearchText(e.target.value)}
-                                placeholder="Digitar negócio..."
+                                placeholder="Negócio..."
                                 autoFocus
-                                className="w-full text-[10px] font-bold border border-indigo-600 rounded px-1.5 py-1 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none truncate"
+                                className={`w-full ${isCompact ? 'text-[8.5px] px-1 py-0.5' : 'text-[10px] px-1.5 py-1'} font-bold border border-indigo-600 rounded bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none truncate`}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Escape') {
                                     setActiveTurmaSearchRowId(null);
@@ -801,18 +814,18 @@ export default function SprintBoard({
                                 setActiveTurmaSearchRowId(row.id);
                                 setTurmaSearchText('');
                               }}
-                              className="w-full text-[10px] font-bold border border-slate-200 rounded px-1.5 py-1 bg-white text-slate-800 cursor-pointer flex justify-between items-center hover:border-indigo-500 hover:bg-slate-50/50"
-                              title="Clique para buscar negócio pelo nome"
+                              className={`w-full ${isCompact ? 'text-[8.5px] px-1 py-0.5' : 'text-[10px] px-1.5 py-1'} font-bold border border-slate-200 rounded bg-white text-slate-800 cursor-pointer flex justify-between items-center hover:border-indigo-500 hover:bg-slate-50/50`}
+                              title="Clique para buscar negócio"
                             >
-                              <span className="truncate pr-1">
-                                {currentTurma ? currentTurma.name : '🔍 Buscar negócio...'}
+                              <span className="truncate pr-0.5">
+                                {currentTurma ? currentTurma.name : (isCompact ? 'Buscar...' : '🔍 Buscar negócio...')}
                               </span>
                               <span className="text-[7px] text-slate-400">▼</span>
                             </div>
                           )}
                           {currentTurma && (
-                            <div className="px-1 text-center">
-                              <span className="inline-flex items-center text-[8px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1 py-0.5 rounded uppercase tracking-wider max-w-full truncate" title={`${currentTurma.course} (${currentTurma.period})`}>
+                            <div className={`${isCompact ? 'px-0.5' : 'px-1'} text-center`}>
+                              <span className={`inline-flex items-center ${isCompact ? 'text-[7px] px-0.5 py-0.2' : 'text-[8px] px-1 py-0.5'} font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded uppercase tracking-wider max-w-full truncate`} title={`${currentTurma.course} (${currentTurma.period})`}>
                                 {currentTurma.period || 'Sem Turno'}
                               </span>
                             </div>
@@ -821,34 +834,34 @@ export default function SprintBoard({
                       </td>
 
                       {/* PARTNER CELL (Read-only, automatically brought from Business/Turma) */}
-                      <td className="p-2 border-r border-slate-200 bg-slate-50/20">
+                      <td className={`${isCompact ? 'p-1' : 'p-2'} border-r border-slate-200 bg-slate-50/20`}>
                         {currentPartner ? (
-                          <div className="flex flex-col items-center gap-1.5 p-2 bg-white rounded-lg border border-slate-150 shadow-4xs">
+                          <div className={`flex flex-col items-center ${isCompact ? 'gap-0.5 p-1' : 'gap-1.5 p-2'} bg-white rounded border border-slate-150 shadow-4xs`}>
                             <img
                               src={currentPartner.logoUrl}
                               alt={currentPartner.name}
-                              className="w-12 h-12 object-contain rounded border border-slate-200 bg-white p-1 shadow-4xs shrink-0"
+                              className={`${isCompact ? 'w-7 h-7 p-0.5' : 'w-12 h-12 p-1'} object-contain rounded border border-slate-200 bg-white shadow-4xs shrink-0`}
                               referrerPolicy="no-referrer"
                               onError={(e) => handleLogoError(e, currentPartner.name)}
                             />
-                            <span className="text-[10px] font-extrabold text-slate-800 text-center max-w-[150px] line-clamp-2 leading-tight" title={currentPartner.name}>
+                            <span className={`${isCompact ? 'text-[8.5px]' : 'text-[10px]'} font-extrabold text-slate-800 text-center max-w-[150px] line-clamp-2 leading-tight`} title={currentPartner.name}>
                               {currentPartner.name}
                             </span>
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center p-3 border border-dashed border-slate-200 rounded-lg text-slate-400 bg-slate-50/50">
-                            <Building2 size={16} className="text-slate-300 mb-1" />
-                            <span className="text-[9px] font-bold text-center leading-snug">
-                              {currentTurma ? 'Sem parceiro vinculado' : 'Definido no negócio'}
+                          <div className={`flex flex-col items-center justify-center ${isCompact ? 'p-1' : 'p-3'} border border-dashed border-slate-200 rounded text-slate-400 bg-slate-50/50`}>
+                            <Building2 size={isCompact ? 11 : 16} className="text-slate-300 mb-1" />
+                            <span className={`${isCompact ? 'text-[7.5px]' : 'text-[9px]'} font-bold text-center leading-snug`}>
+                              {currentTurma ? 'Sem parceiro' : 'Definido no negócio'}
                             </span>
                           </div>
                         )}
                       </td>
 
                       {/* ATELIE LANE (From Business Registration / Cadastro de Negócios) */}
-                      <td className="p-2 border-r border-slate-200 bg-slate-50/10 text-xs">
-                        <div className="flex flex-col gap-2 justify-between h-full min-h-[90px]">
-                          <div className="flex flex-wrap gap-1 max-h-[120px] overflow-y-auto">
+                      <td className={`${isCompact ? 'p-1' : 'p-2'} border-r border-slate-200 bg-slate-50/10 text-xs`}>
+                        <div className={`flex flex-col ${isCompact ? 'gap-1 justify-center' : 'gap-2 justify-between'} h-full min-h-[90px]`}>
+                          <div className={`flex flex-wrap ${isCompact ? 'gap-0.5 max-h-[80px]' : 'gap-1 max-h-[120px]'} overflow-y-auto`}>
                             {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 ? (
                               currentTurma.epAtelie.map((atelieIdOrName) => {
                                 const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies);
@@ -857,7 +870,7 @@ export default function SprintBoard({
                                 return (
                                   <span 
                                     key={atelieIdOrName}
-                                    className="bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold px-2 py-0.5 rounded text-[9px] uppercase tracking-wide truncate max-w-full block"
+                                    className={`bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold ${isCompact ? 'px-1 py-0.2 text-[8px]' : 'px-2 py-0.5 text-[9px]'} rounded uppercase tracking-wide truncate max-w-full block`}
                                     title={`${name}${block}`}
                                   >
                                     {name}{block}
@@ -865,7 +878,7 @@ export default function SprintBoard({
                                 );
                               })
                             ) : (
-                              <span className="text-[10px] text-slate-400 italic">Nenhum ateliê</span>
+                              <span className={`${isCompact ? 'text-[8px]' : 'text-[10px]'} text-slate-400 italic`}>Nenhum ateliê</span>
                             )}
                           </div>
                           
@@ -873,11 +886,11 @@ export default function SprintBoard({
                             <button
                               type="button"
                               onClick={() => handleReplicateAteliesToSprints(row.id, currentTurma.epAtelie!)}
-                              className="w-full mt-1.5 bg-indigo-700 hover:bg-indigo-800 text-white border border-indigo-800 rounded py-1 px-1.5 flex items-center justify-center gap-1.5 text-[8px] font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xs"
+                              className={`w-full mt-1 bg-indigo-700 hover:bg-indigo-800 text-white border border-indigo-800 rounded ${isCompact ? 'py-0.5 px-1 text-[7px]' : 'py-1 px-1.5 text-[8px]'} font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xs`}
                               title="Alocar este ateliê em todas as fases / sprints desta linha"
                             >
-                              <Copy size={9} />
-                              Replicar nas Sprints
+                              <Copy size={isCompact ? 8 : 9} />
+                              {isCompact ? "Replicar" : "Replicar nas Sprints"}
                             </button>
                           )}
                         </div>
@@ -902,9 +915,9 @@ export default function SprintBoard({
                           }, []);
 
                         return (
-                          <td key={phase.key} className="p-3 border-r border-slate-200 last:border-r-0 align-top">
+                          <td key={phase.key} className={`${isCompact ? 'p-1' : 'p-3'} border-r border-slate-200 last:border-r-0 align-top`}>
                             {selectedAtelieIds.length > 0 ? (
-                              <div className="space-y-3">
+                              <div className={isCompact ? "space-y-1" : "space-y-3"}>
                                 {/* Summed capacity and students above the card */}
                                 {(() => {
                                   const compCheck = (() => {
@@ -963,42 +976,44 @@ export default function SprintBoard({
                                   const balance = totalCapacity - studentCount;
 
                                   return (
-                                    <div className="space-y-1.5">
+                                    <div className={isCompact ? "space-y-0.5" : "space-y-1.5"}>
                                       {/* Main Capacity Status Bar */}
-                                      <div className={`flex items-center justify-between text-[9.5px] font-extrabold px-2 py-1.5 rounded border uppercase tracking-wider ${
+                                      <div className={`flex items-center justify-between rounded border uppercase tracking-wider ${isCompact ? 'text-[8px] px-1 py-0.5' : 'text-[9.5px] font-extrabold px-2 py-1.5'} ${
                                         isInsufficient 
                                           ? 'bg-rose-50 border-rose-200 text-rose-700' 
                                           : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                       }`}>
-                                        <span className="flex items-center gap-1.5">
+                                        <span className="flex items-center gap-1.5 truncate">
                                           {isInsufficient ? (
-                                            <AlertTriangle size={11} className="text-rose-600 shrink-0" />
+                                            <AlertTriangle size={isCompact ? 9 : 11} className="text-rose-600 shrink-0" />
                                           ) : (
-                                            <Check size={11} className="text-emerald-600 shrink-0" />
+                                            <Check size={isCompact ? 9 : 11} className="text-emerald-600 shrink-0" />
                                           )}
-                                          Capacidade: {totalCapacity}/{studentCount}
+                                          {isCompact ? `Cap: ${totalCapacity}/${studentCount}` : `Capacidade: ${totalCapacity}/${studentCount}`}
                                         </span>
-                                        <span className="font-black">
-                                          {balance >= 0 && compCheck.isComposable ? `+${balance} sobram` : `${balance} vagas`}
+                                        <span className="font-black shrink-0">
+                                          {balance >= 0 && compCheck.isComposable ? (isCompact ? `+${balance}` : `+${balance} sobram`) : (isCompact ? `${balance}` : `${balance} vagas`)}
                                         </span>
                                       </div>
 
                                       {/* Composable Status Indicator */}
                                       {selectedAtelieIds.length > 1 && (
                                         compCheck.isComposable ? (
-                                          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-150 rounded px-2 py-1 text-[8.5px] font-extrabold text-indigo-700 uppercase tracking-wide">
-                                            <Layers size={10} className="text-indigo-500 shrink-0" />
-                                            <span>🔗 Ateliês Componíveis Unidos (União Física Ativa)</span>
+                                          <div className={`flex items-center ${isCompact ? 'justify-center py-0.5 px-1 text-[7.5px]' : 'gap-1 px-2 py-1 text-[8.5px]'} bg-indigo-50 border border-indigo-150 rounded font-extrabold text-indigo-700 uppercase tracking-wide`}>
+                                            <Layers size={isCompact ? 8 : 10} className="text-indigo-500 shrink-0" />
+                                            {!isCompact && <span>🔗 Ateliês Componíveis Unidos (União Física Ativa)</span>}
                                           </div>
                                         ) : (
-                                          <div className="flex flex-col gap-0.5 bg-amber-50 border border-amber-200 rounded p-1.5 text-[8.5px] font-bold text-amber-800 leading-tight">
+                                          <div className={`flex flex-col ${isCompact ? 'p-1 text-[7.5px]' : 'p-1.5 text-[8.5px]'} gap-0.5 bg-amber-50 border border-amber-200 rounded font-bold text-amber-800 leading-tight`}>
                                             <span className="flex items-center gap-1 uppercase tracking-wider text-amber-900">
-                                              <AlertTriangle size={11} className="text-amber-600 shrink-0" />
-                                              ⚠️ Salas Separadas (Não se integram)
+                                              <AlertTriangle size={isCompact ? 9 : 11} className="text-amber-600 shrink-0" />
+                                              {isCompact ? 'Salas Separadas' : '⚠️ Salas Separadas (Não se integram)'}
                                             </span>
-                                            <span className="font-normal text-slate-500">
-                                              Os ateliês não estão configurados como componíveis no cadastro. A capacidade não pode ser somada.
-                                            </span>
+                                            {!isCompact && (
+                                              <span className="font-normal text-slate-500">
+                                                Os ateliês não estão configurados como componíveis no cadastro. A capacidade não pode ser somada.
+                                              </span>
+                                            )}
                                           </div>
                                         )
                                       )}
@@ -1034,40 +1049,42 @@ export default function SprintBoard({
                                   return (
                                     <div 
                                       key={`${selectedAtelieId}-${index}`}
-                                      className={`rounded border p-3 space-y-2 relative transition-all group shadow-xs ${colorPreset?.bg || 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                                      className={`rounded border ${isCompact ? 'p-1.5 space-y-1' : 'p-3 space-y-2'} relative transition-all group shadow-xs ${colorPreset?.bg || 'bg-slate-50 border-slate-200 text-slate-700'}`}
                                       id={`card-${row.id}-${phase.key}-${index}`}
                                     >
                                       {/* Top Line: Classroom/Block Room Badge */}
                                       <div className="flex items-center justify-between gap-1">
                                         {isMissing ? (
-                                          <span className="text-[8.5px] font-black text-amber-600 uppercase tracking-wider flex items-center gap-0.5">
-                                            <AlertTriangle size={10} className="shrink-0" /> Não Cadastrado
+                                          <span className={`${isCompact ? 'text-[7.5px]' : 'text-[8.5px]'} font-black text-amber-600 uppercase tracking-wider flex items-center gap-0.5`}>
+                                            <AlertTriangle size={isCompact ? 8 : 10} className="shrink-0" /> {isCompact ? 'Sem Cad.' : 'Não Cadastrado'}
                                           </span>
                                         ) : (
                                           <div />
                                         )}
-                                        <span className={`text-[8.5px] font-extrabold px-1.5 py-0.5 rounded ${colorPreset?.badge || 'bg-slate-200 text-slate-700'} shrink-0 truncate uppercase tracking-wider`}>
+                                        <span className={`${isCompact ? 'text-[7.5px] px-1 py-0.2' : 'text-[8.5px] px-1.5 py-0.5'} font-extrabold rounded ${colorPreset?.badge || 'bg-slate-200 text-slate-700'} shrink-0 truncate uppercase tracking-wider`}>
                                           {atelieObj.block}
                                         </span>
                                       </div>
 
                                       {/* Class/Turma Label */}
-                                      <div className="text-[9.5px] font-semibold text-slate-500 line-clamp-1 truncate leading-none" title={currentTurma?.name || 'Turma não definida'}>
-                                        {currentTurma ? currentTurma.name : 'Sem Turma'}
-                                      </div>
+                                      {!isCompact && (
+                                        <div className="text-[9.5px] font-semibold text-slate-500 line-clamp-1 truncate leading-none" title={currentTurma?.name || 'Turma não definida'}>
+                                          {currentTurma ? currentTurma.name : 'Sem Turma'}
+                                        </div>
+                                      )}
 
                                       {/* Ateliê Label - Main Focus */}
-                                      <div className="flex items-center gap-1.5 mt-1.5 text-xs font-extrabold text-slate-800 bg-white/60 p-1.5 rounded border border-black/5">
-                                        <Building2 size={13} className="shrink-0 text-slate-600" />
+                                      <div className={`flex items-center ${isCompact ? 'gap-1 mt-1 text-[9px] p-1' : 'gap-1.5 mt-1.5 text-xs p-1.5'} font-extrabold text-slate-800 bg-white/60 rounded border border-black/5`}>
+                                        <Building2 size={isCompact ? 10 : 13} className="shrink-0 text-slate-600" />
                                         <span className="truncate">{atelieObj.name}</span>
                                       </div>
 
                                       {/* Change Inline Selector Dropdown on Hover/Focus */}
-                                      <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between gap-1">
+                                      <div className={`${isCompact ? 'pt-1' : 'pt-1.5'} border-t border-slate-200/60 flex items-center justify-between gap-1`}>
                                         <select
                                           value={selectedAtelie ? selectedAtelie.id : selectedAtelieId}
                                           onChange={(e) => handleCellAtelieChangeAtIndex(row.id, phase.key, index, e.target.value)}
-                                          className="bg-transparent text-[10px] font-semibold outline-none text-slate-600 hover:text-slate-900 cursor-pointer max-w-[85px] truncate"
+                                          className={`bg-transparent ${isCompact ? 'text-[8.5px] max-w-[62px]' : 'text-[10px] max-w-[85px]'} font-semibold outline-none text-slate-600 hover:text-slate-900 cursor-pointer truncate`}
                                         >
                                           {isMissing && (
                                             <option value={selectedAtelieId} disabled className="text-slate-400 font-normal">
@@ -1116,20 +1133,20 @@ export default function SprintBoard({
 
                                         <button
                                           onClick={() => handleRemoveAtelieFromCell(row.id, phase.key, selectedAtelieId)}
-                                          className="text-[9px] text-red-500 hover:text-red-700 hover:underline cursor-pointer font-extrabold uppercase tracking-wider"
+                                          className={`${isCompact ? 'text-[8px]' : 'text-[9px]'} text-red-500 hover:text-red-700 hover:underline cursor-pointer font-extrabold uppercase tracking-wider`}
                                           title="Remover alocação"
                                         >
-                                          Sair
+                                          {isCompact ? 'X' : 'Sair'}
                                         </button>
                                       </div>
 
                                       {/* Conflict Warning Badge */}
                                       {hasConflict && (
                                         <div 
-                                          className="absolute -top-2 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-xs hover:bg-amber-600 transition-colors cursor-help group/tooltip"
+                                          className={`absolute ${isCompact ? '-top-1 -right-0.5 p-0.5' : '-top-2 -right-1 p-1'} bg-amber-500 text-white rounded-full shadow-xs hover:bg-amber-600 transition-colors cursor-help group/tooltip`}
                                           title={`Conflito! O Ateliê está compartilhado no mesmo período por: ${sharingTurmas.join(', ')}`}
                                         >
-                                          <AlertTriangle size={9} />
+                                          <AlertTriangle size={isCompact ? 8 : 9} />
                                           <div className="absolute bottom-full right-0 mb-2 hidden group-hover/tooltip:block bg-slate-900 text-white text-[10px] rounded p-2.5 w-48 z-30 leading-tight shadow-md">
                                             <span className="font-bold block mb-1 text-amber-300">⚠️ Conflito de Espaço:</span>
                                             Compartilhado por:<br/>
@@ -1145,7 +1162,7 @@ export default function SprintBoard({
 
                                 {/* If 1 Atelie is allocated, allow adding a 2nd one */}
                                 {selectedAtelieIds.length === 1 && (
-                                  <div className="border border-dashed border-slate-200 hover:border-indigo-300 bg-slate-50/40 hover:bg-white rounded px-2 py-1.5 flex items-center justify-center transition-all">
+                                  <div className="border border-dashed border-slate-200 hover:border-indigo-300 bg-slate-50/40 hover:bg-white rounded px-1.5 py-0.5 flex items-center justify-center transition-all">
                                     <select
                                       value=""
                                       onChange={(e) => {
@@ -1153,9 +1170,9 @@ export default function SprintBoard({
                                           handleAddAtelieToCell(row.id, phase.key, e.target.value);
                                         }
                                       }}
-                                      className="text-[9.5px] font-extrabold text-slate-400 bg-transparent border-0 outline-none w-full text-center cursor-pointer hover:text-indigo-600 transition-colors uppercase tracking-wider"
+                                      className={`${isCompact ? 'text-[8.5px]' : 'text-[9.5px]'} font-extrabold text-slate-400 bg-transparent border-0 outline-none w-full text-center cursor-pointer hover:text-indigo-600 transition-colors uppercase tracking-wider`}
                                     >
-                                      <option value="">+ 2º Ateliê</option>
+                                      <option value="">{isCompact ? '+ 2º' : '+ 2º Ateliê'}</option>
                                       {atelies
                                         .filter(a => !selectedAtelieIds.includes(a.id))
                                         .filter((a) => {
@@ -1191,21 +1208,21 @@ export default function SprintBoard({
                                 
                                 {/* Propagate button to copy this cell's allocations to all subsequent phases */}
                                 {phase.key !== PHASES[PHASES.length - 1].key && (
-                                  <div className="pt-2 border-t border-slate-100 flex justify-center">
+                                  <div className="pt-1.5 border-t border-slate-100 flex justify-center">
                                     <button
                                       onClick={() => handlePropagateAllocations(row.id, phase.key)}
-                                      className="w-full text-[9px] text-white bg-indigo-700 hover:bg-indigo-800 font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1.5 border border-indigo-800 py-1.5 rounded transition-all cursor-pointer shadow-xs"
+                                      className={`w-full text-white bg-indigo-700 hover:bg-indigo-800 font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1 border border-indigo-800 rounded transition-all cursor-pointer shadow-xs ${isCompact ? 'text-[7.5px] py-0.5' : 'text-[9px] py-1.5'}`}
                                       title="Replicar este(s) Ateliê(s) para todas as próximas Sprints desta linha"
                                     >
-                                      <Copy size={10} />
-                                      Clonar p/ Próximas
+                                      <Copy size={isCompact ? 8 : 10} />
+                                      {isCompact ? "Clonar" : "Clonar p/ Próximas"}
                                     </button>
                                   </div>
                                 )}
                               </div>
                             ) : (
                               /* EMPTY ASSIGNMENT TRIGGER CELL */
-                              <div className="h-full min-h-[90px] flex flex-col items-center justify-center border border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50/40 hover:bg-white rounded p-2 transition-all group">
+                              <div className={`h-full ${isCompact ? 'min-h-[60px] p-1' : 'min-h-[90px] p-2'} flex flex-col items-center justify-center border border-dashed border-slate-200 hover:border-indigo-400 bg-slate-50/40 hover:bg-white rounded transition-all group`}>
                                 <select
                                   value=""
                                   onChange={(e) => {
@@ -1213,9 +1230,9 @@ export default function SprintBoard({
                                       handleAddAtelieToCell(row.id, phase.key, e.target.value);
                                     }
                                   }}
-                                  className="text-[10px] font-extrabold text-slate-400 bg-transparent border-0 outline-none w-full text-center cursor-pointer group-hover:text-indigo-600 transition-colors"
+                                  className={`${isCompact ? 'text-[8.5px]' : 'text-[10px]'} font-extrabold text-slate-400 bg-transparent border-0 outline-none w-full text-center cursor-pointer group-hover:text-indigo-600 transition-colors`}
                                 >
-                                  <option value="">+ ALOCAR</option>
+                                  <option value="">{isCompact ? '+ ALOCAR' : '+ ALOCAR ATELIÊ'}</option>
                                   {atelies.map((a) => {
                                     const isAllocatedElsewhere = otherRowsAllocatedIds.includes(a.id);
                                     const isCapacityLow = currentTurma && a.capacity < (currentTurma.studentCount || 0);
@@ -1231,7 +1248,7 @@ export default function SprintBoard({
                                     );
                                   })}
                                 </select>
-                                <span className="text-[9px] text-slate-300 font-bold uppercase tracking-wider mt-1 group-hover:text-indigo-400 transition-colors">Disponível</span>
+                                {!isCompact && <span className="text-[9px] text-slate-300 font-bold uppercase tracking-wider mt-1 group-hover:text-indigo-400 transition-colors">Disponível</span>}
                               </div>
                             )}
                           </td>
@@ -1239,34 +1256,36 @@ export default function SprintBoard({
                       })}
 
                       {/* ACTIONS COLUMN */}
-                      <td className="p-3 text-center min-w-[120px]">
+                      <td className={`${isCompact ? 'p-1' : 'p-3'} text-center min-w-[50px]`}>
                         {deleteConfirmId === row.id ? (
-                          <div className="flex items-center justify-center gap-1 bg-rose-50 border border-rose-100 p-0.5 rounded shadow-2xs animate-fade-in inline-flex">
-                            <span className="text-[9px] font-extrabold text-rose-700 uppercase tracking-wider px-1">Excluir?</span>
-                            <button
-                              onClick={() => {
-                                onDeleteRow(row.id);
-                                setDeleteConfirmId(null);
-                              }}
-                              className="px-1.5 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[9px] font-extrabold uppercase tracking-wider cursor-pointer"
-                            >
-                              Sim
-                            </button>
-                            <button
-                              onClick={() => setDeleteConfirmId(null)}
-                              className="px-1.5 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[9px] font-extrabold uppercase tracking-wider cursor-pointer"
-                            >
-                              Não
-                            </button>
+                          <div className="flex flex-col items-center justify-center gap-1 bg-rose-50 border border-rose-100 p-1 rounded shadow-2xs animate-fade-in inline-flex">
+                            <span className="text-[8px] font-extrabold text-rose-700 uppercase tracking-wider">Excluir?</span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => {
+                                  onDeleteRow(row.id);
+                                  setDeleteConfirmId(null);
+                                }}
+                                className="px-1 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[8px] font-extrabold uppercase tracking-wider cursor-pointer"
+                              >
+                                Sim
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="px-1 py-0.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[8px] font-extrabold uppercase tracking-wider cursor-pointer"
+                              >
+                                Não
+                              </button>
+                            </div>
                           </div>
                         ) : (
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center justify-center">
                             <button
                               onClick={() => setDeleteConfirmId(row.id)}
-                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors cursor-pointer inline-flex items-center justify-center"
+                              className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-colors cursor-pointer inline-flex items-center justify-center"
                               title="Excluir linha de cronograma"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={13} />
                             </button>
                           </div>
                         )}
