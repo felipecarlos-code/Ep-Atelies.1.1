@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey, PRESET_COLORS } from '../types';
 import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { getFriendlyStageName } from './TurmaManager';
@@ -64,6 +64,31 @@ export default function SprintBoard({
   const [turmaSearchText, setTurmaSearchText] = useState<string>('');
   const [showDateConfig, setShowDateConfig] = useState<boolean>(false);
   const [importResult, setImportResult] = useState<{ count: number; text: string } | null>(null);
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = (direction: 'left' | 'right' | 'start' | 'mid1' | 'mid2') => {
+    if (!tableContainerRef.current) return;
+    const container = tableContainerRef.current;
+    let targetScroll = container.scrollLeft;
+
+    if (direction === 'left') {
+      targetScroll = Math.max(0, container.scrollLeft - 400);
+    } else if (direction === 'right') {
+      targetScroll = Math.min(container.scrollWidth - container.clientWidth, container.scrollLeft + 400);
+    } else if (direction === 'start') {
+      targetScroll = 0;
+    } else if (direction === 'mid1') {
+      targetScroll = 450; // Sprints 1-4 position
+    } else if (direction === 'mid2') {
+      targetScroll = 1250; // Sprints 5-8 position
+    }
+
+    container.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth'
+    });
+  };
 
   // Helper to normalize strings for comparison (removes accents, spaces, special chars)
   const normalizeStr = (str?: string) => {
@@ -359,6 +384,17 @@ export default function SprintBoard({
     .filter((a) => activeAtelieIds.has(a.id))
     .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 
+  // Helper to determine row order: Manhã (1) then Tarde (2) then others
+  const getRowPeriodOrder = (row: AllocationRow) => {
+    const currentTurma = turmas.find((t) => t.id === row.turmaId);
+    if (!currentTurma) return 999; // Put empty rows at the bottom
+    const p = String(currentTurma.period || '').toLowerCase();
+    if (p.includes('manhã') || p.includes('manha')) return 1;
+    if (p.includes('tarde')) return 2;
+    if (p.includes('noite')) return 3;
+    return 4; // has turma but unknown period
+  };
+
   // Filtering rows
   const filteredRows = rows.filter((row) => {
     if (filterTurmaId !== 'all' && row.turmaId !== filterTurmaId) return false;
@@ -371,6 +407,25 @@ export default function SprintBoard({
       if (!hasAtelieInSomePhase) return false;
     }
     return true;
+  });
+
+  // Sort rows: "Manhã" first, then "Tarde", then others
+  const sortedFilteredRows = [...filteredRows].sort((a, b) => {
+    const orderA = getRowPeriodOrder(a);
+    const orderB = getRowPeriodOrder(b);
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    // If same period, sort by Turma name to keep it neat!
+    const nameA = turmas.find((t) => t.id === a.turmaId)?.name || '';
+    const nameB = turmas.find((t) => t.id === b.turmaId)?.name || '';
+    if (nameA && nameB) {
+      return nameA.localeCompare(nameB, 'pt-BR');
+    }
+    // If one has no name (unselected), put it at the end
+    if (nameA) return -1;
+    if (nameB) return 1;
+    return 0;
   });
 
   return (
@@ -558,7 +613,56 @@ export default function SprintBoard({
 
       {/* Main Allocations Table / Grid - with crisp geometric lines */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden" id="sprints-table-container">
+        
+        {/* Sleek Horizontal Navigation Controller Bar at the Top */}
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center justify-between gap-3 sticky left-0 z-20">
+          <div className="flex items-center gap-1.5 text-slate-700">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Navegação Rápida do Quadro:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleScroll('start')}
+              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+              title="Ir para o início (Colunas de Negócio/Parceiro)"
+            >
+              📍 Início
+            </button>
+            <button
+              onClick={() => handleScroll('mid1')}
+              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+              title="Rolar para Sprints 1 a 4"
+            >
+              🏃 Sprints 1-4
+            </button>
+            <button
+              onClick={() => handleScroll('mid2')}
+              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+              title="Rolar para Sprints 5 a 8"
+            >
+              🏃 Sprints 5-8
+            </button>
+            
+            <div className="h-4 w-[1px] bg-slate-200 mx-1" />
+
+            <button
+              onClick={() => handleScroll('left')}
+              className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
+              title="Rolar para a Esquerda"
+            >
+              ◀ Rolar Esquerda
+            </button>
+            <button
+              onClick={() => handleScroll('right')}
+              className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
+              title="Rolar para a Direita"
+            >
+              Rolar Direita ▶
+            </button>
+          </div>
+        </div>
+
         <div 
+          ref={tableContainerRef}
           className="overflow-x-auto transition-all duration-200"
           style={{ paddingBottom: activeTurmaSearchRowId ? '200px' : '0px' }}
         >
@@ -603,7 +707,7 @@ export default function SprintBoard({
             </thead>
             
             <tbody className="divide-y divide-slate-100">
-              {filteredRows.length === 0 ? (
+              {sortedFilteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={PHASES.length + 4} className="p-12 text-center text-slate-500">
                     <HelpCircle className="mx-auto text-slate-300 mb-2" size={36} />
@@ -612,7 +716,7 @@ export default function SprintBoard({
                   </td>
                 </tr>
               ) : (
-                filteredRows.map((row) => {
+                sortedFilteredRows.map((row) => {
                   const currentTurma = turmas.find((t) => t.id === row.turmaId);
                   const currentPartner = partners.find((p) => p.id === (currentTurma ? currentTurma.partnerId : row.partnerId));
 
@@ -767,7 +871,7 @@ export default function SprintBoard({
                             <button
                               type="button"
                               onClick={() => handleReplicateAteliesToSprints(row.id, currentTurma.epAtelie!)}
-                              className="w-full mt-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 border border-indigo-200 rounded py-1 px-1.5 flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider transition-all cursor-pointer"
+                              className="w-full mt-1.5 bg-indigo-700 hover:bg-indigo-800 text-white border border-indigo-800 rounded py-1 px-1.5 flex items-center justify-center gap-1.5 text-[8px] font-extrabold uppercase tracking-wider transition-all cursor-pointer shadow-xs"
                               title="Alocar este ateliê em todas as fases / sprints desta linha"
                             >
                               <Copy size={9} />
@@ -1087,7 +1191,7 @@ export default function SprintBoard({
                                   <div className="pt-2 border-t border-slate-100 flex justify-center">
                                     <button
                                       onClick={() => handlePropagateAllocations(row.id, phase.key)}
-                                      className="w-full text-[9px] text-indigo-600 hover:text-white hover:bg-indigo-600 font-extrabold uppercase tracking-wider inline-flex items-center justify-center gap-1 bg-indigo-50 border border-indigo-100 py-1 rounded transition-all cursor-pointer"
+                                      className="w-full text-[9px] text-white bg-indigo-700 hover:bg-indigo-800 font-bold uppercase tracking-wider inline-flex items-center justify-center gap-1.5 border border-indigo-800 py-1.5 rounded transition-all cursor-pointer shadow-xs"
                                       title="Replicar este(s) Ateliê(s) para todas as próximas Sprints desta linha"
                                     >
                                       <Copy size={10} />
