@@ -721,7 +721,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         codigo_turma_c: "codigo_turma_c",
         ep_id_unico_da_turma: "ep_id_unico_da_turma",
         period: "period",
-        ep_descricao_curta_do_projeto: "ep_descricao_curta_do_projeto"
+        ep_descricao_curta_do_projeto: "ep_descricao_curta_do_projeto",
+        ep_nps: "nps"
       };
 
       try {
@@ -781,6 +782,9 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           const descCurtaKey = findProp(["ep_descricao_curta_do_projeto", "descricao_curta_do_projeto", "descricao_curta"], [["descricao", "curta", "projeto"], ["descrição", "curta", "projeto"], ["descricao", "curta"], ["descrição", "curta"]]);
           if (descCurtaKey) resolvedKeys.ep_descricao_curta_do_projeto = descCurtaKey;
 
+          const npsKey = findProp(["ep_nps", "nps", "ep_nps_c", "nps_c"], [["nps"], ["net promoter score"]]);
+          if (npsKey) resolvedKeys.ep_nps = npsKey;
+
           props.forEach((p: any) => {
             const label = String(p.label || "").toLowerCase();
             const name = String(p.name || "").toLowerCase();
@@ -806,6 +810,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             resolvedKeys.ep_id_unico_da_turma,
             resolvedKeys.period,
             resolvedKeys.ep_descricao_curta_do_projeto,
+            resolvedKeys.ep_nps,
             ...discoveredAtelieKeys
           ])).filter(Boolean);
         } else {
@@ -815,7 +820,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
             "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
             "period", "periodo", "turno", "ep_turno", "ep_periodo",
-            "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto"
+            "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto",
+            "nps", "ep_nps"
           ];
         }
       } catch (propsErr: any) {
@@ -825,7 +831,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           "titulo_projeto_c", "ep_ano_de_aplicacao", "ep_tri_de_aplicacao",
           "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
           "period", "periodo", "turno", "ep_turno", "ep_periodo",
-          "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto"
+          "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto",
+          "nps", "ep_nps"
         ];
       }
 
@@ -1374,6 +1381,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         // 3 - Descrição do Negocio (description)
         const description = props.description || "";
         const epDescricaoCurta = props[resolvedKeys.ep_descricao_curta_do_projeto] || "";
+        const epNps = props[resolvedKeys.ep_nps] || "";
 
         // 4 - Empresa (Fazer o link com a empresa cadastrada dentro da nossa aplicação)
         let linkedPartnerId = "";
@@ -1574,6 +1582,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           classCode,
           uniqueClassId,
           epAtelie,
+          epNps: epNps ? String(epNps).trim() : "",
           courseYear: courseYear !== 'Não Identificado' ? courseYear : undefined
         };
       });

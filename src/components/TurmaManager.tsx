@@ -19,7 +19,8 @@ import {
   Calendar, 
   Hash, 
   Link2, 
-  Database
+  Database,
+  Percent
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -292,6 +293,7 @@ export default function TurmaManager({
   const [classCode, setClassCode] = useState('');
   const [uniqueClassId, setUniqueClassId] = useState('');
   const [epAtelie, setEpAtelie] = useState<string[]>([]);
+  const [epNps, setEpNps] = useState('');
   
   // Legacy standard fields for backwards compatibility
   const [course, setCourse] = useState('');
@@ -519,6 +521,7 @@ export default function TurmaManager({
     setClassCode('');
     setUniqueClassId('');
     setEpAtelie([]);
+    setEpNps('');
     setCourse('');
     setPeriod('');
     setStudentCount('');
@@ -545,6 +548,7 @@ export default function TurmaManager({
     setClassCode(turma.classCode || '');
     setUniqueClassId(turma.uniqueClassId || '');
     setEpAtelie(turma.epAtelie || []);
+    setEpNps(turma.epNps || '');
     setCourse(cleanOrDetectCourse(turma.course, turma.courseModule, turma.name));
     const calculatedYear = turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''));
     let calculatedPeriod = turma.period || '';
@@ -589,6 +593,7 @@ export default function TurmaManager({
       period: period || undefined,
       studentCount: studentCount !== '' ? Number(studentCount) : undefined,
       epAtelie,
+      epNps: epNps.trim(),
     };
 
     if (editingId) {
@@ -1087,6 +1092,21 @@ export default function TurmaManager({
                 className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold"
               />
             </div>
+
+            {/* [EP] NPS */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">
+                [EP] NPS (nps)
+              </label>
+              <input
+                type="text"
+                value={epNps}
+                onChange={(e) => setEpNps(e.target.value)}
+                disabled={isEditingFromHubspot}
+                placeholder="NPS sincronizado do HubSpot..."
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed font-mono"
+              />
+            </div>
           </div>
 
           {/* Campo Multi Ateliê (ep_atelie) */}
@@ -1368,6 +1388,18 @@ export default function TurmaManager({
                         </span>
                         <span className="font-semibold text-slate-600 font-mono text-[10px] text-right truncate max-w-[65%] inline-block" title={turma.uniqueClassId}>
                           {turma.uniqueClassId}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* [EP] NPS */}
+                    {turma.epNps && (
+                      <div className="flex items-center justify-between gap-2 text-[11px] min-w-0">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
+                          <Percent size={10} className="text-indigo-500" /> [EP] NPS:
+                        </span>
+                        <span className="font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 text-right font-mono text-[10px]" title={turma.epNps}>
+                          {turma.epNps}
                         </span>
                       </div>
                     )}
