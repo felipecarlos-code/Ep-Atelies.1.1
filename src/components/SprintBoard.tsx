@@ -65,6 +65,29 @@ export default function SprintBoard({
   const [showDateConfig, setShowDateConfig] = useState<boolean>(false);
   const [importResult, setImportResult] = useState<{ count: number; text: string } | null>(null);
   const [isCompact, setIsCompact] = useState<boolean>(true);
+  const [portalId, setPortalId] = useState<string>('default');
+
+  React.useEffect(() => {
+    const fetchPortalId = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        const customToken = localStorage.getItem('custom_hubspot_token') || '';
+        if (customToken.trim()) {
+          headers['X-Hubspot-Token'] = customToken.trim();
+        }
+        const res = await fetch('/api/hubspot/status', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.portalId) {
+            setPortalId(String(data.portalId));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching HubSpot portal ID on sprint board:', err);
+      }
+    };
+    fetchPortalId();
+  }, []);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -629,52 +652,54 @@ export default function SprintBoard({
       {/* Main Allocations Table / Grid - with crisp geometric lines */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden" id="sprints-table-container">
         
-        {/* Sleek Horizontal Navigation Controller Bar at the Top */}
-        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center justify-between gap-3 sticky left-0 z-20">
-          <div className="flex items-center gap-1.5 text-slate-700">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Navegação Rápida do Quadro:</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => handleScroll('start')}
-              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
-              title="Ir para o início (Colunas de Negócio/Parceiro)"
-            >
-              📍 Início
-            </button>
-            <button
-              onClick={() => handleScroll('mid1')}
-              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
-              title="Rolar para Sprints 1 a 4"
-            >
-              🏃 Sprints 1-4
-            </button>
-            <button
-              onClick={() => handleScroll('mid2')}
-              className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
-              title="Rolar para Sprints 5 a 8"
-            >
-              🏃 Sprints 5-8
-            </button>
-            
-            <div className="h-4 w-[1px] bg-slate-200 mx-1" />
+        {/* Sleek Horizontal Navigation Controller Bar at the Top (Only visible when not in compact mode / extended scrollable grid) */}
+        {!isCompact && (
+          <div className="bg-slate-50 border-b border-slate-200 px-4 py-2 flex flex-wrap items-center justify-between gap-3 sticky left-0 z-20">
+            <div className="flex items-center gap-1.5 text-slate-700">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Navegação Rápida do Quadro:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleScroll('start')}
+                className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+                title="Ir para o início (Colunas de Negócio/Parceiro)"
+              >
+                📍 Início
+              </button>
+              <button
+                onClick={() => handleScroll('mid1')}
+                className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+                title="Rolar para Sprints 1 a 4"
+              >
+                🏃 Sprints 1-4
+              </button>
+              <button
+                onClick={() => handleScroll('mid2')}
+                className="px-2.5 py-1 text-[10px] font-bold text-[#2e2640] hover:text-[#066d73] bg-white border border-slate-200 rounded hover:border-[#066d73]/30 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+                title="Rolar para Sprints 5 a 8"
+              >
+                🏃 Sprints 5-8
+              </button>
+              
+              <div className="h-4 w-[1px] bg-slate-200 mx-1" />
 
-            <button
-              onClick={() => handleScroll('left')}
-              className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
-              title="Rolar para a Esquerda"
-            >
-              ◀ Rolar Esquerda
-            </button>
-            <button
-              onClick={() => handleScroll('right')}
-              className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
-              title="Rolar para a Direita"
-            >
-              Rolar Direita ▶
-            </button>
+              <button
+                onClick={() => handleScroll('left')}
+                className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
+                title="Rolar para a Esquerda"
+              >
+                ◀ Rolar Esquerda
+              </button>
+              <button
+                onClick={() => handleScroll('right')}
+                className="px-2.5 py-1 text-[10px] font-black text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer flex items-center gap-1 shadow-2xs hover:shadow-xs"
+                title="Rolar para a Direita"
+              >
+                Rolar Direita ▶
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div 
           ref={tableContainerRef}
@@ -824,10 +849,25 @@ export default function SprintBoard({
                             </div>
                           )}
                           {currentTurma && (
-                            <div className={`${isCompact ? 'px-0.5' : 'px-1'} text-center`}>
-                              <span className={`inline-flex items-center ${isCompact ? 'text-[7px] px-0.5 py-0.2' : 'text-[8px] px-1 py-0.5'} font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded uppercase tracking-wider max-w-full truncate`} title={`${currentTurma.course} (${currentTurma.period})`}>
+                            <div className="flex flex-wrap items-center justify-center gap-1">
+                              <span className={`inline-flex items-center ${isCompact ? 'text-[7px] px-1 py-0.2' : 'text-[8px] px-1.5 py-0.5'} font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded uppercase tracking-wider max-w-full truncate`} title={`${currentTurma.course} (${currentTurma.period})`}>
                                 {currentTurma.period || 'Sem Turno'}
                               </span>
+                              {/^[0-9]+$/.test(currentTurma.id) && (
+                                <a
+                                  href={`https://app.hubspot.com/contacts/${portalId}/deal/${currentTurma.id}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={`inline-flex items-center gap-0.5 ${isCompact ? 'text-[7px] px-1 py-0.2' : 'text-[8px] px-1.5 py-0.5'} font-extrabold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 hover:border-amber-300 rounded uppercase tracking-wider transition-all cursor-pointer`}
+                                  title="Abrir Negócio no HubSpot"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-[#ff7a59] text-[#ff7a59] shrink-0" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18.889 11.23a4.004 4.004 0 00-3.322-3.342V4.877c.725-.264 1.25-.95 1.25-1.764a1.815 1.815 0 10-3.63 0c0 .813.525 1.5 1.25 1.764v3.011a4.004 4.004 0 00-3.322 3.342H7.262a1.817 1.817 0 100 2.247h3.853c.277 1.488 1.433 2.673 2.923 2.985v2.88c-.725.264-1.25.95-1.25 1.764a1.815 1.815 0 103.63 0c0-.813-.525-1.5-1.25-1.764v-2.88c1.49-.312 2.646-1.497 2.923-2.985h1.55a1.817 1.817 0 100-2.247h-1.55zm-4.889 4.31a1.94 1.94 0 111.94-1.94 1.94 1.94 0 01-1.94 1.94z"/>
+                                  </svg>
+                                  <span>HS</span>
+                                </a>
+                              )}
                             </div>
                           )}
                         </div>
@@ -836,11 +876,11 @@ export default function SprintBoard({
                       {/* PARTNER CELL (Read-only, automatically brought from Business/Turma) */}
                       <td className={`${isCompact ? 'p-1' : 'p-2'} border-r border-slate-200 bg-slate-50/20`}>
                         {currentPartner ? (
-                          <div className={`flex flex-col items-center ${isCompact ? 'gap-0.5 p-1' : 'gap-1.5 p-2'} bg-white rounded border border-slate-150 shadow-4xs`}>
+                          <div className={`flex flex-col items-center ${isCompact ? 'gap-0.5 p-1' : 'gap-1.5 p-2'} bg-white rounded shadow-4xs`}>
                             <img
                               src={currentPartner.logoUrl}
                               alt={currentPartner.name}
-                              className={`${isCompact ? 'w-7 h-7 p-0.5' : 'w-12 h-12 p-1'} object-contain rounded border border-slate-200 bg-white shadow-4xs shrink-0`}
+                              className={`${isCompact ? 'w-7 h-7 p-0.5' : 'w-12 h-12 p-1'} object-contain rounded bg-white shrink-0`}
                               referrerPolicy="no-referrer"
                               onError={(e) => handleLogoError(e, currentPartner.name)}
                             />
@@ -859,9 +899,9 @@ export default function SprintBoard({
                       </td>
 
                       {/* ATELIE LANE (From Business Registration / Cadastro de Negócios) */}
-                      <td className={`${isCompact ? 'p-1' : 'p-2'} border-r border-slate-200 bg-slate-50/10 text-xs`}>
-                        <div className={`flex flex-col ${isCompact ? 'gap-1 justify-center' : 'gap-2 justify-between'} h-full min-h-[90px]`}>
-                          <div className={`flex flex-wrap ${isCompact ? 'gap-0.5 max-h-[80px]' : 'gap-1 max-h-[120px]'} overflow-y-auto`}>
+                      <td className={`${isCompact ? 'p-1' : 'p-2'} border-r border-slate-200 bg-slate-50/10 text-xs align-middle`}>
+                        <div className={`flex flex-col items-center justify-center ${isCompact ? 'gap-1' : 'gap-2'} h-full min-h-[90px] w-full text-center`}>
+                          <div className={`flex flex-wrap justify-center items-center ${isCompact ? 'gap-0.5 max-h-[80px]' : 'gap-1 max-h-[120px]'} overflow-y-auto w-full`}>
                             {currentTurma && currentTurma.epAtelie && currentTurma.epAtelie.length > 0 ? (
                               currentTurma.epAtelie.map((atelieIdOrName) => {
                                 const foundAtelie = findMatchingAtelie(atelieIdOrName, atelies);
@@ -870,15 +910,15 @@ export default function SprintBoard({
                                 return (
                                   <span 
                                     key={atelieIdOrName}
-                                    className={`bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold ${isCompact ? 'px-1 py-0.2 text-[8px]' : 'px-2 py-0.5 text-[9px]'} rounded uppercase tracking-wide truncate max-w-full block`}
+                                    className={`bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold ${isCompact ? 'px-1.5 py-0.5 text-[8px]' : 'px-2 py-1 text-[9px]'} rounded uppercase tracking-wide truncate max-w-full text-center inline-block`}
                                     title={`${name}${block}`}
                                   >
-                                    {name}{block}
+                                    {name}
                                   </span>
                                 );
                               })
                             ) : (
-                              <span className={`${isCompact ? 'text-[8px]' : 'text-[10px]'} text-slate-400 italic`}>Nenhum ateliê</span>
+                              <span className={`${isCompact ? 'text-[8px]' : 'text-[10px]'} text-slate-400 italic text-center`}>Nenhum ateliê</span>
                             )}
                           </div>
                           
@@ -1052,23 +1092,33 @@ export default function SprintBoard({
                                       className={`rounded border ${isCompact ? 'p-1.5 space-y-1' : 'p-3 space-y-2'} relative transition-all group shadow-xs ${colorPreset?.bg || 'bg-slate-50 border-slate-200 text-slate-700'}`}
                                       id={`card-${row.id}-${phase.key}-${index}`}
                                     >
+                                      {/* HubSpot Deal Link */}
+                                      {currentTurma && /^[0-9]+$/.test(currentTurma.id) && (
+                                        <a
+                                          href={`https://app.hubspot.com/contacts/${portalId}/deal/${currentTurma.id}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="absolute top-1.5 right-1.5 p-1 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors cursor-pointer z-10 flex items-center justify-center bg-white/40 backdrop-blur-xs border border-slate-200/50 shadow-3xs"
+                                          title="Abrir Negócio no HubSpot"
+                                        >
+                                          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-[#ff7a59] text-[#ff7a59] shrink-0" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M18.889 11.23a4.004 4.004 0 00-3.322-3.342V4.877c.725-.264 1.25-.95 1.25-1.764a1.815 1.815 0 10-3.63 0c0 .813.525 1.5 1.25 1.764v3.011a4.004 4.004 0 00-3.322 3.342H7.262a1.817 1.817 0 100 2.247h3.853c.277 1.488 1.433 2.673 2.923 2.985v2.88c-.725.264-1.25.95-1.25 1.764a1.815 1.815 0 103.63 0c0-.813-.525-1.5-1.25-1.764v-2.88c1.49-.312 2.646-1.497 2.923-2.985h1.55a1.817 1.817 0 100-2.247h-1.55zm-4.889 4.31a1.94 1.94 0 111.94-1.94 1.94 1.94 0 01-1.94 1.94z"/>
+                                          </svg>
+                                        </a>
+                                      )}
+
                                       {/* Top Line: Classroom/Block Room Badge */}
-                                      <div className="flex items-center justify-between gap-1">
-                                        {isMissing ? (
+                                      {isMissing && (
+                                        <div className="flex items-center justify-between gap-1">
                                           <span className={`${isCompact ? 'text-[7.5px]' : 'text-[8.5px]'} font-black text-amber-600 uppercase tracking-wider flex items-center gap-0.5`}>
                                             <AlertTriangle size={isCompact ? 8 : 10} className="shrink-0" /> {isCompact ? 'Sem Cad.' : 'Não Cadastrado'}
                                           </span>
-                                        ) : (
-                                          <div />
-                                        )}
-                                        <span className={`${isCompact ? 'text-[7.5px] px-1 py-0.2' : 'text-[8.5px] px-1.5 py-0.5'} font-extrabold rounded ${colorPreset?.badge || 'bg-slate-200 text-slate-700'} shrink-0 truncate uppercase tracking-wider`}>
-                                          {atelieObj.block}
-                                        </span>
-                                      </div>
+                                        </div>
+                                      )}
 
                                       {/* Class/Turma Label */}
                                       {!isCompact && (
-                                        <div className="text-[9.5px] font-semibold text-slate-500 line-clamp-1 truncate leading-none" title={currentTurma?.name || 'Turma não definida'}>
+                                        <div className="text-[9.5px] font-semibold text-slate-500 line-clamp-1 truncate leading-none pr-5" title={currentTurma?.name || 'Turma não definida'}>
                                           {currentTurma ? currentTurma.name : 'Sem Turma'}
                                         </div>
                                       )}

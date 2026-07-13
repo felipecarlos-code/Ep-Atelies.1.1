@@ -380,12 +380,33 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
   };
 
   // 1. HubSpot Configuration Status
-  app.get("/api/hubspot/status", (req, res) => {
+  app.get("/api/hubspot/status", async (req, res) => {
     const token = getHubSpotToken(req);
+    const isConfigured = !!token && token.trim().length > 0;
+    let portalId = null;
+
+    if (isConfigured) {
+      try {
+        const response = await fetch("https://api.hubapi.com/account-info/v3/details", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          portalId = data.portalId || null;
+        }
+      } catch (err) {
+        console.error("Non-blocking error fetching HubSpot portal ID:", err);
+      }
+    }
+
     res.json({
-      configured: !!token && token.trim().length > 0,
+      configured: isConfigured,
       hasTokenEnv: !!process.env.HUBSPOT_ACCESS_TOKEN,
-      hasHeaderToken: !!req.headers["x-hubspot-token"]
+      hasHeaderToken: !!req.headers["x-hubspot-token"],
+      portalId: portalId
     });
   });
 
