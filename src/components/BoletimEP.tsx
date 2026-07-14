@@ -852,65 +852,63 @@ export default function BoletimEP({
           {/* Printable Sheet Canvas Wrapper */}
           <div 
             id="printable-sheet-canvas"
-            className="bg-white p-6 md:p-10 rounded-lg border border-slate-200 max-w-4xl mx-auto shadow-2xs print:border-none print:p-0"
+            className="max-w-4xl mx-auto space-y-8 print:space-y-0"
           >
-            
-            {/* Header Poster conforming to Boletim EP */}
-            <div className="relative text-center pb-2 flex flex-col items-center">
-
+            {/* PAGE 1: Header + Morning Allocations */}
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start">
               
-              <div className="mb-4">
-                {renderInteliLogo(false)}
+              {/* Header Poster conforming to Boletim EP */}
+              <div className="relative text-center pb-2 flex flex-col items-center">
+                <div className="mb-4">
+                  {renderInteliLogo(false)}
+                </div>
+
+                <h1 className="font-sans font-black text-4xl text-[#2e2640] tracking-tight leading-none print:text-[#2e2640]">
+                  BOLETIM EP
+                </h1>
+                
+                <h2 className="font-sans text-xs font-black text-[#ff4545] mt-2 uppercase tracking-widest print:text-[#ff4545]">
+                  {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
+                </h2>
+
+                <p className="font-mono text-[10px] font-black text-slate-700 mt-1 uppercase tracking-wide">
+                  {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
+                </p>
+
+                <div className="mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-slate-100 shadow-xs">
+                  <img 
+                    src={campusImgSrc} 
+                    alt="Inteli Campus" 
+                    className="w-full h-24 print:h-18 object-cover hover:scale-102 transition-transform duration-300"
+                    referrerPolicy="no-referrer"
+                    onError={handleCampusError}
+                  />
+                </div>
+                
+                <div className="w-12 h-0.5 bg-[#ff4545] my-2"></div>
+                
+                <div className="flex justify-center gap-4 mt-1 text-[9px] text-slate-400 font-bold uppercase font-mono">
+                  <span>Graduação 1º e 3º Ano — 09h às 11h</span>
+                  <span className="text-slate-300">•</span>
+                  <span>Graduação 2º Ano — 14h às 16h</span>
+                </div>
               </div>
 
-              <h1 className="font-sans font-black text-4xl text-[#2e2640] tracking-tight leading-none print:text-[#2e2640]">
-                BOLETIM EP
-              </h1>
-              
-              <h2 className="font-sans text-xs font-black text-[#ff4545] mt-2 uppercase tracking-widest print:text-[#ff4545]">
-                {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
-              </h2>
-
-              <p className="font-mono text-[10px] font-black text-slate-700 mt-1 uppercase tracking-wide">
-                {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
-              </p>
-
-              <div className="mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-slate-100 shadow-xs">
-                <img 
-                  src={campusImgSrc} 
-                  alt="Inteli Campus" 
-                  className="w-full h-28 object-cover hover:scale-102 transition-transform duration-300"
-                  referrerPolicy="no-referrer"
-                  onError={handleCampusError}
-                />
+              {/* Delicate section divider */}
+              <div className="relative flex items-center justify-center my-3">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-slate-200/60"></div>
+                </div>
+                <div className="relative bg-white px-3 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
+                  <span>✦</span>
+                  <span>✦</span>
+                  <span>✦</span>
+                </div>
               </div>
-              
-              <div className="w-12 h-0.5 bg-[#ff4545] my-2.5"></div>
-              
-              <div className="flex justify-center gap-4 mt-1 text-[9px] text-slate-400 font-bold uppercase font-mono">
-                <span>Graduação 1º e 3º Ano — 09h às 11h</span>
-                <span className="text-slate-300">•</span>
-                <span>Graduação 2º Ano — 14h às 16h</span>
-              </div>
-            </div>
 
-            {/* Delicate section divider */}
-            <div className="relative flex items-center justify-center my-4">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-slate-200/60"></div>
-              </div>
-              <div className="relative bg-white px-3 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
-                <span>✦</span>
-                <span>✦</span>
-                <span>✦</span>
-              </div>
-            </div>
-
-            {/* List of Projects (Vertical Card Ensembles) sorted by Morning (1º & 3º Anos) first and separated nicely */}
-            <div className="space-y-5">
               {/* PERÍODO DA MANHÃ (1º & 3º ANOS) */}
-              {morningAllocations.length > 0 && (
-                <div className="space-y-2.5">
+              {morningAllocations.length > 0 ? (
+                <div className="space-y-2.5 flex-1">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       Período da Manhã (1º & 3º Anos)
@@ -918,32 +916,32 @@ export default function BoletimEP({
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="space-y-3.5">
+                  <div className="space-y-3">
                     {morningAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[140px]"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[105px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[160px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-20 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[10px] text-[#2e2640] font-black mt-2 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
                             ) : (
                               <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
-                                <HelpCircle size={20} className="text-slate-300" />
+                                <HelpCircle size={18} className="text-slate-300" />
                                 <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
                               </div>
                             )}
@@ -952,11 +950,11 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-4 py-1 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9.5px] font-black uppercase tracking-wider">
+                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
-                              <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
+                              <span className="font-mono text-[8px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
                                   return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
@@ -964,29 +962,29 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2.5 flex-1">
-                              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-                                <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                            <div className="p-2 flex-1">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
                                 {alloc.turma && alloc.academicYear !== '1' && (
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[10px] text-[#2e2640] font-bold uppercase tracking-wider">
+                              <p className="font-mono text-[9.5px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
                                 {alloc.subtitle}
                               </p>
-                              <p className="font-sans text-[12px] text-slate-600 font-medium leading-relaxed mt-1.5">
+                              <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-1 line-clamp-3">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-1.5 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período {alloc.turma?.period || 'Manhã'}
                               </span>
                             </div>
@@ -996,44 +994,51 @@ export default function BoletimEP({
                     })}
                   </div>
                 </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg p-6 text-slate-400">
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto alocado no Período da Manhã</span>
+                </div>
               )}
+            </div>
 
+            {/* PAGE 2: Afternoon Allocations + Timeline + Footer */}
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start">
               {/* PERÍODO DA TARDE (2º ANO) */}
-              {afternoonAllocations.length > 0 && (
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5 pt-2">
+              {afternoonAllocations.length > 0 ? (
+                <div className="space-y-2.5 flex-1">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       Período da Tarde (2º Ano)
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
                   </div>
-                  <div className="space-y-3.5">
+                  <div className="space-y-3">
                     {afternoonAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[140px]"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[105px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[160px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-20 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[10px] text-[#2e2640] font-black mt-2 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
                             ) : (
                               <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
-                                <HelpCircle size={20} className="text-slate-300" />
+                                <HelpCircle size={18} className="text-slate-300" />
                                 <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
                               </div>
                             )}
@@ -1042,11 +1047,11 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-4 py-1 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9.5px] font-black uppercase tracking-wider">
+                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
-                              <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
+                              <span className="font-mono text-[8px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
                                   return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
@@ -1054,29 +1059,29 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2.5 flex-1">
-                              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-                                <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                            <div className="p-2 flex-1">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
                                 {alloc.turma && alloc.academicYear !== '1' && (
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[10px] text-[#2e2640] font-bold uppercase tracking-wider">
+                              <p className="font-mono text-[9.5px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
                                 {alloc.subtitle}
                               </p>
-                              <p className="font-sans text-[12px] text-slate-600 font-medium leading-relaxed mt-1.5">
+                              <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-1 line-clamp-3">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-1.5 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período {alloc.turma?.period || 'Tarde'}
                               </span>
                             </div>
@@ -1086,148 +1091,152 @@ export default function BoletimEP({
                     })}
                   </div>
                 </div>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg p-6 text-slate-400">
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto alocado no Período da Tarde</span>
+                </div>
               )}
-            </div>
 
-            {/* Brand Chronogram / Timeline Graphics (p. 3) */}
-            <div className="mt-6 pt-4 border-t border-slate-200/50 break-inside-avoid print:mt-auto" id="boletim-cronograma-rodape">
-              <div className="text-center mb-3">
-                <h4 className="font-sans font-bold text-xs text-[#2e2640] uppercase tracking-wider">
-                  Cronograma do módulo
-                </h4>
-              </div>
+              {/* Brand Chronogram / Timeline Graphics (p. 3) */}
+              <div className="mt-auto pt-4 border-t border-slate-200/50 break-inside-avoid flex flex-col" id="boletim-cronograma-rodape">
+                <div className="text-center mb-3">
+                  <h4 className="font-sans font-bold text-xs text-[#2e2640] uppercase tracking-wider">
+                    Cronograma do módulo
+                  </h4>
+                </div>
 
-              {/* Symmetrical Milestone Stepper */}
-              <div className="relative mb-4 px-4">
-                {/* Horizontal progress-like line */}
-                <div className="absolute top-[14px] left-12 right-12 h-[2px] bg-slate-100"></div>
-                
-                <div className="relative grid grid-cols-4 text-center gap-4">
-                  {/* Milestone 1: Onboarding */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">1. Onboarding</h5>
-                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
-                        {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : 'Sem data'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Milestone 2: KickOff */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">2. Kick-Off</h5>
-                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
-                        {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : 'Sem data'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Milestone 3: Sprints */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">3. Sprints</h5>
-                      
-                      <div className="mt-1 space-y-0.5 bg-slate-50 border border-slate-200 rounded p-1.5 text-left max-w-[125px] mx-auto shadow-3xs">
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
-                          <span className="text-slate-400 font-semibold">Sprint 1</span>
-                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
-                          <span className="text-slate-400 font-semibold">Sprint 2</span>
-                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
-                          <span className="text-slate-400 font-semibold">Sprint 3</span>
-                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[8px] font-mono">
-                          <span className="text-slate-400 font-semibold">Sprint 4</span>
-                          <span className="text-[#2e2640] font-bold">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : '—'}</span>
+                {/* Symmetrical Milestone Stepper */}
+                <div className="relative mb-4 px-4">
+                  {/* Horizontal progress-like line */}
+                  <div className="absolute top-[14px] left-12 right-12 h-[2px] bg-slate-100"></div>
+                  
+                  <div className="relative grid grid-cols-4 text-center gap-4">
+                    {/* Milestone 1: Onboarding */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Milestone 4: Apresentação */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-center">
-                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                      <div>
+                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">1. Onboarding</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                          {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : 'Sem data'}
+                        </span>
                       </div>
                     </div>
-                    <div>
-                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">4. Apresentação Final</h5>
-                      <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
-                        {sprintDates['fim'] ? formatDate(sprintDates['fim']) : 'Sem data'}
-                      </span>
+
+                    {/* Milestone 2: KickOff */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">2. Kick-Off</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                          {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : 'Sem data'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Milestone 3: Sprints */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">3. Sprints</h5>
+                        
+                        <div className="mt-1 space-y-0.5 bg-slate-50 border border-slate-200 rounded p-1.5 text-left max-w-[125px] mx-auto shadow-3xs">
+                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                            <span className="text-slate-400 font-semibold">Sprint 1</span>
+                            <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                            <span className="text-slate-400 font-semibold">Sprint 2</span>
+                            <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                            <span className="text-slate-400 font-semibold">Sprint 3</span>
+                            <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[8px] font-mono">
+                            <span className="text-slate-400 font-semibold">Sprint 4</span>
+                            <span className="text-[#2e2640] font-bold">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : '—'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Milestone 4: Apresentação */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-center">
+                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        </div>
+                      </div>
+                      <div>
+                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">4. Apresentação Final</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                          {sprintDates['fim'] ? formatDate(sprintDates['fim']) : 'Sem data'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
-            <div className="mt-6 bg-[#2e2640] rounded-lg py-3 px-6 flex items-center justify-center gap-4 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
-              <div className="flex items-center gap-2">
-                <span className="font-sans font-bold tracking-tight text-xl leading-none">
-                  inteli
-                </span>
-                <div className="relative w-8 h-8 flex items-center justify-center shrink-0 -mt-1">
-                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
-                    <g fill="#ff4545">
-                      {/* Row 1 */}
-                      <circle cx="50" cy="25" r="3.5" />
-                      <circle cx="58" cy="27" r="3.2" />
-                      <circle cx="66" cy="31" r="2.8" />
-                      <circle cx="73" cy="37" r="2.2" />
-                      {/* Row 2 */}
-                      <circle cx="43" cy="33" r="4.0" />
-                      <circle cx="51" cy="36" r="3.8" />
-                      <circle cx="59" cy="41" r="3.4" />
-                      <circle cx="66" cy="48" r="2.8" />
-                      <circle cx="72" cy="56" r="2.0" />
-                      {/* Row 3 */}
-                      <circle cx="38" cy="44" r="4.2" />
-                      <circle cx="45" cy="48" r="4.0" />
-                      <circle cx="53" cy="54" r="3.6" />
-                      <circle cx="60" cy="62" r="3.0" />
-                      <circle cx="66" cy="71" r="2.2" />
-                      {/* Row 4 */}
-                      <circle cx="35" cy="57" r="4.0" />
-                      <circle cx="41" cy="62" r="3.8" />
-                      <circle cx="48" cy="69" r="3.4" />
-                      <circle cx="54" cy="77" r="2.8" />
-                      {/* Row 5 */}
-                      <circle cx="36" cy="71" r="3.5" />
-                      <circle cx="41" cy="77" r="3.2" />
-                      <circle cx="46" cy="84" r="2.5" />
-                    </g>
-                  </svg>
+                {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
+                <div className="mt-4 bg-[#2e2640] rounded-lg py-2.5 px-6 flex items-center justify-center gap-4 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
+                  <div className="flex items-center gap-2">
+                    <span className="font-sans font-bold tracking-tight text-xl leading-none">
+                      inteli
+                    </span>
+                    <div className="relative w-8 h-8 flex items-center justify-center shrink-0 -mt-1">
+                      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
+                        <g fill="#ff4545">
+                          {/* Row 1 */}
+                          <circle cx="50" cy="25" r="3.5" />
+                          <circle cx="58" cy="27" r="3.2" />
+                          <circle cx="66" cy="31" r="2.8" />
+                          <circle cx="73" cy="37" r="2.2" />
+                          {/* Row 2 */}
+                          <circle cx="43" cy="33" r="4.0" />
+                          <circle cx="51" cy="36" r="3.8" />
+                          <circle cx="59" cy="41" r="3.4" />
+                          <circle cx="66" cy="48" r="2.8" />
+                          <circle cx="72" cy="56" r="2.0" />
+                          {/* Row 3 */}
+                          <circle cx="38" cy="44" r="4.2" />
+                          <circle cx="45" cy="48" r="4.0" />
+                          <circle cx="53" cy="54" r="3.6" />
+                          <circle cx="60" cy="62" r="3.0" />
+                          <circle cx="66" cy="71" r="2.2" />
+                          {/* Row 4 */}
+                          <circle cx="35" cy="57" r="4.0" />
+                          <circle cx="41" cy="62" r="3.8" />
+                          <circle cx="48" cy="69" r="3.4" />
+                          <circle cx="54" cy="77" r="2.8" />
+                          {/* Row 5 */}
+                          <circle cx="36" cy="71" r="3.5" />
+                          <circle cx="41" cy="77" r="3.2" />
+                          <circle cx="46" cy="84" r="2.5" />
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="h-6 w-px bg-white/20"></div>
+                  
+                  <div className="text-[7.5px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
+                    <p>Instituto de</p>
+                    <p>Tecnologia</p>
+                    <p>e Liderança</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="h-6 w-px bg-white/20"></div>
-              
-              <div className="text-[7.5px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
-                <p>Instituto de</p>
-                <p>Tecnologia</p>
-                <p>e Liderança</p>
               </div>
             </div>
           </div>
@@ -1238,12 +1247,16 @@ export default function BoletimEP({
       <style>{`
         @media print {
           @page {
-            margin: 1.2cm 1.5cm !important; /* Elegant page margins to avoid edge-to-edge printing */
+            size: A4 portrait !important;
+            margin: 0 !important; /* Removes ugly browser headers/footers (date, title, URL, page number) */
           }
           
           body {
             margin: 0 !important;
+            padding: 0 !important;
             background-color: white !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
 
           /* Hide non-printable elements */
@@ -1257,7 +1270,9 @@ export default function BoletimEP({
           
           #boletim-print-section {
             display: block !important;
-            position: relative !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
             background: white !important;
             border: none !important;
@@ -1281,15 +1296,32 @@ export default function BoletimEP({
             margin: 0 !important;
             max-width: 100% !important;
             width: 100% !important;
-            border-radius: 0 !important;
+          }
+
+          .boletim-print-page {
+            width: 21cm !important;
+            height: 29.7cm !important;
+            max-height: 29.7cm !important;
+            box-sizing: border-box !important;
+            padding: 1.0cm 1.2cm !important; /* Gives beautiful, elegant margins all around the page */
             display: flex !important;
             flex-direction: column !important;
-            min-height: 52cm !important; /* Forces the flex canvas to fill exactly 2 pages, pushing the footer to the bottom */
+            position: relative !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            background: white !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .boletim-print-page:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
 
           #boletim-cronograma-rodape {
             margin-top: auto !important;
-            padding-top: 1cm !important;
+            padding-top: 0.5cm !important;
           }
 
           /* Eliminate all outside UI chrome from print */
