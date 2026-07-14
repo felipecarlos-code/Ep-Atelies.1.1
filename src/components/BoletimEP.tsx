@@ -1238,11 +1238,11 @@ export default function BoletimEP({
       <style>{`
         @media print {
           @page {
-            margin: 0 !important; /* Removes browser default headers and footers (URL, page numbers, date) */
+            margin: 1.2cm 1.5cm !important; /* Elegant page margins to avoid edge-to-edge printing */
           }
           
           body {
-            margin: 1.2cm !important; /* Elegant printable area margins */
+            margin: 0 !important;
             background-color: white !important;
           }
 
@@ -1257,9 +1257,7 @@ export default function BoletimEP({
           
           #boletim-print-section {
             display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            position: relative !important;
             width: 100% !important;
             background: white !important;
             border: none !important;
@@ -1286,6 +1284,7 @@ export default function BoletimEP({
             border-radius: 0 !important;
             display: flex !important;
             flex-direction: column !important;
+            min-height: 52cm !important; /* Forces the flex canvas to fill exactly 2 pages, pushing the footer to the bottom */
           }
 
           #boletim-cronograma-rodape {

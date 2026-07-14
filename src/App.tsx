@@ -1794,14 +1794,40 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
                       ...synced,
                       // Preservar studentCount se ele existir localmente e o valor sincronizado não contiver um novo valor numérico válido
                       studentCount: synced.studentCount !== undefined ? synced.studentCount : existing.studentCount,
+                      // Preservar descrição editada manualmente se houver
+                      projectDescription: existing.projectDescription || synced.projectDescription,
+                      description: existing.description || synced.description,
                     };
                   }
                   return synced;
                 });
-                return deduplicateArrayById(merged);
+                
+                // Manter turmas criadas localmente que não existem no HubSpot
+                const localOnly = prevTurmas.filter((t) => !syncedTurmas.some((st) => st.id === t.id));
+                return deduplicateArrayById([...merged, ...localOnly]);
               });
 
-              setPartners(deduplicateArrayById(syncedPartners));
+              // Preservar parceiros existentes e manter logos manuais
+              setPartners((prevPartners) => {
+                const merged = syncedPartners.map((synced) => {
+                  const existing = prevPartners.find((p) => p.id === synced.id);
+                  if (existing) {
+                    return {
+                      ...synced,
+                      // Preservar a logo manual
+                      logoUrl: existing.logoUrl || synced.logoUrl,
+                      // Preservar nome e descrição editados manualmente se houver
+                      name: existing.name || synced.name,
+                      description: existing.description || synced.description,
+                    };
+                  }
+                  return synced;
+                });
+
+                // Manter parceiros criados localmente que não existem no HubSpot
+                const localOnly = prevPartners.filter((p) => !syncedPartners.some((sp) => sp.id === p.id));
+                return deduplicateArrayById([...merged, ...localOnly]);
+              });
             }}
           />
         )}
