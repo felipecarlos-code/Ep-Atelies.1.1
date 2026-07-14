@@ -727,7 +727,7 @@ export default function BoletimEP({
                         </div>
 
                         {/* Year Badge & Course next to it */}
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                           <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                             {seg.name}
                           </span>
@@ -965,7 +965,7 @@ export default function BoletimEP({
 
                             {/* Card main text content */}
                             <div className="p-2.5 flex-1">
-                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                                 <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
@@ -1055,7 +1055,7 @@ export default function BoletimEP({
 
                             {/* Card main text content */}
                             <div className="p-2.5 flex-1">
-                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                                 <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
