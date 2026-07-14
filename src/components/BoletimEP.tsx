@@ -852,12 +852,10 @@ export default function BoletimEP({
           {/* Printable Sheet Canvas Wrapper */}
           <div 
             id="printable-sheet-canvas"
-            className="max-w-4xl mx-auto space-y-8 print:space-y-0"
+            className="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6"
           >
-            {/* PAGE 1: Header + Morning Allocations */}
-            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start">
-              
-              {/* Header Poster conforming to Boletim EP */}
+            
+            {/* Header Poster conforming to Boletim EP */}
               <div className="relative text-center pb-2 flex flex-col items-center">
                 <div className="mb-4">
                   {renderInteliLogo(false)}
@@ -999,10 +997,19 @@ export default function BoletimEP({
                   <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto alocado no Período da Manhã</span>
                 </div>
               )}
-            </div>
 
-            {/* PAGE 2: Afternoon Allocations + Timeline + Footer */}
-            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start">
+              {/* Delicate section divider */}
+              <div className="relative flex items-center justify-center my-4 print:my-2 break-inside-avoid">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                  <div className="w-full border-t border-slate-200/60"></div>
+                </div>
+                <div className="relative bg-white px-3 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
+                  <span>✦</span>
+                  <span>✦</span>
+                  <span>✦</span>
+                </div>
+              </div>
+
               {/* PERÍODO DA TARDE (2º ANO) */}
               {afternoonAllocations.length > 0 ? (
                 <div className="space-y-2.5 flex-1">
@@ -1240,15 +1247,14 @@ export default function BoletimEP({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
        {/* Global CSS for physical paper print optimization */}
       <style>{`
         @media print {
           @page {
             size: A4 portrait !important;
-            margin: 0 !important; /* Removes ugly browser headers/footers (date, title, URL, page number) */
+            margin: 1.2cm 1.5cm !important; /* Elegant browser-native margins applied to every page automatically */
           }
           
           body {
@@ -1291,30 +1297,11 @@ export default function BoletimEP({
           #printable-sheet-canvas {
             border: none !important;
             box-shadow: none !important;
-            background: transparent !important;
+            background: white !important;
             padding: 0 !important;
             margin: 0 !important;
             max-width: 100% !important;
             width: 100% !important;
-          }
-
-          .boletim-print-page {
-            width: 21cm !important;
-            min-height: 29.7cm !important;
-            box-sizing: border-box !important;
-            padding: 1.0cm 1.2cm !important; /* Beautiful, elegant, spacious margins around each page */
-            display: flex !important;
-            flex-direction: column !important;
-            position: relative !important;
-            page-break-after: always !important;
-            break-after: page !important;
-            background: white !important;
-            margin: 0 !important;
-          }
-
-          .boletim-print-page:last-child {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
           }
 
           .break-inside-avoid {
@@ -1323,7 +1310,7 @@ export default function BoletimEP({
           }
 
           #boletim-cronograma-rodape {
-            margin-top: auto !important;
+            margin-top: 2cm !important; /* Elegant space before footer */
             padding-top: 0.5cm !important;
           }
 
