@@ -533,7 +533,7 @@ export default function BoletimEP({
           <span className="text-[10px] font-mono text-[#ff4545] font-bold uppercase tracking-wider flex items-center gap-1">
             <Calendar size={12} /> Navegar por Ciclo / Sprints
           </span>
-          <span className="text-xs text-slate-400 font-semibold">Selecione uma fase para visualizar o boletim</span>
+          <span className="text-xs text-slate-400 font-semibold">Selecione um ciclo para visualizar o boletim</span>
         </div>
 
         {/* Timeline Horizontal List */}
@@ -587,7 +587,7 @@ export default function BoletimEP({
       {/* Action Toolbar buttons */}
       <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className="font-sans text-sm font-bold text-[#2e2640]">Fase Ativa:</span>
+          <span className="font-sans text-sm font-bold text-[#2e2640]">Ciclo Ativo:</span>
           <span className="font-mono text-xs font-extrabold uppercase px-2.5 py-1 rounded bg-[#ff4545]/10 text-[#ff4545] border border-[#ff4545]/20">
             {activePhaseLabel}
           </span>
@@ -617,9 +617,9 @@ export default function BoletimEP({
       {activeAllocations.length === 0 && (
         <div className="bg-white border border-[#e6eaeb] rounded-lg p-16 text-center text-slate-500 shadow-3xs">
           <HelpCircle className="mx-auto text-slate-300 mb-2.5" size={44} />
-          <h3 className="font-sans text-base font-extrabold text-[#2e2640] uppercase tracking-wider">Sem alocações nesta fase</h3>
+          <h3 className="font-sans text-base font-extrabold text-[#2e2640] uppercase tracking-wider">Sem alocações registradas</h3>
           <p className="text-xs text-slate-400 mt-1.5 max-w-md mx-auto leading-relaxed font-sans">
-            Nenhuma turma possui ateliês alocados na fase <strong>{activePhaseLabel}</strong>. 
+            Nenhuma turma possui ateliês alocados em <strong>{activePhaseLabel}</strong>. 
             Vá até a aba do <strong>Quadro de Sprints</strong> para vincular as turmas aos seus respectivos ateliês.
           </p>
         </div>
@@ -646,7 +646,7 @@ export default function BoletimEP({
                     {selectedYear} • {selectedQuarter}
                   </span>
                   <span className="font-mono text-[10px] text-[#90a5e5] font-extrabold uppercase tracking-wider">
-                    Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
+                    {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                   </span>
                 </div>
                 <h1 className="font-sans text-2xl font-black text-white mt-1.5 tracking-tight uppercase">
@@ -689,13 +689,13 @@ export default function BoletimEP({
                     style={{ borderLeftColor: seg.bg.includes('[#') ? seg.bg.slice(4, -1) : '#b2b6bf' }}
                   >
                     {/* Left Frame: Partner Logo container */}
-                    <div className="w-[85px] shrink-0 bg-[#e6eaeb]/30 rounded p-1.5 flex flex-col justify-center items-center border border-slate-100/80 shadow-3xs">
+                    <div className="w-[100px] shrink-0 bg-transparent p-1.5 flex flex-col justify-center items-center">
                       {alloc.partner ? (
                         <>
                           <img
                             src={alloc.partner.logoUrl}
                             alt={alloc.partner.name}
-                            className="max-h-12 max-w-full object-contain mix-blend-multiply"
+                            className="max-h-16 max-w-full object-contain mix-blend-multiply"
                             referrerPolicy="no-referrer"
                             onError={(e) => handleLogoError(e, alloc.partner!.name)}
                           />
@@ -726,18 +726,20 @@ export default function BoletimEP({
                           </span>
                         </div>
 
-                        {/* Title & Technical Subtitle */}
-                        <h3 className="font-sans font-black text-xs text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
-                        <p className="font-mono text-[9px] text-[#ff4545] font-bold mt-0.5 uppercase tracking-wide truncate">
-                          {alloc.subtitle}
-                        </p>
-                        {alloc.turma && (
-                          <div className="mt-1 flex items-center gap-1">
+                        {/* Year Badge & Course next to it */}
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                            {seg.name}
+                          </span>
+                          {alloc.turma && alloc.academicYear !== '1' && (
                             <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                               Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                             </span>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                        <p className="font-mono text-[9px] text-[#2e2640] font-bold mt-0.5 uppercase tracking-wide truncate">
+                          {alloc.subtitle}
+                        </p>
 
                         {/* Description */}
                         <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-2 line-clamp-3" title={alloc.turma?.epDescricaoCurta}>
@@ -748,7 +750,7 @@ export default function BoletimEP({
                       {/* Info footer */}
                       <div className="flex items-center justify-end text-[8px] text-slate-400 font-extrabold mt-2 pt-1.5 border-t border-slate-100">
                         <span className="font-mono uppercase text-[#066d73]">
-                          {alloc.turma?.studentCount || 0} alunos • {alloc.turma?.period}
+                          {alloc.turma?.period}
                         </span>
                       </div>
                     </div>
@@ -865,27 +867,27 @@ export default function BoletimEP({
                 BOLETIM EP
               </h1>
               
-              <h2 className="font-sans text-sm font-black text-[#ff4545] mt-3.5 uppercase tracking-widest print:text-[#ff4545]">
+              <h2 className="font-sans text-xs font-black text-[#ff4545] mt-2 uppercase tracking-widest print:text-[#ff4545]">
                 {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
               </h2>
 
-              <p className="font-mono text-xs font-black text-slate-700 mt-2 uppercase tracking-wide">
-                Fase: {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
+              <p className="font-mono text-[10px] font-black text-slate-700 mt-1 uppercase tracking-wide">
+                {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
               </p>
 
-              <div className="mt-3 w-full max-w-md overflow-hidden rounded-lg border border-slate-100 shadow-xs">
+              <div className="mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-slate-100 shadow-xs">
                 <img 
                   src={campusImgSrc} 
                   alt="Inteli Campus" 
-                  className="w-full h-44 object-cover hover:scale-102 transition-transform duration-300"
+                  className="w-full h-28 object-cover hover:scale-102 transition-transform duration-300"
                   referrerPolicy="no-referrer"
                   onError={handleCampusError}
                 />
               </div>
               
-              <div className="w-16 h-1 bg-[#ff4545] my-4"></div>
+              <div className="w-12 h-0.5 bg-[#ff4545] my-2.5"></div>
               
-              <div className="flex justify-center gap-6 mt-3 text-[10px] text-slate-400 font-bold uppercase font-mono">
+              <div className="flex justify-center gap-4 mt-1 text-[9px] text-slate-400 font-bold uppercase font-mono">
                 <span>Graduação 1º e 3º Ano — 09h às 11h</span>
                 <span className="text-slate-300">•</span>
                 <span>Graduação 2º Ano — 14h às 16h</span>
@@ -893,11 +895,11 @@ export default function BoletimEP({
             </div>
 
             {/* Delicate section divider */}
-            <div className="relative flex items-center justify-center my-8">
+            <div className="relative flex items-center justify-center my-4">
               <div className="absolute inset-0 flex items-center" aria-hidden="true">
                 <div className="w-full border-t border-slate-200/60"></div>
               </div>
-              <div className="relative bg-white px-4 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
+              <div className="relative bg-white px-3 text-slate-300 flex gap-2 text-[8px] leading-none select-none">
                 <span>✦</span>
                 <span>✦</span>
                 <span>✦</span>
@@ -905,37 +907,37 @@ export default function BoletimEP({
             </div>
 
             {/* List of Projects (Vertical Card Ensembles) sorted by Morning (1º & 3º Anos) first and separated nicely */}
-            <div className="space-y-8">
+            <div className="space-y-5">
               {/* PERÍODO DA MANHÃ (1º & 3º ANOS) */}
               {morningAllocations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4">
-                    <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       Período da Manhã (1º & 3º Anos)
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
-                    <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">09h às 11h</span>
+                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-3.5">
                     {morningAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="bg-[#e6eaeb]/10 border border-[#e6eaeb] rounded-lg overflow-hidden flex items-stretch hover:shadow-2xs transition-all relative break-inside-avoid"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[140px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[120px] shrink-0 bg-[#e6eaeb]/25 border-r border-[#e6eaeb] p-3 flex flex-col justify-center items-center">
+                          <div className="w-[160px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="max-h-14 max-w-full object-contain mix-blend-multiply"
+                                  className="h-20 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[7.5px] text-slate-500 font-bold mt-2 text-center truncate w-full" title={alloc.partner.name}>
+                                <span className="text-[10px] text-[#2e2640] font-black mt-2 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -948,10 +950,10 @@ export default function BoletimEP({
                           </div>
 
                           {/* Right Frame: Project description */}
-                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-4 py-1.5 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                            <div className={`${seg.bg} px-4 py-1 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9.5px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
                               <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
@@ -962,33 +964,30 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-4 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                            <div className="p-2.5 flex-1">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                <h3 className="font-sans font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
-                              </div>
-                              
-                              <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
-                                {alloc.subtitle}
-                              </p>
-                              {alloc.turma && (
-                                <div className="mt-1.5 flex items-center gap-1">
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                {alloc.turma && alloc.academicYear !== '1' && (
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
-                                </div>
-                              )}
-                              <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
+                                )}
+                              </div>
+                              
+                              <p className="font-mono text-[10px] text-[#2e2640] font-bold uppercase tracking-wider">
+                                {alloc.subtitle}
+                              </p>
+                              <p className="font-sans text-[12px] text-slate-600 font-medium leading-relaxed mt-1.5">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-1.5 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
-                                {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Manhã'}
+                                Período {alloc.turma?.period || 'Manhã'}
                               </span>
                             </div>
                           </div>
@@ -1001,34 +1000,34 @@ export default function BoletimEP({
 
               {/* PERÍODO DA TARDE (2º ANO) */}
               {afternoonAllocations.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-2 mb-4 pt-4">
-                    <span className="text-[11px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-3 py-1 rounded-full flex items-center gap-1.5">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5 pt-2">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       Período da Tarde (2º Ano)
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
-                    <span className="font-mono text-[9px] text-slate-400 font-bold uppercase">14h às 16h</span>
+                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-3.5">
                     {afternoonAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="bg-[#e6eaeb]/10 border border-[#e6eaeb] rounded-lg overflow-hidden flex items-stretch hover:shadow-2xs transition-all relative break-inside-avoid"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[140px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[120px] shrink-0 bg-[#e6eaeb]/25 border-r border-[#e6eaeb] p-3 flex flex-col justify-center items-center">
+                          <div className="w-[160px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="max-h-14 max-w-full object-contain mix-blend-multiply"
+                                  className="h-20 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[7.5px] text-slate-500 font-bold mt-2 text-center truncate w-full" title={alloc.partner.name}>
+                                <span className="text-[10px] text-[#2e2640] font-black mt-2 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -1041,10 +1040,10 @@ export default function BoletimEP({
                           </div>
 
                           {/* Right Frame: Project description */}
-                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-4 py-1.5 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                            <div className={`${seg.bg} px-4 py-1 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9.5px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
                               <span className="font-mono text-[8.5px] font-black uppercase bg-white/20 px-2 py-0.5 rounded tracking-wide">
@@ -1055,33 +1054,30 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-4 flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className={`text-[8px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                            <div className="p-2.5 flex-1">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className={`text-[8.5px] font-mono font-bold px-1.5 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                <h3 className="font-sans font-black text-sm text-[#2e2640] tracking-tight leading-tight">{alloc.title}</h3>
-                              </div>
-                              
-                              <p className="font-mono text-[9.5px] text-[#ff4545] font-bold uppercase tracking-wider">
-                                {alloc.subtitle}
-                              </p>
-                              {alloc.turma && (
-                                <div className="mt-1.5 flex items-center gap-1">
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
+                                {alloc.turma && alloc.academicYear !== '1' && (
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8.5px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
                                     Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                                   </span>
-                                </div>
-                              )}
-                              <p className="font-sans text-xs text-slate-600 font-medium leading-relaxed mt-2.5">
+                                )}
+                              </div>
+                              
+                              <p className="font-mono text-[10px] text-[#2e2640] font-bold uppercase tracking-wider">
+                                {alloc.subtitle}
+                              </p>
+                              <p className="font-sans text-[12px] text-slate-600 font-medium leading-relaxed mt-1.5">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-2 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-4 py-1.5 flex justify-end items-center text-[9px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8.5px]">
-                                {alloc.turma?.studentCount || 0} Alunos • Período {alloc.turma?.period || 'Tarde'}
+                                Período {alloc.turma?.period || 'Tarde'}
                               </span>
                             </div>
                           </div>
@@ -1094,24 +1090,24 @@ export default function BoletimEP({
             </div>
 
             {/* Brand Chronogram / Timeline Graphics (p. 3) */}
-            <div className="mt-12 pt-8 border-t border-slate-200/80 break-inside-avoid">
-              <div className="text-center mb-8">
+            <div className="mt-6 pt-4 border-t border-slate-200/50 break-inside-avoid print:mt-auto" id="boletim-cronograma-rodape">
+              <div className="text-center mb-3">
                 <h4 className="font-sans font-bold text-xs text-[#2e2640] uppercase tracking-wider">
-                  Cronograma do modulo
+                  Cronograma do módulo
                 </h4>
               </div>
 
               {/* Symmetrical Milestone Stepper */}
-              <div className="relative mb-8 px-4">
+              <div className="relative mb-4 px-4">
                 {/* Horizontal progress-like line */}
-                <div className="absolute top-[18px] left-12 right-12 h-[2px] bg-slate-100"></div>
+                <div className="absolute top-[14px] left-12 right-12 h-[2px] bg-slate-100"></div>
                 
                 <div className="relative grid grid-cols-4 text-center gap-4">
                   {/* Milestone 1: Onboarding */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
                       </div>
                     </div>
                     <div>
@@ -1123,10 +1119,10 @@ export default function BoletimEP({
                   </div>
 
                   {/* Milestone 2: KickOff */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
                       </div>
                     </div>
                     <div>
@@ -1138,25 +1134,25 @@ export default function BoletimEP({
                   </div>
 
                   {/* Milestone 3: Sprints */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-[#ff4545]/10 border border-[#ff4545]/30 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#ff4545]"></div>
+                      <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
                       </div>
                     </div>
                     <div>
-                      <h5 className="font-sans font-bold text-[10px] text-[#ff4545]">3. Sprints</h5>
+                      <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">3. Sprints</h5>
                       
-                      <div className="mt-2 space-y-1 bg-[#ff4545]/5 border border-[#ff4545]/10 rounded-lg p-2 text-left max-w-[140px] mx-auto shadow-3xs">
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                      <div className="mt-1 space-y-0.5 bg-slate-50 border border-slate-200 rounded p-1.5 text-left max-w-[125px] mx-auto shadow-3xs">
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
                           <span className="text-slate-400 font-semibold">Sprint 1</span>
                           <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
                         </div>
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
                           <span className="text-slate-400 font-semibold">Sprint 2</span>
                           <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
                         </div>
-                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-[#ff4545]/10 pb-0.5">
+                        <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
                           <span className="text-slate-400 font-semibold">Sprint 3</span>
                           <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
                         </div>
@@ -1169,10 +1165,10 @@ export default function BoletimEP({
                   </div>
 
                   {/* Milestone 4: Apresentação */}
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center justify-center">
-                      <div className="w-9 h-9 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#2e2640]"></div>
+                      <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                        <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
                       </div>
                     </div>
                     <div>
@@ -1187,12 +1183,12 @@ export default function BoletimEP({
             </div>
 
             {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
-            <div className="mt-12 bg-[#2e2640] rounded-xl py-6 px-10 flex items-center justify-center gap-6 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
-              <div className="flex items-center gap-3">
-                <span className="font-sans font-bold tracking-tight text-3xl leading-none">
+            <div className="mt-6 bg-[#2e2640] rounded-lg py-3 px-6 flex items-center justify-center gap-4 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
+              <div className="flex items-center gap-2">
+                <span className="font-sans font-bold tracking-tight text-xl leading-none">
                   inteli
                 </span>
-                <div className="relative w-10 h-10 flex items-center justify-center shrink-0 -mt-2">
+                <div className="relative w-8 h-8 flex items-center justify-center shrink-0 -mt-1">
                   <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
                     <g fill="#ff4545">
                       {/* Row 1 */}
@@ -1226,9 +1222,9 @@ export default function BoletimEP({
                 </div>
               </div>
               
-              <div className="h-8 w-px bg-white/20"></div>
+              <div className="h-6 w-px bg-white/20"></div>
               
-              <div className="text-[8px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
+              <div className="text-[7.5px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
                 <p>Instituto de</p>
                 <p>Tecnologia</p>
                 <p>e Liderança</p>
@@ -1288,6 +1284,13 @@ export default function BoletimEP({
             max-width: 100% !important;
             width: 100% !important;
             border-radius: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+
+          #boletim-cronograma-rodape {
+            margin-top: auto !important;
+            padding-top: 1cm !important;
           }
 
           /* Eliminate all outside UI chrome from print */
