@@ -1254,11 +1254,11 @@ export default function BoletimEP({
         @media print {
           @page {
             size: A4 portrait !important;
-            margin: 1.2cm 1.5cm !important; /* Elegant browser-native margins applied to every page automatically */
+            margin: 0 !important; /* Crucial: setting page margin to 0 completely removes the browser's default header (date, title) and footer (URL, page number) */
           }
           
           body {
-            margin: 0 !important;
+            margin: 1.2cm 1.5cm !important; /* Applies elegant margin inside the physical page boundaries on every page of the document */
             padding: 0 !important;
             background-color: white !important;
             -webkit-print-color-adjust: exact !important;
