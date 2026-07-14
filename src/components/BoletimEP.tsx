@@ -916,26 +916,26 @@ export default function BoletimEP({
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 print:space-y-1.5">
                     {morningAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[105px]"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[9px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] print:text-[8px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -951,10 +951,10 @@ export default function BoletimEP({
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
                             <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                              <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
-                              <span className="font-mono text-[8px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
+                              <span className="font-mono text-[8px] print:text-[7px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
                                   return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
@@ -962,7 +962,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 flex-1">
+                            <div className="p-2 print:p-1.5 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -974,10 +974,10 @@ export default function BoletimEP({
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[9.5px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
                                 {alloc.subtitle}
                               </p>
-                              <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-1 line-clamp-3">
+                              <p className="font-sans text-[11px] print:text-[10px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
@@ -1013,26 +1013,26 @@ export default function BoletimEP({
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
                   </div>
-                  <div className="space-y-3">
+                  <div className="space-y-3 print:space-y-1.5">
                     {afternoonAllocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[105px]"
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[9px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] print:text-[8px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -1048,10 +1048,10 @@ export default function BoletimEP({
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
                             <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
-                              <span className="font-mono text-[9px] font-black uppercase tracking-wider">
+                              <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
-                              <span className="font-mono text-[8px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
+                              <span className="font-mono text-[8px] print:text-[7px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
                                 {alloc.atelieBlocks.map(b => {
                                   return String(b).toUpperCase().replace('BLOCO', '').trim();
                                 }).join(' / ') || 'N/A'}
@@ -1059,7 +1059,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 flex-1">
+                            <div className="p-2 print:p-1.5 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -1071,10 +1071,10 @@ export default function BoletimEP({
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[9.5px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
                                 {alloc.subtitle}
                               </p>
-                              <p className="font-sans text-[11px] text-slate-600 font-medium leading-relaxed mt-1 line-clamp-3">
+                              <p className="font-sans text-[11px] print:text-[10px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
                                 {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
                               </p>
                             </div>
@@ -1098,73 +1098,73 @@ export default function BoletimEP({
               )}
 
               {/* Brand Chronogram / Timeline Graphics (p. 3) */}
-              <div className="mt-auto pt-4 border-t border-slate-200/50 break-inside-avoid flex flex-col" id="boletim-cronograma-rodape">
-                <div className="text-center mb-3">
-                  <h4 className="font-sans font-bold text-xs text-[#2e2640] uppercase tracking-wider">
+              <div className="mt-auto pt-3 border-t border-slate-200/50 break-inside-avoid flex flex-col" id="boletim-cronograma-rodape">
+                <div className="text-center mb-2 print:mb-1">
+                  <h4 className="font-sans font-bold text-xs print:text-[10px] text-[#2e2640] uppercase tracking-wider">
                     Cronograma do módulo
                   </h4>
                 </div>
 
                 {/* Symmetrical Milestone Stepper */}
-                <div className="relative mb-4 px-4">
+                <div className="relative mb-3 print:mb-1 px-4">
                   {/* Horizontal progress-like line */}
-                  <div className="absolute top-[14px] left-12 right-12 h-[2px] bg-slate-100"></div>
+                  <div className="absolute top-[14px] print:top-[10px] left-12 right-12 h-[2px] bg-slate-100"></div>
                   
-                  <div className="relative grid grid-cols-4 text-center gap-4">
+                  <div className="relative grid grid-cols-4 text-center gap-4 print:gap-2">
                     {/* Milestone 1: Onboarding */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 print:space-y-0.5">
                       <div className="flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        <div className="w-7 h-7 print:w-5 print:h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 print:w-1.5 print:h-1.5 rounded-full bg-[#2e2640]"></div>
                         </div>
                       </div>
                       <div>
-                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">1. Onboarding</h5>
-                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                        <h5 className="font-sans font-bold text-[10px] print:text-[8px] text-[#2e2640]">1. Onboarding</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] print:text-[7px] font-bold px-2 print:px-1.5 py-0.5 print:py-0 rounded-full uppercase mt-1 print:mt-0.5">
                           {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : 'Sem data'}
                         </span>
                       </div>
                     </div>
 
                     {/* Milestone 2: KickOff */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 print:space-y-0.5">
                       <div className="flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        <div className="w-7 h-7 print:w-5 print:h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 print:w-1.5 print:h-1.5 rounded-full bg-[#2e2640]"></div>
                         </div>
                       </div>
                       <div>
-                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">2. Kick-Off</h5>
-                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                        <h5 className="font-sans font-bold text-[10px] print:text-[8px] text-[#2e2640]">2. Kick-Off</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] print:text-[7px] font-bold px-2 print:px-1.5 py-0.5 print:py-0 rounded-full uppercase mt-1 print:mt-0.5">
                           {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : 'Sem data'}
                         </span>
                       </div>
                     </div>
 
                     {/* Milestone 3: Sprints */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 print:space-y-0.5">
                       <div className="flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center relative z-10 shadow-3xs">
-                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        <div className="w-7 h-7 print:w-5 print:h-5 rounded-full bg-slate-100 border border-slate-300 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 print:w-1.5 print:h-1.5 rounded-full bg-[#2e2640]"></div>
                         </div>
                       </div>
                       <div>
-                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">3. Sprints</h5>
+                        <h5 className="font-sans font-bold text-[10px] print:text-[8px] text-[#2e2640]">3. Sprints</h5>
                         
-                        <div className="mt-1 space-y-0.5 bg-slate-50 border border-slate-200 rounded p-1.5 text-left max-w-[125px] mx-auto shadow-3xs">
-                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                        <div className="mt-1 print:mt-0.5 space-y-0.5 bg-slate-50 border border-slate-200 rounded p-1.5 print:p-1 text-left max-w-[125px] print:max-w-[105px] mx-auto shadow-3xs">
+                          <div className="flex justify-between items-center text-[8px] print:text-[7px] font-mono border-b border-slate-100 pb-0.5">
                             <span className="text-slate-400 font-semibold">Sprint 1</span>
                             <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
                           </div>
-                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                          <div className="flex justify-between items-center text-[8px] print:text-[7px] font-mono border-b border-slate-100 pb-0.5">
                             <span className="text-slate-400 font-semibold">Sprint 2</span>
                             <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
                           </div>
-                          <div className="flex justify-between items-center text-[8px] font-mono border-b border-slate-100 pb-0.5">
+                          <div className="flex justify-between items-center text-[8px] print:text-[7px] font-mono border-b border-slate-100 pb-0.5">
                             <span className="text-slate-400 font-semibold">Sprint 3</span>
                             <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
                           </div>
-                          <div className="flex justify-between items-center text-[8px] font-mono">
+                          <div className="flex justify-between items-center text-[8px] print:text-[7px] font-mono">
                             <span className="text-slate-400 font-semibold">Sprint 4</span>
                             <span className="text-[#2e2640] font-bold">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : '—'}</span>
                           </div>
@@ -1173,15 +1173,15 @@ export default function BoletimEP({
                     </div>
 
                     {/* Milestone 4: Apresentação */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 print:space-y-0.5">
                       <div className="flex items-center justify-center">
-                        <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
-                          <div className="w-2 h-2 rounded-full bg-[#2e2640]"></div>
+                        <div className="w-7 h-7 print:w-5 print:h-5 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center relative z-10 shadow-3xs">
+                          <div className="w-2 h-2 print:w-1.5 print:h-1.5 rounded-full bg-[#2e2640]"></div>
                         </div>
                       </div>
                       <div>
-                        <h5 className="font-sans font-bold text-[10px] text-[#2e2640]">4. Apresentação Final</h5>
-                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] font-bold px-2 py-0.5 rounded-full uppercase mt-1">
+                        <h5 className="font-sans font-bold text-[10px] print:text-[8px] text-[#2e2640]">4. Apresentação Final</h5>
+                        <span className="inline-block bg-slate-100/70 text-slate-500 font-mono text-[8px] print:text-[7px] font-bold px-2 print:px-1.5 py-0.5 print:py-0 rounded-full uppercase mt-1 print:mt-0.5">
                           {sprintDates['fim'] ? formatDate(sprintDates['fim']) : 'Sem data'}
                         </span>
                       </div>
@@ -1190,12 +1190,12 @@ export default function BoletimEP({
                 </div>
 
                 {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
-                <div className="mt-4 bg-[#2e2640] rounded-lg py-2.5 px-6 flex items-center justify-center gap-4 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
+                <div className="mt-3 print:mt-1.5 bg-[#2e2640] rounded-lg py-2.5 print:py-1 px-6 print:px-3 flex items-center justify-center gap-4 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
                   <div className="flex items-center gap-2">
-                    <span className="font-sans font-bold tracking-tight text-xl leading-none">
+                    <span className="font-sans font-bold tracking-tight text-xl print:text-base leading-none">
                       inteli
                     </span>
-                    <div className="relative w-8 h-8 flex items-center justify-center shrink-0 -mt-1">
+                    <div className="relative w-8 h-8 print:w-6 print:h-6 flex items-center justify-center shrink-0 -mt-1">
                       <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
                         <g fill="#ff4545">
                           {/* Row 1 */}
@@ -1229,9 +1229,9 @@ export default function BoletimEP({
                     </div>
                   </div>
                   
-                  <div className="h-6 w-px bg-white/20"></div>
+                  <div className="h-6 print:h-4 w-px bg-white/20"></div>
                   
-                  <div className="text-[7.5px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
+                  <div className="text-[7.5px] print:text-[6.5px] font-sans tracking-widest text-slate-300 uppercase leading-tight font-medium text-left">
                     <p>Instituto de</p>
                     <p>Tecnologia</p>
                     <p>e Liderança</p>
@@ -1303,7 +1303,7 @@ export default function BoletimEP({
             height: 29.7cm !important;
             max-height: 29.7cm !important;
             box-sizing: border-box !important;
-            padding: 1.0cm 1.2cm !important; /* Gives beautiful, elegant margins all around the page */
+            padding: 0.5cm 1.0cm !important; /* Slightly more compact margins to maximize content area and prevent cutting off */
             display: flex !important;
             flex-direction: column !important;
             position: relative !important;
