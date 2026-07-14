@@ -1300,10 +1300,9 @@ export default function BoletimEP({
 
           .boletim-print-page {
             width: 21cm !important;
-            height: 29.7cm !important;
-            max-height: 29.7cm !important;
+            min-height: 29.7cm !important;
             box-sizing: border-box !important;
-            padding: 0.5cm 1.0cm !important; /* Slightly more compact margins to maximize content area and prevent cutting off */
+            padding: 1.0cm 1.2cm !important; /* Beautiful, elegant, spacious margins around each page */
             display: flex !important;
             flex-direction: column !important;
             position: relative !important;
@@ -1311,12 +1310,16 @@ export default function BoletimEP({
             break-after: page !important;
             background: white !important;
             margin: 0 !important;
-            overflow: hidden !important;
           }
 
           .boletim-print-page:last-child {
             page-break-after: avoid !important;
             break-after: avoid !important;
+          }
+
+          .break-inside-avoid {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
 
           #boletim-cronograma-rodape {
