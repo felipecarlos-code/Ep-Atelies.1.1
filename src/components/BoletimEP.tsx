@@ -126,83 +126,19 @@ export default function BoletimEP({
 
   // Logo do Inteli - integrated text and floating sphere logo matching "logo inteli (3) (1)"
   const renderInteliLogo = (isDark: boolean = false, size: 'sm' | 'md' | 'lg' = 'md') => {
-    const textColorClass = isDark ? 'text-white' : 'text-[#2e2640]';
+    const src = isDark ? '/logo-inteli-white.svg' : '/logo-inteli.svg';
     
     // sizing configurations
     const sizeConfig = {
-      sm: {
-        text: 'text-lg',
-        dot: 'top-[3px] w-[3.5px] h-[3.5px]',
-        container: 'pt-3 pb-0.5',
-        cluster: 'top-[-26px] left-[-11px] w-[34px] h-[34px]'
-      },
-      md: {
-        text: 'text-2xl',
-        dot: 'top-[4px] w-[4.5px] h-[4.5px]',
-        container: 'pt-5 pb-1',
-        cluster: 'top-[-36px] left-[-14px] w-[46px] h-[46px]'
-      },
-      lg: {
-        text: 'text-4xl',
-        dot: 'top-[7px] w-[7px] h-[7px]',
-        container: 'pt-8 pb-2',
-        cluster: 'top-[-54px] left-[-22px] w-[70px] h-[70px]'
-      }
+      sm: 'h-5',
+      md: 'h-7',
+      lg: 'h-10'
     };
 
-    const cfg = sizeConfig[size];
+    const heightClass = sizeConfig[size];
 
     return (
-      <div className={`relative inline-flex items-end select-none ${cfg.container}`} id="brand-logo-frame">
-        {/* Wordmark in Manrope font */}
-        <span className={`font-sans font-extrabold tracking-tight leading-none ${cfg.text} ${textColorClass}`}>
-          {/* First "i" without standard dot - replaced with perfectly positioned Coral dot */}
-          <span className="relative inline-block">
-            ı
-            <span className={`absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full ${cfg.dot}`}></span>
-          </span>
-          ntel
-          {/* Second "i" with Coral dot and floating dot cluster sphere */}
-          <span className="relative inline-block">
-            ı
-            <span className={`absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full ${cfg.dot}`}></span>
-            
-            {/* Dotted cluster floating above and to the right */}
-            <div className={`absolute pointer-events-none ${cfg.cluster}`}>
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
-                <g fill="#ff4545">
-                  {/* Row 1 */}
-                  <circle cx="50" cy="25" r="3.5" />
-                  <circle cx="58" cy="27" r="3.2" />
-                  <circle cx="66" cy="31" r="2.8" />
-                  <circle cx="73" cy="37" r="2.2" />
-                  {/* Row 2 */}
-                  <circle cx="43" cy="33" r="4.0" />
-                  <circle cx="51" cy="36" r="3.8" />
-                  <circle cx="59" cy="41" r="3.4" />
-                  <circle cx="66" cy="48" r="2.8" />
-                  <circle cx="72" cy="56" r="2.0" />
-                  {/* Row 3 */}
-                  <circle cx="38" cy="44" r="4.2" />
-                  <circle cx="45" cy="48" r="4.0" />
-                  <circle cx="53" cy="54" r="3.6" />
-                  <circle cx="60" cy="62" r="3.0" />
-                  <circle cx="66" cy="71" r="2.2" />
-                  {/* Row 4 */}
-                  <circle cx="35" cy="57" r="4.0" />
-                  <circle cx="41" cy="62" r="3.8" />
-                  <circle cx="48" cy="69" r="3.4" />
-                  <circle cx="54" cy="77" r="2.8" />
-                  {/* Row 5 */}
-                  <circle cx="36" cy="71" r="3.5" />
-                  <circle cx="41" cy="77" r="3.2" />
-                  <circle cx="46" cy="84" r="2.5" />
-                </g>
-              </svg>
-            </div>
-          </span>
-        </span>
-      </div>
+      <img src={src} alt="Inteli" className={`${heightClass} object-contain select-none`} />
     );
   };
 

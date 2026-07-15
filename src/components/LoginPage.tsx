@@ -110,48 +110,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   // Corporate Inteli Logo
   const renderInteliLogo = () => {
     return (
-      <div className="relative inline-flex items-end select-none pb-1" id="login-brand-logo">
-        <span className="font-sans font-extrabold tracking-tight text-3xl leading-none text-[#2e2640]">
-          <span className="relative inline-block">
-            ı
-            <span className="absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full top-[4px] w-[5.5px] h-[5.5px]"></span>
-          </span>
-          ntel
-          <span className="relative inline-block">
-            ı
-            <span className="absolute left-1/2 transform -translate-x-1/2 bg-[#ff4545] rounded-full top-[4px] w-[5.5px] h-[5.5px]"></span>
-            
-            {/* Dotted cluster floating above and to the right */}
-            <div className="absolute pointer-events-none top-[-36px] left-[-16px] w-[46px] h-[46px]">
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
-                <g fill="#ff4545">
-                  <circle cx="50" cy="25" r="3.5" />
-                  <circle cx="58" cy="27" r="3.2" />
-                  <circle cx="66" cy="31" r="2.8" />
-                  <circle cx="73" cy="37" r="2.2" />
-                  <circle cx="43" cy="33" r="4.0" />
-                  <circle cx="51" cy="36" r="3.8" />
-                  <circle cx="59" cy="41" r="3.4" />
-                  <circle cx="66" cy="48" r="2.8" />
-                  <circle cx="72" cy="56" r="2.0" />
-                  <circle cx="38" cy="44" r="4.2" />
-                  <circle cx="45" cy="48" r="4.0" />
-                  <circle cx="53" cy="54" r="3.6" />
-                  <circle cx="60" cy="62" r="3.0" />
-                  <circle cx="66" cy="71" r="2.2" />
-                  <circle cx="35" cy="57" r="4.0" />
-                  <circle cx="41" cy="62" r="3.8" />
-                  <circle cx="48" cy="69" r="3.4" />
-                  <circle cx="54" cy="77" r="2.8" />
-                  <circle cx="36" cy="71" r="3.5" />
-                  <circle cx="41" cy="77" r="3.2" />
-                  <circle cx="46" cy="84" r="2.5" />
-                </g>
-              </svg>
-            </div>
-          </span>
-        </span>
-      </div>
+      <img src="/logo-inteli.svg" alt="Inteli" className="h-10 mx-auto object-contain select-none" />
     );
   };
 
