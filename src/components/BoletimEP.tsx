@@ -252,13 +252,13 @@ export default function BoletimEP({
     }
 
     let title = 'PROJETO PRÁTICO';
-    let subtitle = turma.course;
+    let subtitle = turma.courseModule || turma.course;
     let academicYear: '1' | '2' | '3' = '1';
 
     // Detect Year & Module using name or detectedYear
     if (name.includes('1º ano') || name.includes('1º') || detectedYear === '1') {
       title = '1º ANO - MÓD. 02';
-      subtitle = 'APLICAÇÃO WEB';
+      subtitle = turma.courseModule || 'APLICAÇÃO WEB';
       academicYear = '1';
     } else if (name.includes('2º ano') || name.includes('2º') || detectedYear === '2') {
       let acronym = 'ES';
@@ -271,11 +271,13 @@ export default function BoletimEP({
       academicYear = '2';
       
       // Subtitle area of study from real EP
-      if (acronym === 'ES') subtitle = 'Plataforma digital baseada em arquitetura orientada a serviços';
-      else if (acronym === 'EC') subtitle = 'Dermolipectomia / Robótica Móvel e Visão Computacional';
-      else if (acronym === 'CC') subtitle = 'Otimização e Pesquisa Operacional para Crédito';
-      else if (acronym === 'SI') subtitle = 'Aplicação baseada em Processamento em Linguagem Natural';
-      else if (acronym === 'ADM TECH') subtitle = 'Sistemas de Business Intelligence para tomada de decisão';
+      if (!turma.courseModule) {
+        if (acronym === 'ES') subtitle = 'Plataforma digital baseada em arquitetura orientada a serviços';
+        else if (acronym === 'EC') subtitle = 'Dermolipectomia / Robótica Móvel e Visão Computacional';
+        else if (acronym === 'CC') subtitle = 'Otimização e Pesquisa Operacional para Crédito';
+        else if (acronym === 'SI') subtitle = 'Aplicação baseada em Processamento em Linguagem Natural';
+        else if (acronym === 'ADM TECH') subtitle = 'Sistemas de Business Intelligence para tomada de decisão';
+      }
     } else if (name.includes('3º ano') || name.includes('3º') || detectedYear === '3') {
       let acronym = 'ES';
       if (name.includes('computação') || name.includes('comp')) acronym = 'EC';
@@ -285,10 +287,12 @@ export default function BoletimEP({
       title = `3º ANO - MÓD. 10 - ${acronym}`;
       academicYear = '3';
 
-      if (acronym === 'ES') subtitle = 'Esteira ágil de produção de software / Plataforma DevOps';
-      else if (acronym === 'EC') subtitle = 'Aplicações para dispositivos móveis e IoT avançado';
-      else if (acronym === 'CC') subtitle = 'Aplicação de redes neurais artificiais em aprendizado por reforço';
-      else if (acronym === 'SI') subtitle = 'Análise Comportamental de Usuários de Interfaces Digitais';
+      if (!turma.courseModule) {
+        if (acronym === 'ES') subtitle = 'Esteira ágil de produção de software / Plataforma DevOps';
+        else if (acronym === 'EC') subtitle = 'Aplicações para dispositivos móveis e IoT avançado';
+        else if (acronym === 'CC') subtitle = 'Aplicação de redes neurais artificiais em aprendizado por reforço';
+        else if (acronym === 'SI') subtitle = 'Análise Comportamental de Usuários de Interfaces Digitais';
+      }
     }
 
     return { title, subtitle, academicYear };
