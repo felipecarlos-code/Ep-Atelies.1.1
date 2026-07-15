@@ -377,8 +377,8 @@ export default function BoletimEP({
       return a.academicYear.localeCompare(b.academicYear);
     });
 
-  const morningAllocations = activeAllocations.filter(alloc => isMorning(alloc));
-  const afternoonAllocations = activeAllocations.filter(alloc => !isMorning(alloc));
+  const page1Allocations = activeAllocations.filter(alloc => alloc.academicYear === '1');
+  const page2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2' || alloc.academicYear === '3');
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
   const activePhaseLabel = activePhaseObj ? activePhaseObj.label : selectedPhase;
@@ -447,32 +447,32 @@ export default function BoletimEP({
   const itemsPerSlide = 4;
   
   interface SlideData {
-    period: 'manhã' | 'tarde';
+    period: 'page1' | 'page2';
     allocations: typeof activeAllocations;
   }
 
   const slides: SlideData[] = [];
 
-  // Morning slides
-  for (let i = 0; i < morningAllocations.length; i += itemsPerSlide) {
+  // Page 1 slides (1º Ano)
+  for (let i = 0; i < page1Allocations.length; i += itemsPerSlide) {
     slides.push({
-      period: 'manhã',
-      allocations: morningAllocations.slice(i, i + itemsPerSlide),
+      period: 'page1',
+      allocations: page1Allocations.slice(i, i + itemsPerSlide),
     });
   }
 
-  // Afternoon slides
-  for (let i = 0; i < afternoonAllocations.length; i += itemsPerSlide) {
+  // Page 2 slides (2º e 3º Ano)
+  for (let i = 0; i < page2Allocations.length; i += itemsPerSlide) {
     slides.push({
-      period: 'tarde',
-      allocations: afternoonAllocations.slice(i, i + itemsPerSlide),
+      period: 'page2',
+      allocations: page2Allocations.slice(i, i + itemsPerSlide),
     });
   }
 
   // If no slides at all, create an empty one so we don't break
   if (slides.length === 0) {
     slides.push({
-      period: 'manhã',
+      period: 'page1',
       allocations: [],
     });
   }
@@ -662,18 +662,18 @@ export default function BoletimEP({
 
             {/* Period Separator Banner inside the Slide */}
             <div className="relative flex items-center gap-2 mt-4 z-10">
-              {activeSlide.period === 'manhã' ? (
+              {activeSlide.period === 'page1' ? (
                 <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#89cea5] bg-[#89cea5]/10 border border-[#89cea5]/20 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse-subtle">
-                  🌅 Período da Manhã (1º & 3º Anos)
+                  🌅 1º Ano (Período da Manhã)
                 </span>
               ) : (
                 <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#90a5e5] bg-[#90a5e5]/10 border border-[#90a5e5]/20 px-3 py-1 rounded-full flex items-center gap-1.5 animate-pulse-subtle">
-                  🌇 Período da Tarde (2º Ano)
+                  🌇 2º e 3º Anos
                 </span>
               )}
               <div className="h-px bg-white/10 flex-1"></div>
               <span className="font-mono text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-                {activeSlide.period === 'manhã' ? '09h às 11h' : '14h às 16h'}
+                {activeSlide.period === 'page1' ? '09h às 11h' : 'Diversos'}
               </span>
             </div>
 
@@ -778,7 +778,7 @@ export default function BoletimEP({
                 <span>Slide {currentSlideIndex + 1} de {totalSlides}</span>
                 <span className="text-white/20">•</span>
                 <span className="uppercase text-slate-200">
-                  {activeSlide.period === 'manhã' ? 'Período da Manhã (1º & 3º Anos)' : 'Período da Tarde (2º Ano)'}
+                  {activeSlide.period === 'page1' ? '1º Ano' : '2º e 3º Anos'}
                 </span>
                 <span className="text-white/20">•</span>
                 <span>{activeSlide.allocations.length} Projetos</span>
@@ -852,10 +852,11 @@ export default function BoletimEP({
           {/* Printable Sheet Canvas Wrapper */}
           <div 
             id="printable-sheet-canvas"
-            className="max-w-4xl mx-auto bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6"
+            className="max-w-4xl mx-auto bg-transparent rounded-lg print:border-none print:shadow-none print:p-0 flex flex-col justify-start"
           >
-            
-            {/* Header Poster conforming to Boletim EP */}
+            {/* PAGE 1 */}
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6">
+              {/* Header Poster conforming to Boletim EP */}
               <div className="relative text-center pb-2 flex flex-col items-center">
                 <div className="mb-4">
                   {renderInteliLogo(false)}
@@ -886,9 +887,9 @@ export default function BoletimEP({
                 <div className="w-12 h-0.5 bg-[#ff4545] my-2"></div>
                 
                 <div className="flex justify-center gap-4 mt-1 text-[9px] text-slate-400 font-bold uppercase font-mono">
-                  <span>Graduação 1º e 3º Ano — 09h às 11h</span>
+                  <span>Graduação 1º Ano</span>
                   <span className="text-slate-300">•</span>
-                  <span>Graduação 2º Ano — 14h às 16h</span>
+                  <span>Graduação 2º e 3º Anos</span>
                 </div>
               </div>
 
@@ -904,18 +905,18 @@ export default function BoletimEP({
                 </div>
               </div>
 
-              {/* PERÍODO DA MANHÃ (1º & 3º ANOS) */}
-              {morningAllocations.length > 0 ? (
+              {/* PERÍODO DA MANHÃ (1º ANO) */}
+              {page1Allocations.length > 0 ? (
                 <div className="space-y-2.5 flex-1">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                      Período da Manhã (1º & 3º Anos)
+                      1º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
                   <div className="space-y-3 print:space-y-1.5">
-                    {morningAllocations.map((alloc) => {
+                    {page1Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
@@ -994,12 +995,15 @@ export default function BoletimEP({
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg p-6 text-slate-400">
-                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto alocado no Período da Manhã</span>
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto de 1º Ano</span>
                 </div>
               )}
+            </div>
 
-              {/* Delicate section divider */}
-              <div className="relative flex items-center justify-center my-4 print:my-2 break-inside-avoid">
+            {/* PAGE 2 */}
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start mt-6 print:mt-0 print:break-before-page">
+              {/* Delicate section divider - hidden in print if it's the start of the page, but nice on screen */}
+              <div className="relative flex items-center justify-center my-4 print:hidden break-inside-avoid">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                   <div className="w-full border-t border-slate-200/60"></div>
                 </div>
@@ -1010,18 +1014,18 @@ export default function BoletimEP({
                 </div>
               </div>
 
-              {/* PERÍODO DA TARDE (2º ANO) */}
-              {afternoonAllocations.length > 0 ? (
+              {/* 2º e 3º ANOS */}
+              {page2Allocations.length > 0 ? (
                 <div className="space-y-2.5 flex-1">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                      Período da Tarde (2º Ano)
+                      2º e 3º Anos
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
-                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
+                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h / 09h às 11h</span>
                   </div>
                   <div className="space-y-3 print:space-y-1.5">
-                    {afternoonAllocations.map((alloc) => {
+                    {page2Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
@@ -1100,7 +1104,7 @@ export default function BoletimEP({
                 </div>
               ) : (
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg p-6 text-slate-400">
-                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto alocado no Período da Tarde</span>
+                  <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto de 2º/3º Ano</span>
                 </div>
               )}
 
@@ -1247,18 +1251,21 @@ export default function BoletimEP({
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
        {/* Global CSS for physical paper print optimization */}
       <style>{`
         @media print {
           @page {
             size: A4 portrait !important;
-            margin: 0 !important; /* Crucial: setting page margin to 0 completely removes the browser's default header (date, title) and footer (URL, page number) */
+            margin: 0 !important; /* Forces browser headers to disappear completely */
           }
           
           body {
-            margin: 1.2cm 1.5cm !important; /* Applies elegant margin inside the physical page boundaries on every page of the document */
+            /* We set margin on body for the document bounds without browser headers */
+            /* 0.5cm de cada lado e em cima */
+            margin: 0.5cm 0.5cm 0.5cm 0.5cm !important;
             padding: 0 !important;
             background-color: white !important;
             -webkit-print-color-adjust: exact !important;
@@ -1285,6 +1292,21 @@ export default function BoletimEP({
             box-shadow: none !important;
             padding: 0 !important;
             margin: 0 !important;
+          }
+
+          /* Page break directives */
+          .boletim-print-page {
+            page-break-after: always !important;
+            break-after: page !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            min-height: 28.7cm !important; /* A4 height minus 1cm of margins */
+          }
+          
+          .print\\:break-before-page {
+            page-break-before: always !important;
+            break-before: page !important;
           }
           
           /* Hide print instruction directives card */
