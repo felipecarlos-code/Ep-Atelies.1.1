@@ -4,6 +4,7 @@ import inteliCampusImg from '../assets/images/regenerated_image_1783795299073.jp
 import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey } from '../types';
 import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { cleanOrDetectCourse } from './TurmaManager';
+import { BoletimPrintAlt } from './BoletimPrintAlt';
 import { 
   FileSpreadsheet, 
   Printer, 
@@ -40,7 +41,7 @@ export default function BoletimEP({
   selectedQuarter,
 }: BoletimEPProps) {
   const [selectedPhase, setSelectedPhase] = useState<PhaseKey>('sprint1');
-  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print'>('ppt');
+  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt'>('ppt');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const [campusImgSrc, setCampusImgSrc] = useState(inteliCampusImg);
@@ -529,6 +530,17 @@ export default function BoletimEP({
               <Printer size={13} />
               Boletim A4 Oficial
             </button>
+            <button
+              onClick={() => setLayoutMode('print_alt')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
+                layoutMode === 'print_alt' 
+                  ? 'bg-[#ff4545] text-white shadow-sm' 
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Layers size={13} />
+              Boletim A4 (Opção 2)
+            </button>
           </div>
         </div>
       </div>
@@ -841,8 +853,8 @@ export default function BoletimEP({
       {/* RENDER MODE: PRINT LAYOUT (A4 PORTRAIT) */}
       {activeAllocations.length > 0 && (
         <div 
-          className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print' ? 'block' : 'hidden print:block'}`} 
-          id="boletim-print-section"
+          className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print' ? 'block' : layoutMode === 'ppt' ? 'hidden print:block' : 'hidden print:hidden'}`} 
+          id={layoutMode !== 'print_alt' ? 'active-boletim-print-section' : undefined}
         >
           
           <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium print-hidden">
@@ -1352,6 +1364,37 @@ export default function BoletimEP({
         </div>
       )}
 
+      {/* RENDER MODE: PRINT LAYOUT ALT (A4 PORTRAIT) */}
+      {activeAllocations.length > 0 && (
+        <div 
+          className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print_alt' ? 'block print:block' : 'hidden print:hidden'}`}
+          id={layoutMode === 'print_alt' ? 'active-boletim-print-section' : undefined}
+        >
+          <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium print-hidden">
+            <Info size={16} className="text-[#ff4545] shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold">Diretrizes de Impressão Oficial - Boletim EP (Opção 2)</p>
+              <p className="text-slate-500 font-sans">
+                Este layout é uma versão alternativa sugerida, com cores corporativas do Inteli. Para gerar uma versão em PDF perfeita, clique no botão <strong>PDF / Imprimir</strong> acima e, nas opções do seu navegador, ative <strong>"Imprimir cores e imagens de plano de fundo"</strong>. Configure a orientação para "Retrato".
+              </p>
+            </div>
+          </div>
+          
+          <BoletimPrintAlt 
+            activeAllocations={activeAllocations}
+            selectedQuarter={selectedQuarter}
+            selectedYear={selectedYear}
+            activePhaseLabel={activePhaseLabel}
+            sprintDates={sprintDates}
+            selectedPhase={selectedPhase}
+            renderInteliLogo={renderInteliLogo}
+            handleLogoError={handleLogoError}
+            formatDate={formatDate}
+            getSegmentStyle={getSegmentStyle}
+          />
+        </div>
+      )}
+
        {/* Global CSS for physical paper print optimization */}
       <style>{`
         @media print {
@@ -1373,11 +1416,11 @@ export default function BoletimEP({
             visibility: hidden;
           }
           
-          #boletim-print-section, #boletim-print-section * {
+          #active-boletim-print-section, #active-boletim-print-section * {
             visibility: visible;
           }
           
-          #boletim-print-section {
+          #active-boletim-print-section {
             display: block !important;
             position: absolute !important;
             left: 0 !important;
