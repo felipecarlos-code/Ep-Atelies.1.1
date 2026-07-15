@@ -1263,9 +1263,7 @@ export default function BoletimEP({
           }
           
           body {
-            /* We set margin on body for the document bounds without browser headers */
-            /* 0.5cm de cada lado e em cima */
-            margin: 0.5cm 0.5cm 0.5cm 0.5cm !important;
+            margin: 0 !important;
             padding: 0 !important;
             background-color: white !important;
             -webkit-print-color-adjust: exact !important;
@@ -1296,12 +1294,22 @@ export default function BoletimEP({
 
           /* Page break directives */
           .boletim-print-page {
+            width: 21cm !important;
+            height: 29.7cm !important;
+            max-height: 29.7cm !important;
+            box-sizing: border-box !important;
+            padding: 0.5cm !important; /* 0.5cm de cada lado e em cima */
+            margin: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            min-height: 28.7cm !important; /* A4 height minus 1cm of margins */
+            overflow: hidden !important; /* Prevents spilling to next page */
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          
+          .boletim-print-page:last-child {
+            page-break-after: avoid !important;
+            break-after: avoid !important;
           }
           
           .print\\:break-before-page {
@@ -1332,7 +1340,7 @@ export default function BoletimEP({
           }
 
           #boletim-cronograma-rodape {
-            margin-top: 2cm !important; /* Elegant space before footer */
+            margin-top: auto !important;
             padding-top: 0.5cm !important;
           }
 
