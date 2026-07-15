@@ -876,11 +876,11 @@ export default function BoletimEP({
                   {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                 </p>
 
-                <div className="mt-2 w-full max-w-xs overflow-hidden rounded-lg border border-slate-100 shadow-xs">
+                <div className="mt-4 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
                   <img 
                     src={campusImgSrc} 
                     alt="Inteli Campus" 
-                    className="w-full h-24 print:h-18 object-cover hover:scale-102 transition-transform duration-300"
+                    className="w-full h-40 print:h-36 object-cover hover:scale-102 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={handleCampusError}
                   />
