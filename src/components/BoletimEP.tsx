@@ -378,6 +378,8 @@ export default function BoletimEP({
     });
 
   const page1Allocations = activeAllocations.filter(alloc => alloc.academicYear === '1');
+  const page2Ano3Allocations = activeAllocations.filter(alloc => alloc.academicYear === '3');
+  const page2Ano2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2');
   const page2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2' || alloc.academicYear === '3');
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
@@ -1014,18 +1016,18 @@ export default function BoletimEP({
                 </div>
               </div>
 
-              {/* 2º e 3º ANOS */}
-              {page2Allocations.length > 0 ? (
-                <div className="space-y-2.5 flex-1">
+              {/* 3º ANO */}
+              {page2Ano3Allocations.length > 0 && (
+                <div className="space-y-2.5 flex-1 mb-4">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
-                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                      2º e 3º Anos
+                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                      3º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
-                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h / 09h às 11h</span>
+                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
                   <div className="space-y-3 print:space-y-1.5">
-                    {page2Allocations.map((alloc) => {
+                    {page2Ano3Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
@@ -1093,7 +1095,7 @@ export default function BoletimEP({
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
-                                Período {alloc.turma?.period || 'Tarde'}
+                                Período Manhã
                               </span>
                             </div>
                           </div>
@@ -1102,7 +1104,99 @@ export default function BoletimEP({
                     })}
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* 2º ANO */}
+              {page2Ano2Allocations.length > 0 && (
+                <div className="space-y-2.5 flex-1">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
+                    <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                      2º Ano
+                    </span>
+                    <div className="h-px bg-[#2e2640]/10 flex-1"></div>
+                    <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
+                  </div>
+                  <div className="space-y-3 print:space-y-1.5">
+                    {page2Ano2Allocations.map((alloc) => {
+                      const seg = getSegmentStyle(alloc.academicYear);
+                      return (
+                        <div 
+                          key={alloc.rowId} 
+                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
+                        >
+                          {/* Left Frame: Corporate partner */}
+                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                            {alloc.partner ? (
+                              <>
+                                <img
+                                  src={alloc.partner.logoUrl}
+                                  alt={alloc.partner.name}
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => handleLogoError(e, alloc.partner!.name)}
+                                />
+                                <span className="text-[9px] print:text-[8px] text-[#2e2640] font-black mt-1 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                  {alloc.partner.name}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-slate-300 py-4 h-full">
+                                <HelpCircle size={18} className="text-slate-300" />
+                                <span className="text-[7px] font-bold text-slate-400 mt-1 uppercase">Sem Parceiro</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right Frame: Project description */}
+                          <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
+                            {/* Colored Segment Badge Header Band */}
+                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                              <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
+                                {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
+                              </span>
+                              <span className="font-mono text-[8px] print:text-[7px] font-black uppercase bg-white/20 px-1.5 py-0.2 rounded tracking-wide">
+                                {alloc.atelieBlocks.map(b => {
+                                  return String(b).toUpperCase().replace('BLOCO', '').trim();
+                                }).join(' / ') || 'N/A'}
+                              </span>
+                            </div>
+
+                            {/* Card main text content */}
+                            <div className="p-2 print:p-1.5 flex-1">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
+                                  {seg.name}
+                                </span>
+                                {alloc.turma && alloc.academicYear !== '1' && (
+                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
+                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                                {alloc.subtitle}
+                              </p>
+                              <p className="font-sans text-[11px] print:text-[10px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
+                                {alloc.turma?.epDescricaoCurta || 'Sem descrição curta do projeto cadastrada.'}
+                              </p>
+                            </div>
+
+                            {/* Bottom Meta */}
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
+                                Período Tarde
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {page2Ano3Allocations.length === 0 && page2Ano2Allocations.length === 0 && (
                 <div className="flex-1 flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-lg p-6 text-slate-400">
                   <span className="text-[10px] font-mono uppercase tracking-wider font-bold">Nenhum projeto de 2º/3º Ano</span>
                 </div>
