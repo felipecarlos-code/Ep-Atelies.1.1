@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Turma, Partner, Atelie } from '../types';
 import { getFriendlyStageName } from './TurmaManager';
+import { handleLogoError } from '../utils/logoUtils';
 import { 
   BarChart3, 
   AlertTriangle, 
@@ -532,7 +533,9 @@ export default function NpsReport({ turmas, partners, atelies }: NpsReportProps)
                                   <img 
                                     src={partner.logoUrl} 
                                     alt={partner.name} 
-                                    className="w-5 h-5 rounded-full object-cover border border-slate-200 bg-white"
+                                    className="w-5 h-5 rounded-full object-contain border border-slate-200 bg-white"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => handleLogoError(e, partner.name)}
                                   />
                                 ) : (
                                   <div className="w-5 h-5 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-[8px] font-extrabold uppercase border border-indigo-100">
@@ -666,7 +669,9 @@ export default function NpsReport({ turmas, partners, atelies }: NpsReportProps)
                               <img 
                                 src={stat.logoUrl} 
                                 alt={stat.name} 
-                                className="w-6 h-6 rounded-full object-cover border border-slate-200 bg-white"
+                                className="w-6 h-6 rounded-full object-contain border border-slate-200 bg-white"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => handleLogoError(e, stat.name)}
                               />
                             ) : (
                               <div className="w-6 h-6 bg-indigo-50 text-indigo-700 rounded-full flex items-center justify-center text-[10px] font-extrabold uppercase border border-indigo-100">

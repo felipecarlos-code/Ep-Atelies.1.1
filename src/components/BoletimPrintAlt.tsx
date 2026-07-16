@@ -37,10 +37,10 @@ export function BoletimPrintAlt({
               {selectedQuarter === 'Q1' ? 'PRIMEIRO' : selectedQuarter === 'Q2' ? 'SEGUNDO' : selectedQuarter === 'Q3' ? 'TERCEIRO' : 'QUARTO'} TRIMESTRE - {selectedYear}
             </h2>
             <div className="flex items-center gap-3 mt-3">
-              <span className="font-mono text-[10px] font-bold text-white/80 uppercase tracking-wide bg-white/10 px-2 py-0.5 rounded">
+              <span className="font-sans text-[10px] font-bold text-white/80 uppercase tracking-wide bg-white/10 px-2 py-0.5 rounded">
                 {activePhaseLabel}
               </span>
-              <span className="font-mono text-[10px] text-white/60">
+              <span className="font-sans text-[10px] text-white/60">
                 {sprintDates[selectedPhase] ? formatDate(sprintDates[selectedPhase]) : ''}
               </span>
             </div>
@@ -59,7 +59,7 @@ export function BoletimPrintAlt({
           <div className="flex items-center gap-3 mb-4 shrink-0">
             <div className="w-1.5 h-4 bg-[#ff4545] rounded-full"></div>
             <h3 className="font-sans font-black text-[#2e2640] text-lg uppercase tracking-tight">1º Ano</h3>
-            <span className="font-mono text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">09h às 11h</span>
+            <span className="font-sans text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">09h às 11h</span>
           </div>
 
           {page1Allocations.length > 0 ? (
@@ -92,15 +92,15 @@ export function BoletimPrintAlt({
                     
                     <div className="p-3 flex-1 flex flex-col justify-start">
                       <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                        <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                        <span className={`text-[8px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
                           {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                         </span>
-                        <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                        <span className="text-[8px] font-sans font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
                            {alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', '').trim()).join('/') || 'N/A'}
                         </span>
                       </div>
                       
-                      <p className="font-mono text-[10px] text-[#2e2640] font-black uppercase tracking-wide leading-tight mb-1.5">
+                      <p className="font-sans text-[10px] text-[#2e2640] font-black uppercase tracking-wide leading-tight mb-1.5">
                         {alloc.subtitle}
                       </p>
                       <p className="font-sans text-[10px] text-slate-500 leading-snug line-clamp-3">
@@ -113,7 +113,7 @@ export function BoletimPrintAlt({
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg">
-              <span className="text-[10px] font-mono uppercase font-bold text-slate-300">Nenhum projeto de 1º Ano</span>
+              <span className="text-[10px] font-sans uppercase font-bold text-slate-300">Nenhum projeto de 1º Ano</span>
             </div>
           )}
         </div>
@@ -129,7 +129,7 @@ export function BoletimPrintAlt({
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-1.5 h-4 bg-[#2e2640] rounded-full"></div>
                 <h3 className="font-sans font-black text-[#2e2640] text-lg uppercase tracking-tight">3º Ano</h3>
-                <span className="font-mono text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">09h às 11h</span>
+                <span className="font-sans text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">09h às 11h</span>
               </div>
               
               <div className="grid grid-cols-2 gap-4 print:gap-3">
@@ -161,16 +161,16 @@ export function BoletimPrintAlt({
                       
                       <div className="p-2.5">
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className={`text-[7.5px] font-mono font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                          <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
                             {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                           </span>
                           {alloc.turma && (
-                            <span className="text-[7.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
+                            <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
                               {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                             </span>
                           )}
                         </div>
-                        <p className="font-mono text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
+                        <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
                           {alloc.subtitle}
                         </p>
                       </div>
@@ -187,7 +187,7 @@ export function BoletimPrintAlt({
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-1.5 h-4 bg-[#90a5e5] rounded-full"></div>
                 <h3 className="font-sans font-black text-[#2e2640] text-lg uppercase tracking-tight">2º Ano</h3>
-                <span className="font-mono text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">14h às 16h</span>
+                <span className="font-sans text-[9px] text-slate-400 font-bold uppercase ml-auto bg-slate-100 px-2 py-1 rounded">14h às 16h</span>
               </div>
               
               <div className="grid grid-cols-2 gap-4 print:gap-3">
@@ -219,16 +219,16 @@ export function BoletimPrintAlt({
                       
                       <div className="p-2.5">
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className={`text-[7.5px] font-mono font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                          <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
                             {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                           </span>
                           {alloc.turma && (
-                            <span className="text-[7.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
+                            <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
                               {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
                             </span>
                           )}
                         </div>
-                        <p className="font-mono text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
+                        <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
                           {alloc.subtitle}
                         </p>
                       </div>
@@ -241,7 +241,7 @@ export function BoletimPrintAlt({
 
           {page2Ano3Allocations.length === 0 && page2Ano2Allocations.length === 0 && (
             <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg">
-              <span className="text-[10px] font-mono uppercase font-bold text-slate-300">Nenhum projeto de 2º/3º Ano</span>
+              <span className="text-[10px] font-sans uppercase font-bold text-slate-300">Nenhum projeto de 2º/3º Ano</span>
             </div>
           )}
           
@@ -249,7 +249,7 @@ export function BoletimPrintAlt({
           <div className="mt-auto pt-4" id="boletim-cronograma-rodape">
             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50">
               <div className="text-center mb-4">
-                <span className="font-mono text-[8px] font-bold uppercase tracking-widest text-slate-400">
+                <span className="font-sans text-[8px] font-bold uppercase tracking-widest text-slate-400">
                   Cronograma do Módulo
                 </span>
               </div>
@@ -262,7 +262,7 @@ export function BoletimPrintAlt({
                     <div key={key} className="relative z-10 flex flex-col items-center">
                       <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
                       <span className="font-sans text-[9px] font-bold text-[#2e2640]">{labels[i]}</span>
-                      <span className="font-mono text-[8px] text-slate-500 mt-0.5">
+                      <span className="font-sans text-[8px] text-slate-500 mt-0.5">
                         {key === 'sprint2' ? 'Ver detalhe' : sprintDates[key] ? formatDate(sprintDates[key]) : '-'}
                       </span>
                     </div>

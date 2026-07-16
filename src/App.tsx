@@ -16,6 +16,7 @@ import BoletimEP from './components/BoletimEP';
 import UserManager from './components/UserManager';
 import LoginPage from './components/LoginPage';
 import NpsReport from './components/NpsReport';
+import Chatbot from './components/Chatbot';
 
 import { 
   CalendarRange, 
@@ -2367,6 +2368,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
         </div>
       )}
 
+      <Chatbot turmas={turmas} atelies={atelies} partners={partners} />
     </div>
   );
 }

@@ -1824,5 +1824,62 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
     }
   });
 
+  // Chatbot endpoint
+  app.post("/api/chat", async (req, res) => {
+    res.setHeader("Connection", "close");
+    const { message, contextData } = req.body;
+    if (!message) {
+      return res.status(400).json({ success: false, error: "Message is required." });
+    }
+    if (!aiClient) {
+      return res.status(500).json({ success: false, error: "Gemini AI client not initialized." });
+    }
+
+    try {
+      let npsInfo = "Não há dados de turmas com NPS disponíveis no momento.";
+      if (contextData && contextData.turmas && Array.isArray(contextData.turmas)) {
+        const activeNpsTurmas = contextData.turmas.filter((t: any) => {
+           if (!t.epNps) return false;
+           const val = parseFloat(String(t.epNps).replace("%", "").trim());
+           return !isNaN(val);
+        });
+        if (activeNpsTurmas.length > 0) {
+          const sum = activeNpsTurmas.reduce((acc: number, t: any) => acc + parseFloat(String(t.epNps).replace("%", "").trim()), 0);
+          const avg = sum / activeNpsTurmas.length;
+          npsInfo = `O NPS Médio Geral atual de todos os negócios é de ${avg.toFixed(1)}. Temos ${activeNpsTurmas.length} turmas avaliadas.`;
+        }
+      }
+
+      let contextDataString = "";
+      if (contextData) {
+        contextDataString = JSON.stringify(contextData);
+        if (contextDataString.length > 3000) {
+          contextDataString = contextDataString.substring(0, 3000) + "...";
+        }
+      }
+
+      const prompt = `Você é o Assistente Virtual do Sistema Ateliês do Inteli.
+Responda de maneira amigável, clara e concisa em Português do Brasil.
+Abaixo estão as informações contextuais atuais para responder o usuário:
+
+${npsInfo}
+Dados completos: ${contextDataString}
+
+Lembre-se: O usuário pode fazer perguntas curtas como "Qual o valor da NPS?". Use o contexto acima para responder precisamente e diretamente. 
+
+Mensagem do usuário: "${message}"`;
+
+      const response = await aiClient.models.generateContent({
+        model: "gemini-3.1-flash-lite",
+        contents: prompt
+      });
+
+      return res.json({ success: true, text: response.text });
+    } catch (err: any) {
+      console.error("[Chat API Error]", err);
+      return res.status(500).json({ success: false, error: "Erro interno no chatbot: " + (err.message || err.toString()) });
+    }
+  });
+
   return app;
 }
