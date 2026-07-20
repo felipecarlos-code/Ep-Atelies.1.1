@@ -828,11 +828,11 @@ export default function BoletimEP({
                   {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                 </p>
 
-                <div className="mt-4 print:mt-1 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
+                <div className="mt-4 print:mt-1.5 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
                   <img 
                     src={campusImgSrc} 
                     alt="Inteli Campus" 
-                    className="w-full h-40 print:h-22 object-cover hover:scale-102 transition-transform duration-300"
+                    className="w-full h-40 print:h-34 object-cover hover:scale-102 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={handleCampusError}
                   />
@@ -875,20 +875,20 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[66px]"
+                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-20 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-7 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[9px] print:text-[7px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] print:text-[7.5px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -984,20 +984,20 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[66px]"
+                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-20 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-7 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[9px] print:text-[7px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] print:text-[7.5px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
@@ -1074,20 +1074,20 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[66px]"
+                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-20 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-7 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
-                                <span className="text-[9px] print:text-[7px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
+                                <span className="text-[9px] print:text-[7.5px] text-[#2e2640] font-black mt-1 print:mt-0.5 text-center truncate w-full px-1" title={alloc.partner.name}>
                                   {alloc.partner.name}
                                 </span>
                               </>
