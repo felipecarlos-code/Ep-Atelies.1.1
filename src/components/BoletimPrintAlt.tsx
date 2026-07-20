@@ -183,6 +183,9 @@ export function BoletimPrintAlt({
                           <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-2 mb-2">
                             {alloc.subtitle}
                           </p>
+                          <p className="font-sans text-[8.5px] text-slate-500 leading-snug line-clamp-3 mb-2">
+                            {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
+                          </p>
                         </div>
 
                         <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[7.5px] text-slate-400 font-bold uppercase tracking-wide mt-auto">
@@ -250,6 +253,9 @@ export function BoletimPrintAlt({
                           <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-2 mb-2">
                             {alloc.subtitle}
                           </p>
+                          <p className="font-sans text-[8.5px] text-slate-500 leading-snug line-clamp-3 mb-2">
+                            {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
+                          </p>
                         </div>
 
                         <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[7.5px] text-slate-400 font-bold uppercase tracking-wide mt-auto">
@@ -283,18 +289,57 @@ export function BoletimPrintAlt({
               <div className="relative flex justify-between">
                 <div className="absolute top-2 left-4 right-4 h-px bg-slate-200"></div>
                 
-                {['inicio', 'kickoff', 'sprint2', 'fim'].map((key, i) => {
-                  const labels = ['1. Onboarding', '2. Kick-Off', '3. Sprints', '4. Apresentação'];
-                  return (
-                    <div key={key} className="relative z-10 flex flex-col items-center">
-                      <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
-                      <span className="font-sans text-[9px] font-bold text-[#2e2640]">{labels[i]}</span>
-                      <span className="font-sans text-[8px] text-slate-500 mt-0.5">
-                        {key === 'sprint2' ? 'Ver detalhe' : sprintDates[key] ? formatDate(sprintDates[key]) : '-'}
-                      </span>
+                {/* 1. Onboarding */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
+                  <span className="font-sans text-[9px] font-bold text-[#2e2640]">1. Onboarding</span>
+                  <span className="font-sans text-[8px] text-slate-500 mt-0.5">
+                    {sprintDates['inicio'] ? formatDate(sprintDates['inicio']) : '-'}
+                  </span>
+                </div>
+
+                {/* 2. Kick-Off */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
+                  <span className="font-sans text-[9px] font-bold text-[#2e2640]">2. Kick-Off</span>
+                  <span className="font-sans text-[8px] text-slate-500 mt-0.5">
+                    {sprintDates['kickoff'] ? formatDate(sprintDates['kickoff']) : '-'}
+                  </span>
+                </div>
+
+                {/* 3. Sprints */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
+                  <span className="font-sans text-[9px] font-bold text-[#2e2640]">3. Sprints</span>
+                  
+                  <div className="mt-1 space-y-0.5 bg-white border border-slate-200 rounded p-1 text-left min-w-[95px] max-w-[110px] shadow-3xs">
+                    <div className="flex justify-between items-center text-[7px] font-mono border-b border-slate-100 pb-0.5">
+                      <span className="text-slate-400 font-semibold">Sprint 1</span>
+                      <span className="text-[#2e2640] font-bold">{sprintDates['sprint1'] ? formatDate(sprintDates['sprint1']) : '—'}</span>
                     </div>
-                  )
-                })}
+                    <div className="flex justify-between items-center text-[7px] font-mono border-b border-slate-100 pb-0.5">
+                      <span className="text-slate-400 font-semibold">Sprint 2</span>
+                      <span className="text-[#2e2640] font-bold">{sprintDates['sprint2'] ? formatDate(sprintDates['sprint2']) : '—'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[7px] font-mono border-b border-slate-100 pb-0.5">
+                      <span className="text-slate-400 font-semibold">Sprint 3</span>
+                      <span className="text-[#2e2640] font-bold">{sprintDates['sprint3'] ? formatDate(sprintDates['sprint3']) : '—'}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[7px] font-mono">
+                      <span className="text-slate-400 font-semibold">Sprint 4</span>
+                      <span className="text-[#2e2640] font-bold">{sprintDates['sprint4'] ? formatDate(sprintDates['sprint4']) : '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Apresentação */}
+                <div className="relative z-10 flex flex-col items-center">
+                  <div className="w-4 h-4 rounded-full bg-white border-2 border-[#2e2640] mb-2"></div>
+                  <span className="font-sans text-[9px] font-bold text-[#2e2640]">4. Apresentação</span>
+                  <span className="font-sans text-[8px] text-slate-500 mt-0.5">
+                    {sprintDates['fim'] ? formatDate(sprintDates['fim']) : '-'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

@@ -784,16 +784,6 @@ export default function BoletimEP({
           id={layoutMode !== 'print_alt' ? 'active-boletim-print-section' : undefined}
         >
           
-          <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium print-hidden">
-            <Info size={16} className="text-[#ff4545] shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold">Diretrizes de Impressão Oficial - Boletim EP</p>
-              <p className="text-slate-500 font-sans">
-                Este layout replica perfeitamente o encarte impresso do Inteli. Para gerar uma versão em PDF perfeita, clique no botão <strong>PDF / Imprimir</strong> acima e, nas opções do seu navegador, ative <strong>"Imprimir cores e imagens de plano de fundo"</strong>. Configure a orientação para "Retrato".
-              </p>
-            </div>
-          </div>
-
           {/* Printable Sheet Canvas Wrapper */}
           <div 
             id="printable-sheet-canvas"
@@ -1297,16 +1287,6 @@ export default function BoletimEP({
           className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print_alt' ? 'block print:block' : 'hidden print:hidden'}`}
           id={layoutMode === 'print_alt' ? 'active-boletim-print-section' : undefined}
         >
-          <div className="bg-[#e6eaeb]/50 border border-slate-200 rounded-lg p-4 text-[#2e2640] text-xs flex items-start gap-3 font-medium print-hidden">
-            <Info size={16} className="text-[#ff4545] shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-bold">Diretrizes de Impressão Oficial - Boletim EP (Opção 2)</p>
-              <p className="text-slate-500 font-sans">
-                Este layout é uma versão alternativa sugerida, com cores corporativas do Inteli. Para gerar uma versão em PDF perfeita, clique no botão <strong>PDF / Imprimir</strong> acima e, nas opções do seu navegador, ative <strong>"Imprimir cores e imagens de plano de fundo"</strong>. Configure a orientação para "Retrato".
-              </p>
-            </div>
-          </div>
-          
           <BoletimPrintAlt 
             activeAllocations={activeAllocations}
             selectedQuarter={selectedQuarter}
