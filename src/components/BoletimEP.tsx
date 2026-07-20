@@ -332,7 +332,7 @@ export default function BoletimEP({
     if (activeAllocations.length === 0) return;
 
     const sheetData = activeAllocations.map((alloc) => ({
-      'Turma': alloc.turma?.name || '',
+      'Cód. Turma': alloc.turma?.name || '',
       'Curso / Área de Estudo': alloc.turma?.course || '',
       'Ano Acadêmico': alloc.academicYear + 'º Ano',
       'Período': alloc.turma?.period || '',
