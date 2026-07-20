@@ -132,13 +132,14 @@ export default function BoletimEP({
     const sizeConfig = {
       sm: 'h-5 print:h-8',
       md: 'h-7 print:h-14',
-      lg: 'h-10 print:h-18'
+      lg: 'h-10 print:h-20'
     };
 
     const heightClass = sizeConfig[size];
+    const printClass = size === 'lg' ? 'inteli-logo-print-lg' : size === 'md' ? 'inteli-logo-print-md' : 'inteli-logo-print-sm';
 
     return (
-      <img src={src} alt="Inteli" className={`${heightClass} object-contain select-none`} />
+      <img src={src} alt="Inteli" className={`${heightClass} ${printClass} object-contain select-none`} />
     );
   };
 
@@ -828,11 +829,11 @@ export default function BoletimEP({
                   {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                 </p>
 
-                <div className="mt-4 print:mt-1 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
+                <div className="mt-4 print:mt-2 w-full max-w-lg print:max-w-2xl overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
                   <img 
                     src={campusImgSrc} 
                     alt="Inteli Campus" 
-                    className="w-full h-40 print:h-44 object-cover hover:scale-102 transition-transform duration-300"
+                    className="w-full h-40 print:h-56 object-cover hover:scale-102 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={handleCampusError}
                   />
@@ -875,16 +876,16 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
+                          className="flex items-stretch gap-4 print:gap-2.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[82px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-28 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-13 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -903,7 +904,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 print:px-1.5 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0.5 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -915,7 +916,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-0.5 flex-1">
+                            <div className="p-2 print:p-1.5 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -927,7 +928,7 @@ export default function BoletimEP({
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
                                 {alloc.subtitle}
                               </p>
                               <p className="font-sans text-[11px] print:text-[9px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
@@ -936,7 +937,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-1.5 py-1 print:py-0 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período {alloc.turma?.period || 'Manhã'}
                               </span>
@@ -984,16 +985,16 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
+                          className="flex items-stretch gap-4 print:gap-2.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[82px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-28 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-13 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -1012,7 +1013,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 print:px-1.5 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0.5 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -1024,7 +1025,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-0.5 flex-1">
+                            <div className="p-2 print:p-1.5 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -1036,7 +1037,7 @@ export default function BoletimEP({
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
                                 {alloc.subtitle}
                               </p>
                               <p className="font-sans text-[11px] print:text-[9px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
@@ -1045,7 +1046,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-1.5 py-1 print:py-0 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período Manhã
                               </span>
@@ -1074,16 +1075,16 @@ export default function BoletimEP({
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 print:gap-1.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[74px]"
+                          className="flex items-stretch gap-4 print:gap-2.5 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[82px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-24 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-28 shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-13 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -1102,7 +1103,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 print:px-1.5 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0.5 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -1114,7 +1115,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-0.5 flex-1">
+                            <div className="p-2 print:p-1.5 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -1126,7 +1127,7 @@ export default function BoletimEP({
                                 )}
                               </div>
                               
-                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate">
+                              <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
                                 {alloc.subtitle}
                               </p>
                               <p className="font-sans text-[11px] print:text-[9px] text-slate-600 font-medium leading-relaxed print:leading-normal mt-1 print:mt-0.5 line-clamp-3 print:line-clamp-2">
@@ -1135,7 +1136,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-1.5 py-1 print:py-0 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período Tarde
                               </span>
@@ -1375,13 +1376,35 @@ export default function BoletimEP({
             height: 29.6cm !important;
             max-height: 29.6cm !important;
             box-sizing: border-box !important;
-            padding: 0.5cm !important; /* 0.5cm de cada lado e em cima */
+            padding: 0.8cm 1cm !important; /* Elegant modern spacing to avoid edge-hugging */
             margin: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
             overflow: hidden !important; /* Prevents spilling to next page */
             display: flex !important;
             flex-direction: column !important;
+            justify-content: space-between !important; /* Distribute whitespace elegantly and fluidly */
+          }
+
+          .inteli-logo-print-lg {
+            height: 1.8cm !important;
+            max-height: 1.8cm !important;
+            width: auto !important;
+            display: inline-block !important;
+          }
+          
+          .inteli-logo-print-md {
+            height: 1.2cm !important;
+            max-height: 1.2cm !important;
+            width: auto !important;
+            display: inline-block !important;
+          }
+          
+          .inteli-logo-print-sm {
+            height: 0.8cm !important;
+            max-height: 0.8cm !important;
+            width: auto !important;
+            display: inline-block !important;
           }
           
           .boletim-print-page:last-child {
