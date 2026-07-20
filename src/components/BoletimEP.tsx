@@ -130,9 +130,9 @@ export default function BoletimEP({
     
     // sizing configurations
     const sizeConfig = {
-      sm: 'h-5',
-      md: 'h-7',
-      lg: 'h-10'
+      sm: 'h-5 print:h-8',
+      md: 'h-7 print:h-14',
+      lg: 'h-10 print:h-18'
     };
 
     const heightClass = sizeConfig[size];
@@ -809,11 +809,11 @@ export default function BoletimEP({
             className="max-w-4xl mx-auto bg-transparent rounded-lg print:border-none print:shadow-none print:p-0 flex flex-col justify-start"
           >
             {/* PAGE 1 */}
-            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6 print:space-y-2">
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6 print:space-y-1.5">
               {/* Header Poster conforming to Boletim EP */}
               <div className="relative text-center pb-2 flex flex-col items-center">
-                <div className="mb-4">
-                  {renderInteliLogo(false)}
+                <div className="mb-4 print:mb-1">
+                  {renderInteliLogo(false, 'lg')}
                 </div>
 
                 <h1 className="font-sans font-black text-4xl text-[#2e2640] tracking-tight leading-none print:text-[#2e2640]">
@@ -828,17 +828,17 @@ export default function BoletimEP({
                   {activePhaseLabel} {sprintDates[selectedPhase] ? `— ${formatDate(sprintDates[selectedPhase])}` : ''}
                 </p>
 
-                <div className="mt-4 print:mt-1.5 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
+                <div className="mt-4 print:mt-1 w-full max-w-lg overflow-hidden rounded-xl border border-slate-200/50 shadow-sm">
                   <img 
                     src={campusImgSrc} 
                     alt="Inteli Campus" 
-                    className="w-full h-40 print:h-34 object-cover hover:scale-102 transition-transform duration-300"
+                    className="w-full h-40 print:h-44 object-cover hover:scale-102 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={handleCampusError}
                   />
                 </div>
                 
-                <div className="w-12 h-0.5 bg-[#ff4545] my-2 print:my-1"></div>
+                <div className="w-12 h-0.5 bg-[#ff4545] my-2 print:my-0.5"></div>
                 
                 <div className="flex justify-center gap-4 mt-1 text-[9px] text-slate-400 font-bold uppercase font-mono">
                   <span>Graduação 1º Ano</span>
@@ -848,7 +848,7 @@ export default function BoletimEP({
               </div>
 
               {/* Delicate section divider */}
-              <div className="relative flex items-center justify-center my-3">
+              <div className="relative flex items-center justify-center my-3 print:my-0.5">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                   <div className="w-full border-t border-slate-200/60"></div>
                 </div>
@@ -1247,12 +1247,12 @@ export default function BoletimEP({
                 </div>
 
                 {/* Elegant Inteli Brand Banner Footer matching the corporate identity */}
-                <div className="mt-3 print:mt-1 bg-[#2e2640] rounded-lg py-2.5 print:py-0.5 px-6 print:px-2 flex items-center justify-center gap-4 print:gap-2 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
+                <div className="mt-3 print:mt-1 bg-[#2e2640] rounded-lg py-2.5 print:py-1 px-6 print:px-3 flex items-center justify-center gap-4 print:gap-2.5 text-white select-none shadow-sm print:bg-[#2e2640] print:text-white break-inside-avoid">
                   <div className="flex items-center gap-2">
-                    <span className="font-sans font-bold tracking-tight text-xl print:text-sm leading-none">
+                    <span className="font-sans font-bold tracking-tight text-xl print:text-base leading-none">
                       inteli
                     </span>
-                    <div className="relative w-8 h-8 print:w-5 print:h-5 flex items-center justify-center shrink-0 -mt-1">
+                    <div className="relative w-8 h-8 print:w-6 print:h-6 flex items-center justify-center shrink-0 -mt-1">
                       <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-12">
                         <g fill="#ff4545">
                           {/* Row 1 */}
