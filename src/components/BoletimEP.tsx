@@ -369,8 +369,9 @@ export default function BoletimEP({
     const originalLayout = layoutMode;
     const originalTitle = document.title;
     
-    // Force layout mode to print so that the DOM section is active and fully rendered
-    setLayoutMode('print');
+    // Force layout mode to print/print_alt so that the DOM section is active and fully rendered
+    const targetLayout = (layoutMode === 'print' || layoutMode === 'print_alt') ? layoutMode : 'print';
+    setLayoutMode(targetLayout);
     document.title = `Boletim EP - ${selectedYear} - ${selectedQuarter} - ${activePhaseLabel}`;
     
     setTimeout(() => {
