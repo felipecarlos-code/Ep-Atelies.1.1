@@ -310,18 +310,16 @@ export default function BoletimEP({
       };
     })
     .sort((a, b) => {
-      const aMorning = isMorning(a);
-      const bMorning = isMorning(b);
-      if (aMorning && !bMorning) return -1;
-      if (!aMorning && bMorning) return 1;
-      // Preserve academicYear order (e.g. 1º Ano, then 3º Ano, then 2º Ano)
-      return a.academicYear.localeCompare(b.academicYear);
+      const orderMap: Record<string, number> = { '1': 1, '3': 2, '2': 3 };
+      const orderA = orderMap[a.academicYear] || 99;
+      const orderB = orderMap[b.academicYear] || 99;
+      return orderA - orderB;
     });
 
   const page1Allocations = activeAllocations.filter(alloc => alloc.academicYear === '1');
   const page2Ano3Allocations = activeAllocations.filter(alloc => alloc.academicYear === '3');
   const page2Ano2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2');
-  const page2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2' || alloc.academicYear === '3');
+  const page2Allocations = [...page2Ano3Allocations, ...page2Ano2Allocations];
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
   const activePhaseLabel = activePhaseObj ? activePhaseObj.label : selectedPhase;
@@ -861,15 +859,15 @@ export default function BoletimEP({
 
               {/* PERÍODO DA MANHÃ (1º ANO) */}
               {page1Allocations.length > 0 ? (
-                <div className="space-y-2.5 flex-1">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
+                <div className="space-y-2.5 flex-1 flex flex-col justify-start">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       1º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="space-y-3 print:space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
                     {page1Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
@@ -970,15 +968,15 @@ export default function BoletimEP({
 
               {/* 3º ANO */}
               {page2Ano3Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1 mb-4">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
+                <div className="space-y-2.5 flex-1 mb-4 flex flex-col justify-start">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       3º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="space-y-3 print:space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
                     {page2Ano3Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
@@ -1060,15 +1058,15 @@ export default function BoletimEP({
 
               {/* 2º ANO */}
               {page2Ano2Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
+                <div className="space-y-2.5 flex-1 flex flex-col justify-start">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       2º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
                   </div>
-                  <div className="space-y-3 print:space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
                     {page2Ano2Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
@@ -1372,16 +1370,18 @@ export default function BoletimEP({
           /* Page break directives */
           .boletim-print-page {
             width: 21cm !important;
-            height: 27.2cm !important;
-            max-height: 27.2cm !important;
+            height: 29.7cm !important;
+            min-height: 29.7cm !important;
+            max-height: 29.7cm !important;
             box-sizing: border-box !important;
-            padding: 0.5cm !important; /* 0.5cm de cada lado e em cima */
+            padding: 1.2cm !important; /* Elegant margin to align inside the printable area */
             margin: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
             overflow: hidden !important; /* Prevents spilling to next page */
             display: flex !important;
             flex-direction: column !important;
+            background-color: white !important;
           }
           
           .boletim-print-page:last-child {
