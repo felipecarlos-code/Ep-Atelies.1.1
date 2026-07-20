@@ -1838,15 +1838,51 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
     try {
       let npsInfo = "Não há dados de turmas com NPS disponíveis no momento.";
       if (contextData && contextData.turmas && Array.isArray(contextData.turmas)) {
-        const activeNpsTurmas = contextData.turmas.filter((t: any) => {
-           if (!t.epNps) return false;
-           const val = parseFloat(String(t.epNps).replace("%", "").trim());
-           return !isNaN(val);
+        const parsedTurmas = contextData.turmas.map((t: any) => {
+          let npsNum: number | null = null;
+          if (t.epNps) {
+            const clean = String(t.epNps).replace('%', '').trim();
+            const parsed = parseFloat(clean);
+            if (!isNaN(parsed)) {
+              npsNum = parsed;
+            }
+          }
+          return { ...t, npsNumeric: npsNum };
         });
-        if (activeNpsTurmas.length > 0) {
-          const sum = activeNpsTurmas.reduce((acc: number, t: any) => acc + parseFloat(String(t.epNps).replace("%", "").trim()), 0);
-          const avg = sum / activeNpsTurmas.length;
-          npsInfo = `O NPS Médio Geral atual de todos os negócios é de ${avg.toFixed(1)}. Temos ${activeNpsTurmas.length} turmas avaliadas.`;
+
+        const activeNpsTurmas = parsedTurmas.filter((t: any) => t.npsNumeric !== null);
+        const totalWithNps = activeNpsTurmas.length;
+
+        if (totalWithNps > 0) {
+          let promotersCount = 0;
+          let passivesCount = 0;
+          let detractorsCount = 0;
+          let sumNps = 0;
+
+          activeNpsTurmas.forEach((t: any) => {
+            const score = t.npsNumeric!;
+            sumNps += score;
+            const normalizedScore = score <= 10 ? score * 10 : score;
+            if (normalizedScore >= 90) {
+              promotersCount++;
+            } else if (normalizedScore >= 70) {
+              passivesCount++;
+            } else {
+              detractorsCount++;
+            }
+          });
+
+          const promoterPct = Math.round((promotersCount / totalWithNps) * 100);
+          const passivePct = Math.round((passivesCount / totalWithNps) * 100);
+          const detractorPct = Math.round((detractorsCount / totalWithNps) * 100);
+          const overallNps = promoterPct - detractorPct;
+          const avgNps = sumNps / totalWithNps;
+
+          npsInfo = `RESULTADOS OFICIAIS DO RELATÓRIO DE NPS:
+- Índice Oficial NPS Geral: ${overallNps} (calculado como % Promotores [${promoterPct}%] - % Detratores [${detractorPct}%])
+- Nota Média Geral das avaliações: ${avgNps.toFixed(1)}
+- Quantidade de turmas avaliadas: ${totalWithNps} (de ${contextData.turmas.length} turmas no total)
+- Distribuição: Promotores: ${promotersCount} (${promoterPct}%), Passivos: ${passivesCount} (${passivePct}%), Detratores: ${detractorsCount} (${detractorPct}%)`;
         }
       }
 

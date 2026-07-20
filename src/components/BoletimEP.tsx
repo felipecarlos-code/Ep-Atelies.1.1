@@ -1372,8 +1372,8 @@ export default function BoletimEP({
           /* Page break directives */
           .boletim-print-page {
             width: 21cm !important;
-            height: 29.7cm !important;
-            max-height: 29.7cm !important;
+            height: 27.2cm !important;
+            max-height: 27.2cm !important;
             box-sizing: border-box !important;
             padding: 0.5cm !important; /* 0.5cm de cada lado e em cima */
             margin: 0 !important;
