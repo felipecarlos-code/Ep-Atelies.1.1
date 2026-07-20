@@ -310,16 +310,18 @@ export default function BoletimEP({
       };
     })
     .sort((a, b) => {
-      const orderMap: Record<string, number> = { '1': 1, '3': 2, '2': 3 };
-      const orderA = orderMap[a.academicYear] || 99;
-      const orderB = orderMap[b.academicYear] || 99;
-      return orderA - orderB;
+      const aMorning = isMorning(a);
+      const bMorning = isMorning(b);
+      if (aMorning && !bMorning) return -1;
+      if (!aMorning && bMorning) return 1;
+      // Preserve academicYear order (e.g. 1º Ano, then 3º Ano, then 2º Ano)
+      return a.academicYear.localeCompare(b.academicYear);
     });
 
   const page1Allocations = activeAllocations.filter(alloc => alloc.academicYear === '1');
   const page2Ano3Allocations = activeAllocations.filter(alloc => alloc.academicYear === '3');
   const page2Ano2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2');
-  const page2Allocations = [...page2Ano3Allocations, ...page2Ano2Allocations];
+  const page2Allocations = activeAllocations.filter(alloc => alloc.academicYear === '2' || alloc.academicYear === '3');
 
   const activePhaseObj = PHASES.find((p) => p.key === selectedPhase);
   const activePhaseLabel = activePhaseObj ? activePhaseObj.label : selectedPhase;
@@ -807,7 +809,7 @@ export default function BoletimEP({
             className="max-w-4xl mx-auto bg-transparent rounded-lg print:border-none print:shadow-none print:p-0 flex flex-col justify-start"
           >
             {/* PAGE 1 */}
-            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6">
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start space-y-6 print:space-y-2">
               {/* Header Poster conforming to Boletim EP */}
               <div className="relative text-center pb-2 flex flex-col items-center">
                 <div className="mb-4">
@@ -859,30 +861,30 @@ export default function BoletimEP({
 
               {/* PERÍODO DA MANHÃ (1º ANO) */}
               {page1Allocations.length > 0 ? (
-                <div className="space-y-2.5 flex-1 flex flex-col justify-start">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
+                <div className="space-y-2.5 flex-1">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       1º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
+                  <div className="space-y-3 print:space-y-1">
                     {page1Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
+                          className="flex items-stretch gap-4 print:gap-2 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[75px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-[95px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-9 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -901,7 +903,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -913,7 +915,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-1.5 flex-1">
+                            <div className="p-2 print:p-1 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -934,7 +936,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período {alloc.turma?.period || 'Manhã'}
                               </span>
@@ -953,7 +955,7 @@ export default function BoletimEP({
             </div>
 
             {/* PAGE 2 */}
-            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start mt-6 print:mt-0 print:break-before-page">
+            <div className="boletim-print-page bg-white p-6 md:p-10 rounded-lg border border-slate-200 shadow-2xs print:border-none print:shadow-none print:p-0 flex flex-col justify-start mt-6 print:mt-0 print:break-before-page print:space-y-2">
               {/* Delicate section divider - hidden in print if it's the start of the page, but nice on screen */}
               <div className="relative flex items-center justify-center my-4 print:hidden break-inside-avoid">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -968,30 +970,30 @@ export default function BoletimEP({
 
               {/* 3º ANO */}
               {page2Ano3Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1 mb-4 flex flex-col justify-start">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
+                <div className="space-y-2.5 flex-1 mb-4">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       3º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">09h às 11h</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
+                  <div className="space-y-3 print:space-y-1">
                     {page2Ano3Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
+                          className="flex items-stretch gap-4 print:gap-2 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[75px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-[95px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-9 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -1010,7 +1012,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -1022,7 +1024,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-1.5 flex-1">
+                            <div className="p-2 print:p-1 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -1043,7 +1045,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período Manhã
                               </span>
@@ -1058,30 +1060,30 @@ export default function BoletimEP({
 
               {/* 2º ANO */}
               {page2Ano2Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1 flex flex-col justify-start">
-                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2 shrink-0">
+                <div className="space-y-2.5 flex-1">
+                  <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 mb-2.5">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       2º Ano
                     </span>
                     <div className="h-px bg-[#2e2640]/10 flex-1"></div>
                     <span className="font-mono text-[8px] text-slate-400 font-bold uppercase">14h às 16h</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:grid-cols-2 print:gap-3 flex-1 content-start">
+                  <div className="space-y-3 print:space-y-1">
                     {page2Ano2Allocations.map((alloc) => {
                       const seg = getSegmentStyle(alloc.academicYear);
                       return (
                         <div 
                           key={alloc.rowId} 
-                          className="flex items-stretch gap-4 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[90px]"
+                          className="flex items-stretch gap-4 print:gap-2 hover:shadow-2xs transition-all relative break-inside-avoid animate-fade-in min-h-[115px] print:min-h-[75px]"
                         >
                           {/* Left Frame: Corporate partner */}
-                          <div className="w-[140px] print:w-[110px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
+                          <div className="w-[140px] print:w-[95px] shrink-0 bg-transparent p-1 flex flex-col justify-center items-center">
                             {alloc.partner ? (
                               <>
                                 <img
                                   src={alloc.partner.logoUrl}
                                   alt={alloc.partner.name}
-                                  className="h-16 print:h-11 w-full object-contain mix-blend-multiply shrink-0"
+                                  className="h-16 print:h-9 w-full object-contain mix-blend-multiply shrink-0"
                                   referrerPolicy="no-referrer"
                                   onError={(e) => handleLogoError(e, alloc.partner!.name)}
                                 />
@@ -1100,7 +1102,7 @@ export default function BoletimEP({
                           {/* Right Frame: Project description */}
                           <div className="flex-1 min-w-0 bg-[#e6eaeb]/5 border border-[#e6eaeb] rounded-lg overflow-hidden flex flex-col justify-between">
                             {/* Colored Segment Badge Header Band */}
-                            <div className={`${seg.bg} px-3 py-0.5 flex justify-between items-center ${seg.text}`}>
+                            <div className={`${seg.bg} px-3 print:px-2 py-0.5 print:py-0 flex justify-between items-center ${seg.text}`}>
                               <span className="font-mono text-[9px] print:text-[8px] font-black uppercase tracking-wider">
                                 {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                               </span>
@@ -1112,7 +1114,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Card main text content */}
-                            <div className="p-2 print:p-1.5 flex-1">
+                            <div className="p-2 print:p-1 flex-1">
                               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
@@ -1133,7 +1135,7 @@ export default function BoletimEP({
                             </div>
 
                             {/* Bottom Meta */}
-                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 py-1 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
+                            <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
                                 Período Tarde
                               </span>
@@ -1370,18 +1372,16 @@ export default function BoletimEP({
           /* Page break directives */
           .boletim-print-page {
             width: 21cm !important;
-            height: 29.7cm !important;
-            min-height: 29.7cm !important;
-            max-height: 29.7cm !important;
+            height: 28.7cm !important;
+            max-height: 28.7cm !important;
             box-sizing: border-box !important;
-            padding: 1.2cm !important; /* Elegant margin to align inside the printable area */
+            padding: 0.5cm !important; /* 0.5cm de cada lado e em cima */
             margin: 0 !important;
             page-break-after: always !important;
             break-after: page !important;
             overflow: hidden !important; /* Prevents spilling to next page */
             display: flex !important;
             flex-direction: column !important;
-            background-color: white !important;
           }
           
           .boletim-print-page:last-child {
