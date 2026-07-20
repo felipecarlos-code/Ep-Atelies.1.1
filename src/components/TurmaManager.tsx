@@ -294,6 +294,7 @@ export default function TurmaManager({
   const [uniqueClassId, setUniqueClassId] = useState('');
   const [epAtelie, setEpAtelie] = useState<string[]>([]);
   const [epNps, setEpNps] = useState('');
+  const [epOrientador, setEpOrientador] = useState('');
   
   // Legacy standard fields for backwards compatibility
   const [course, setCourse] = useState('');
@@ -522,6 +523,7 @@ export default function TurmaManager({
     setUniqueClassId('');
     setEpAtelie([]);
     setEpNps('');
+    setEpOrientador('');
     setCourse('');
     setPeriod('');
     setStudentCount('');
@@ -549,6 +551,7 @@ export default function TurmaManager({
     setUniqueClassId(turma.uniqueClassId || '');
     setEpAtelie(turma.epAtelie || []);
     setEpNps(turma.epNps || '');
+    setEpOrientador(turma.epOrientador || turma.orientador || '');
     setCourse(cleanOrDetectCourse(turma.course, turma.courseModule, turma.name));
     const calculatedYear = turma.courseYear || getCourseYearFromModule(extractModuleNumber(turma.courseModule || ''));
     let calculatedPeriod = turma.period || '';
@@ -594,6 +597,8 @@ export default function TurmaManager({
       studentCount: studentCount !== '' ? Number(studentCount) : undefined,
       epAtelie,
       epNps: epNps.trim(),
+      epOrientador: epOrientador.trim(),
+      orientador: epOrientador.trim(),
     };
 
     if (editingId) {
@@ -1107,6 +1112,21 @@ export default function TurmaManager({
                 className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-white text-slate-800 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none transition-all font-semibold disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed font-mono"
               />
             </div>
+
+            {/* Orientador */}
+            <div>
+              <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5 flex items-center justify-between">
+                <span>Orientador</span>
+                <span className="text-[8px] bg-slate-100 text-slate-600 px-1 rounded font-mono font-bold lowercase">Não Editável</span>
+              </label>
+              <input
+                type="text"
+                value={epOrientador}
+                disabled={true}
+                placeholder="Orientador sincronizado..."
+                className="w-full text-xs border border-slate-200 rounded px-3 py-2 bg-slate-50 text-slate-400 font-semibold cursor-not-allowed outline-none"
+              />
+            </div>
           </div>
 
           {/* Campo Multi Ateliê (ep_atelie) */}
@@ -1400,6 +1420,18 @@ export default function TurmaManager({
                         </span>
                         <span className="font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5 text-right font-mono text-[10px]" title={turma.epNps}>
                           {turma.epNps}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Orientador */}
+                    {(turma.epOrientador || turma.orientador) && (
+                      <div className="flex items-center justify-between gap-2 text-[11px] min-w-0">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 shrink-0">
+                          <Users size={10} className="text-emerald-500" /> Orientador:
+                        </span>
+                        <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 text-right truncate max-w-[65%]" title={turma.epOrientador || turma.orientador}>
+                          {turma.epOrientador || turma.orientador}
                         </span>
                       </div>
                     )}

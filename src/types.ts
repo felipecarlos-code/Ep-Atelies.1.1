@@ -28,6 +28,8 @@ export interface Turma {
   uniqueClassId?: string;           // 9 - ID Único da Turma (ep_id_unico_da_turma)
   epAtelie?: string[];              // HubSpot ep_atelie (array of Atelie IDs or names)
   epNps?: string;                   // [EP] NPS - nps do HubSpot
+  epOrientador?: string;            // [EP] Orientador (ep_orientador) do HubSpot
+  orientador?: string;              // Orientador (fallback) do HubSpot
   courseYear?: string;              // Ano do Curso (Auto-calculated from modulo_curso)
 }
 

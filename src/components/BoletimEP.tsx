@@ -938,8 +938,8 @@ export default function BoletimEP({
 
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
-                                Período {alloc.turma?.period || 'Manhã'}
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
+                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -1047,8 +1047,8 @@ export default function BoletimEP({
 
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
-                                Período Manhã
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
+                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -1137,8 +1137,8 @@ export default function BoletimEP({
 
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
-                              <span className="shrink-0 text-slate-400 font-semibold text-[8px]">
-                                Período Tarde
+                              <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
+                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>

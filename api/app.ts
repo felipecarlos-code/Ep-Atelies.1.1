@@ -861,7 +861,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         ep_id_unico_da_turma: "ep_id_unico_da_turma",
         period: "period",
         ep_descricao_curta_do_projeto: "ep_descricao_curta_do_projeto",
-        ep_nps: "nps"
+        ep_nps: "nps",
+        ep_orientador: "ep_orientador"
       };
 
       try {
@@ -924,6 +925,9 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           const npsKey = findProp(["ep_nps", "nps", "ep_nps_c", "nps_c"], [["nps"], ["net promoter score"]]);
           if (npsKey) resolvedKeys.ep_nps = npsKey;
 
+          const orientadorKey = findProp(["ep_orientador", "orientador", "orientador_c", "ep_orientador_c"], [["orientador"], ["advisor"]]);
+          if (orientadorKey) resolvedKeys.ep_orientador = orientadorKey;
+
           props.forEach((p: any) => {
             const label = String(p.label || "").toLowerCase();
             const name = String(p.name || "").toLowerCase();
@@ -950,6 +954,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             resolvedKeys.period,
             resolvedKeys.ep_descricao_curta_do_projeto,
             resolvedKeys.ep_nps,
+            resolvedKeys.ep_orientador,
             ...discoveredAtelieKeys
           ])).filter(Boolean);
         } else {
@@ -960,7 +965,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
             "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
             "period", "periodo", "turno", "ep_turno", "ep_periodo",
             "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto",
-            "nps", "ep_nps"
+            "nps", "ep_nps", "ep_orientador", "orientador"
           ];
         }
       } catch (propsErr: any) {
@@ -971,7 +976,7 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           "modulo_curso", "codigo_turma_c", "ep_id_unico_da_turma",
           "period", "periodo", "turno", "ep_turno", "ep_periodo",
           "ep_atelie", "atelie", "ateliê", "ep_descricao_curta_do_projeto", "descricao_curta_do_projeto",
-          "nps", "ep_nps"
+          "nps", "ep_nps", "ep_orientador", "orientador"
         ];
       }
 
@@ -1722,6 +1727,8 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
           uniqueClassId,
           epAtelie,
           epNps: epNps ? String(epNps).trim() : "",
+          epOrientador: props[resolvedKeys.ep_orientador] || "",
+          orientador: props[resolvedKeys.ep_orientador] || "",
           courseYear: courseYear !== 'Não Identificado' ? courseYear : undefined
         };
       });
