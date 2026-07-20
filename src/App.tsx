@@ -1561,28 +1561,32 @@ export default function App() {
 
           {/* Toolbar Utility Buttons with Geometric aesthetic */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={handleExportData}
-              className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Exportar arquivo JSON com todo o backup de dados"
-            >
-              <Download size={13} />
-              Exportar Backup
-            </button>
+            {currentUserReg?.isAdmin && (
+              <>
+                <button
+                  onClick={handleExportData}
+                  className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Exportar arquivo JSON com todo o backup de dados"
+                >
+                  <Download size={13} />
+                  Exportar Backup
+                </button>
 
-            <label
-              className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Importar backup de arquivo JSON existente"
-            >
-              <Upload size={13} />
-              Importar
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleImportData}
-                className="hidden"
-              />
-            </label>
+                <label
+                  className="px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Importar backup de arquivo JSON existente"
+                >
+                  <Upload size={13} />
+                  Importar
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportData}
+                    className="hidden"
+                  />
+                </label>
+              </>
+            )}
 
             {activeTab === 'sprints' && (
               <button
@@ -1716,6 +1720,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             onUpdateTurma={handleUpdateTurma}
             onDeleteTurma={handleDeleteTurma}
             onClearTurmas={handleClearAllTurmas}
+            isAdmin={currentUserReg?.isAdmin}
           />
         )}
 

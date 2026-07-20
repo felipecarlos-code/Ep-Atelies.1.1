@@ -41,7 +41,7 @@ export default function BoletimEP({
   selectedQuarter,
 }: BoletimEPProps) {
   const [selectedPhase, setSelectedPhase] = useState<PhaseKey>('sprint1');
-  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt'>('ppt');
+  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt'>('print');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const [campusImgSrc, setCampusImgSrc] = useState(inteliCampusImg);
@@ -445,17 +445,6 @@ export default function BoletimEP({
         {/* View Switcher Tabs */}
         <div className="flex items-center gap-2 relative z-10">
           <div className="bg-[#1a162b] p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
-            <button
-              onClick={() => setLayoutMode('ppt')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
-                layoutMode === 'ppt' 
-                  ? 'bg-[#ff4545] text-white shadow-sm' 
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Layout size={13} />
-              Apresentação Slides
-            </button>
             <button
               onClick={() => setLayoutMode('print')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
@@ -939,7 +928,7 @@ export default function BoletimEP({
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
-                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
+                                Orientador (a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -1048,7 +1037,7 @@ export default function BoletimEP({
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
-                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
+                                Orientador (a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>
@@ -1138,7 +1127,7 @@ export default function BoletimEP({
                             {/* Bottom Meta */}
                             <div className="bg-[#e6eaeb]/20 border-t border-[#e6eaeb]/50 px-3 print:px-2 py-1 print:py-0.5 flex justify-end items-center text-[8.5px] text-slate-500 font-bold uppercase font-mono">
                               <span className="shrink-0 text-slate-400 font-semibold text-[8px] truncate max-w-full">
-                                Orientador: {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
+                                Orientador (a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/A'}
                               </span>
                             </div>
                           </div>

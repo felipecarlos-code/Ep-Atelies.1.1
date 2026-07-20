@@ -261,6 +261,7 @@ interface TurmaManagerProps {
   onUpdateTurma: (turma: Turma) => void;
   onDeleteTurma: (id: string) => void;
   onClearTurmas: () => void;
+  isAdmin?: boolean;
 }
 
 export default function TurmaManager({
@@ -272,6 +273,7 @@ export default function TurmaManager({
   onUpdateTurma,
   onDeleteTurma,
   onClearTurmas,
+  isAdmin = false,
 }: TurmaManagerProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -620,7 +622,7 @@ export default function TurmaManager({
           <p className="text-xs font-semibold text-slate-400 mt-1 uppercase tracking-wider">Gerencie os negócios integrados e estruturados do HubSpot</p>
         </div>
         <div className="flex items-center gap-2">
-          {turmas.length > 0 && !isEditing && (
+          {isAdmin && turmas.length > 0 && !isEditing && (
             showClearConfirm ? (
               <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded text-xs animate-fade-in">
                 <span className="font-bold text-rose-800 text-[11px]">Excluir todos?</span>
@@ -654,22 +656,24 @@ export default function TurmaManager({
               </button>
             )
           )}
-          <button
-            id="toggle-import-btn"
-            onClick={() => {
-              setShowImportSection(!showImportSection);
-              setIsEditing(false);
-              setImportSummary(null);
-              setImportError(null);
-            }}
-            className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded transition-all shadow-2xs cursor-pointer border ${
-              showImportSection
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <FileSpreadsheet size={14} /> Importar Planilha
-          </button>
+          {isAdmin && (
+            <button
+              id="toggle-import-btn"
+              onClick={() => {
+                setShowImportSection(!showImportSection);
+                setIsEditing(false);
+                setImportSummary(null);
+                setImportError(null);
+              }}
+              className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded transition-all shadow-2xs cursor-pointer border ${
+                showImportSection
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <FileSpreadsheet size={14} /> Importar Planilha
+            </button>
+          )}
           {!isEditing && (
             <button
               id="add-negocio-btn"
@@ -685,7 +689,7 @@ export default function TurmaManager({
         </div>
       </div>
 
-      {showImportSection && (
+      {isAdmin && showImportSection && (
         <div className="bg-gradient-to-br from-indigo-50/50 to-slate-50 rounded border border-indigo-100 p-5 shadow-2xs space-y-4 relative animate-fade-in">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">

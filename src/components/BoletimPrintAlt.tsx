@@ -90,22 +90,31 @@ export function BoletimPrintAlt({
                       )}
                     </div>
                     
-                    <div className="p-3 flex-1 flex flex-col justify-start">
-                      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                        <span className={`text-[8px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
-                          {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
-                        </span>
-                        <span className="text-[8px] font-sans font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                           {alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', '').trim()).join('/') || 'N/A'}
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                          <span className={`text-[8px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                            {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
+                          </span>
+                          <span className="text-[8px] font-sans font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                             {alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', '').trim()).join('/') || 'N/A'}
+                          </span>
+                        </div>
+                        
+                        <p className="font-sans text-[10px] text-[#2e2640] font-black uppercase tracking-wide leading-tight mb-1.5">
+                          {alloc.subtitle}
+                        </p>
+                        <p className="font-sans text-[10px] text-slate-500 leading-snug line-clamp-3 mb-3">
+                          {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[8px] text-slate-400 font-bold uppercase tracking-wide mt-auto">
+                        <span>Orientador (a):</span>
+                        <span className="text-[#2e2640] font-black truncate max-w-[70%]" title={alloc.turma?.epOrientador || alloc.turma?.orientador}>
+                          {alloc.turma?.epOrientador || alloc.turma?.orientador || 'Não Cadastrado'}
                         </span>
                       </div>
-                      
-                      <p className="font-sans text-[10px] text-[#2e2640] font-black uppercase tracking-wide leading-tight mb-1.5">
-                        {alloc.subtitle}
-                      </p>
-                      <p className="font-sans text-[10px] text-slate-500 leading-snug line-clamp-3">
-                        {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
-                      </p>
                     </div>
                   </div>
                 );
@@ -136,7 +145,7 @@ export function BoletimPrintAlt({
                 {page2Ano3Allocations.map((alloc: any) => {
                   const seg = getSegmentStyle(alloc.academicYear);
                   return (
-                    <div key={alloc.rowId} className="border border-slate-200 rounded-lg overflow-hidden flex flex-col break-inside-avoid">
+                    <div key={alloc.rowId} className="border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full break-inside-avoid">
                       <div className="flex items-center p-2.5 border-b border-slate-100 bg-slate-50/50 shrink-0">
                         {alloc.partner ? (
                           <div className="flex items-center gap-2.5 w-full">
@@ -159,20 +168,29 @@ export function BoletimPrintAlt({
                         )}
                       </div>
                       
-                      <div className="p-2.5">
-                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
-                            {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
-                          </span>
-                          {alloc.turma && (
-                            <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
-                              {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                      <div className="p-2.5 flex-1 flex flex-col justify-between min-h-[90px]">
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                            <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                              {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                             </span>
-                          )}
+                            {alloc.turma && (
+                              <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640] max-w-full truncate">
+                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-2 mb-2">
+                            {alloc.subtitle}
+                          </p>
                         </div>
-                        <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
-                          {alloc.subtitle}
-                        </p>
+
+                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[7.5px] text-slate-400 font-bold uppercase tracking-wide mt-auto">
+                          <span>Orientador (a):</span>
+                          <span className="text-[#2e2640] font-black truncate max-w-[70%]" title={alloc.turma?.epOrientador || alloc.turma?.orientador}>
+                            {alloc.turma?.epOrientador || alloc.turma?.orientador || 'Não Cadastrado'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -194,7 +212,7 @@ export function BoletimPrintAlt({
                 {page2Ano2Allocations.map((alloc: any) => {
                   const seg = getSegmentStyle(alloc.academicYear);
                   return (
-                    <div key={alloc.rowId} className="border border-slate-200 rounded-lg overflow-hidden flex flex-col break-inside-avoid">
+                    <div key={alloc.rowId} className="border border-slate-200 rounded-lg overflow-hidden flex flex-col h-full break-inside-avoid">
                       <div className="flex items-center p-2.5 border-b border-slate-100 bg-slate-50/50 shrink-0">
                         {alloc.partner ? (
                           <div className="flex items-center gap-2.5 w-full">
@@ -217,20 +235,29 @@ export function BoletimPrintAlt({
                         )}
                       </div>
                       
-                      <div className="p-2.5">
-                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
-                            {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
-                          </span>
-                          {alloc.turma && (
-                            <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640]">
-                              {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                      <div className="p-2.5 flex-1 flex flex-col justify-between min-h-[90px]">
+                        <div>
+                          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                            <span className={`text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded ${seg.bg} ${seg.text}`}>
+                              {alloc.atelieNames.join(' & ') || 'Ateliê Pendente'}
                             </span>
-                          )}
+                            {alloc.turma && (
+                              <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640] max-w-full truncate">
+                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-2 mb-2">
+                            {alloc.subtitle}
+                          </p>
                         </div>
-                        <p className="font-sans text-[9px] text-[#2e2640] font-bold uppercase tracking-wide leading-tight line-clamp-1">
-                          {alloc.subtitle}
-                        </p>
+
+                        <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[7.5px] text-slate-400 font-bold uppercase tracking-wide mt-auto">
+                          <span>Orientador (a):</span>
+                          <span className="text-[#2e2640] font-black truncate max-w-[70%]" title={alloc.turma?.epOrientador || alloc.turma?.orientador}>
+                            {alloc.turma?.epOrientador || alloc.turma?.orientador || 'Não Cadastrado'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
