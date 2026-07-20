@@ -971,7 +971,7 @@ export default function BoletimEP({
 
               {/* 3º ANO */}
               {page2Ano3Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1 mb-4 print:mb-2">
+                <div className="space-y-2.5 flex-1 print:flex-none mb-4 print:mb-1.5">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 print:pb-0.5 mb-2.5 print:mb-1">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#89cea5]/25 border border-[#89cea5]/40 px-2.5 py-0.5 print:px-1.5 print:py-0 print:text-[8.5px] rounded-full flex items-center gap-1.5">
                       3º Ano
@@ -1061,7 +1061,7 @@ export default function BoletimEP({
 
               {/* 2º ANO */}
               {page2Ano2Allocations.length > 0 && (
-                <div className="space-y-2.5 flex-1">
+                <div className="space-y-2.5 flex-1 print:flex-none">
                   <div className="flex items-center gap-2 border-b border-[#2e2640]/10 pb-1.5 print:pb-0.5 mb-2.5 print:mb-1">
                     <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#2e2640] bg-[#90a5e5]/25 border border-[#90a5e5]/40 px-2.5 py-0.5 print:px-1.5 print:py-0 print:text-[8.5px] rounded-full flex items-center gap-1.5">
                       2º Ano
