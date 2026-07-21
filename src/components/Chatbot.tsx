@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Loader2, Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Turma, Atelie, Partner } from '../types';
+import { Turma, Atelie, Partner, AllocationRow } from '../types';
 
 interface ChatbotProps {
   turmas: Turma[];
   atelies: Atelie[];
   partners: Partner[];
+  schedules?: Record<string, AllocationRow[]>;
 }
 
 interface ChatMessage {
@@ -15,7 +16,7 @@ interface ChatMessage {
   text: string;
 }
 
-export default function Chatbot({ turmas, atelies, partners }: ChatbotProps) {
+export default function Chatbot({ turmas, atelies, partners, schedules }: ChatbotProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: 'welcome', role: 'bot', text: 'Olá! Sou o assistente virtual do Sistema Ateliês. Como posso ajudar você hoje?' }
@@ -46,7 +47,7 @@ export default function Chatbot({ turmas, atelies, partners }: ChatbotProps) {
 
     try {
       // Build context payload
-      const contextData = { turmas, atelies, partners };
+      const contextData = { turmas, atelies, partners, schedules };
 
       const res = await fetch('/api/chat', {
         method: 'POST',

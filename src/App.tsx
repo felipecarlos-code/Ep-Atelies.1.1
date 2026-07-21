@@ -2373,7 +2373,7 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
         </div>
       )}
 
-      <Chatbot turmas={turmas} atelies={atelies} partners={partners} />
+      <Chatbot turmas={turmas} atelies={atelies} partners={partners} schedules={schedules} />
     </div>
   );
 }

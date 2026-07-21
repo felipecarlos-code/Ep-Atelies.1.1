@@ -1838,8 +1838,149 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
     if (!message) {
       return res.status(400).json({ success: false, error: "Message is required." });
     }
+    // Local smart heuristic responder in case Gemini is offline/keyless or fails
+    const getLocalChatbotResponse = (msg: string, ctx: any) => {
+      const msgLower = msg.toLowerCase();
+      const turmas = ctx?.turmas || [];
+      const atelies = ctx?.atelies || [];
+      const partners = ctx?.partners || [];
+      const schedules = ctx?.schedules || {};
+
+      const atelieMap = new Map<string, any>(atelies.map((a: any) => [a.id, a]));
+      const partnerMap = new Map<string, any>(partners.map((p: any) => [p.id, p]));
+      const turmaMap = new Map<string, any>(turmas.map((t: any) => [t.id, t]));
+
+      // 1. "Em qual Ateliê está o Metro SP" / "Onde está o Metro SP" / "Metro SP"
+      if (msgLower.includes("metro")) {
+        const metroPartner = partners.find((p: any) => p.name.toLowerCase().includes("metro"));
+        const metroTurma = turmas.find((t: any) => t.name.toLowerCase().includes("metro") || (t.projectTitle && t.projectTitle.toLowerCase().includes("metro")));
+
+        let responseStr = "";
+        if (metroPartner) {
+          responseStr += `A empresa parceira **${metroPartner.name}** está cadastrada no sistema.\n\n`;
+        }
+
+        const allocationsFound: string[] = [];
+        Object.keys(schedules).forEach((scheduleKey) => {
+          const rows = schedules[scheduleKey];
+          if (rows && Array.isArray(rows)) {
+            rows.forEach((row: any) => {
+              const isMatchPartner = metroPartner && String(row.partnerId) === String(metroPartner.id);
+              const isMatchTurma = metroTurma && String(row.turmaId) === String(metroTurma.id);
+              if (isMatchPartner || isMatchTurma) {
+                const tObj = turmaMap.get(row.turmaId);
+                const pObj = partnerMap.get(row.partnerId);
+                const label = `${tObj ? tObj.name : 'Turma'} (Parceiro: ${pObj ? pObj.name : 'Nenhum'}) no cronograma **${scheduleKey.replace(/_/g, ' ')}**`;
+                
+                if (row.allocations) {
+                  const phaseDetails: string[] = [];
+                  Object.keys(row.allocations).forEach((phaseKey) => {
+                    const val = row.allocations[phaseKey];
+                    if (val) {
+                      const resolved = val.split(',').map((id: string) => {
+                        const matched = atelieMap.get(id.trim());
+                        return matched ? matched.name : id.trim();
+                      }).join(' & ');
+                      phaseDetails.push(`- **${phaseKey}**: Ateliê **${resolved}**`);
+                    }
+                  });
+                  if (phaseDetails.length > 0) {
+                    allocationsFound.push(`Para **${label}**:\n${phaseDetails.join('\n')}`);
+                  }
+                }
+              }
+            });
+          }
+        });
+
+        if (allocationsFound.length > 0) {
+          return `O parceiro **Metro SP** está alocado nos seguintes ateliês pelas fases do cronograma:\n\n` + allocationsFound.join('\n\n');
+        } else {
+          if (metroTurma && metroTurma.epAtelie) {
+            return `De acordo com as informações importadas do HubSpot, o projeto **Metro SP** está associado ao ateliê: **${metroTurma.epAtelie}**.`;
+          }
+          return `Não encontrei alocações de ateliês no cronograma de sprints para o **Metro SP**. Certifique-se de que a empresa está vinculada a uma turma e alocada na aba "Cronograma de Sprints"!`;
+        }
+      }
+
+      // 2. "Quantos Parceiros temos na Sprint do terceiro Semestre" / "terceiro" / "3º"
+      if (msgLower.includes("parceir") && (msgLower.includes("terceir") || msgLower.includes("3") || msgLower.includes("3º"))) {
+        const thirdYearKeys = Object.keys(schedules).filter(k => k.toLowerCase().includes("3_ano") || k.includes("3º") || k.includes("3"));
+        const thirdYearTurmas = turmas.filter((t: any) => t.courseYear && (t.courseYear.includes("3") || t.courseYear.toLowerCase().includes("terceir")));
+        const thirdYearTurmaIds = new Set(thirdYearTurmas.map((t: any) => String(t.id)));
+
+        const allocatedPartners = new Set<string>();
+        
+        Object.keys(schedules).forEach((scheduleKey) => {
+          const is3rdYearSchedule = scheduleKey.includes("3") || scheduleKey.toLowerCase().includes("terceir");
+          const rows = schedules[scheduleKey];
+          if (rows && Array.isArray(rows)) {
+            rows.forEach((row: any) => {
+              const is3rdYearTurma = thirdYearTurmaIds.has(String(row.turmaId));
+              if ((is3rdYearSchedule || is3rdYearTurma) && row.partnerId) {
+                const p = partnerMap.get(row.partnerId);
+                if (p) {
+                  allocatedPartners.add(p.name);
+                }
+              }
+            });
+          }
+        });
+
+        if (allocatedPartners.size > 0) {
+          return `Temos **${allocatedPartners.size} parceiros** alocados nas Sprints do 3º Semestre/Ano/Módulo:\n\n` + 
+                 Array.from(allocatedPartners).map(name => `- ${name}`).join('\n');
+        } else if (thirdYearTurmas.length > 0) {
+          const distinctPartners = new Set(thirdYearTurmas.map((t: any) => partnerMap.get(t.partnerId)?.name).filter(Boolean));
+          return `Temos **${distinctPartners.size} parceiros** cadastrados nas turmas do 3º Semestre/Ano/Módulo:\n\n` +
+                 Array.from(distinctPartners).map(name => `- ${name}`).join('\n');
+        } else {
+          return `Não encontrei parceiros alocados especificamente para o 3º semestre/ano nos cronogramas atuais. Cadastre as turmas e faça as alocações na aba "Cronograma de Sprints"!`;
+        }
+      }
+
+      // 3. "Quantos Ateliês Temos" / "Quantos Ateliês" / "Cadastro de Atelies"
+      if (msgLower.includes("quant") && (msgLower.includes("atelie") || msgLower.includes("ateliê"))) {
+        if (atelies.length > 0) {
+          const list = atelies.map((a: any) => `- **${a.name}** (Bloco ${a.block || 'A'}, Capacidade: ${a.capacity || 'N/A'} alunos)`).join('\n');
+          return `Temos **${atelies.length} Ateliês** cadastrados no cadastro de ateliês do sistema:\n\n${list}`;
+        } else {
+          return `Atualmente não há ateliês cadastrados no sistema. Você pode cadastrá-los na aba "Cadastro de Ateliês".`;
+        }
+      }
+
+      // 4. "Quantos parceiros temos" (general partners count)
+      if (msgLower.includes("quant") && (msgLower.includes("parceir") || msgLower.includes("empres"))) {
+        if (partners.length > 0) {
+          const list = partners.map((p: any) => `- ${p.name}`).join('\n');
+          return `Temos **${partners.length} Empresas Parceiras** cadastradas no sistema:\n\n${list}`;
+        } else {
+          return `Atualmente não há empresas parceiras cadastradas.`;
+        }
+      }
+
+      // 5. General "sprint" or "cronograma" info
+      if (msgLower.includes("sprint") || msgLower.includes("cronograma")) {
+        let totalAll = 0;
+        Object.keys(schedules).forEach(k => {
+          totalAll += (schedules[k]?.length || 0);
+        });
+        return `Atualmente temos cronogramas configurados para as seguintes turmas/períodos:\n` +
+               Object.keys(schedules).map(k => `- **${k.replace(/_/g, ' ')}** (${schedules[k]?.length || 0} turmas alocadas)`).join('\n') +
+               `\n\nTotal de alocações registradas: ${totalAll}.`;
+      }
+
+      return `Olá! Sou o Assistente Virtual do Sistema Ateliês do Inteli. Consigo responder dúvidas específicas em tempo real sobre os ateliês cadastrados, parceiros e o cronograma de sprints! 
+  
+Experimente me perguntar:
+- *Onde está o Metro SP no cronograma?*
+- *Quantos parceiros temos no 3º ano/semestre?*
+- *Quantos ateliês temos cadastrados?*`;
+    };
+
     if (!aiClient) {
-      return res.status(500).json({ success: false, error: "Gemini AI client not initialized." });
+      const localResponse = getLocalChatbotResponse(message, contextData);
+      return res.json({ success: true, text: localResponse });
     }
 
     try {
@@ -1893,34 +2034,144 @@ O JSON deve ser exatamente um array contendo objetos com os seguintes campos:
         }
       }
 
-      let contextDataString = "";
+      let customLiveContext = "";
       if (contextData) {
-        contextDataString = JSON.stringify(contextData);
-        if (contextDataString.length > 3000) {
-          contextDataString = contextDataString.substring(0, 3000) + "...";
+        const turmas = contextData.turmas || [];
+        const atelies = contextData.atelies || [];
+        const partners = contextData.partners || [];
+        const schedules = contextData.schedules || {};
+
+        const atelieMap = new Map<string, any>(atelies.map((a: any) => [a.id, a]));
+        const partnerMap = new Map<string, any>(partners.map((p: any) => [p.id, p]));
+        const turmaMap = new Map<string, any>(turmas.map((t: any) => [t.id, t]));
+
+        // 1. Ateliês list
+        let ateliesSummary = `ATELIÊS CADASTRADOS (${atelies.length} no total):\n`;
+        if (atelies.length > 0) {
+          atelies.forEach((a: any) => {
+            ateliesSummary += `- **${a.name}**: Bloco ${a.block || 'N/A'}, Capacidade: ${a.capacity || 'N/A'}\n`;
+          });
+        } else {
+          ateliesSummary += "- Nenhum ateliê cadastrado.\n";
         }
+
+        // 2. Parceiros/Empresas list
+        let partnersSummary = `EMPRESAS PARCEIRAS CADASTRADAS (${partners.length} no total):\n`;
+        if (partners.length > 0) {
+          partners.forEach((p: any) => {
+            partnersSummary += `- **${p.name}** | ID: ${p.id} | Site/Domínio: ${p.domain || 'N/A'}\n`;
+          });
+        } else {
+          partnersSummary += "- Nenhuma empresa parceira cadastrada.\n";
+        }
+
+        // 3. Turmas (Sprints/Negócios) list
+        let turmasSummary = `TURMAS (PROJETOS/NEGÓCIOS) CADASTRADAS (${turmas.length} no total):\n`;
+        if (turmas.length > 0) {
+          turmas.forEach((t: any) => {
+            const partnerName = partnerMap.get(t.partnerId)?.name || 'Nenhum';
+            let allocatedAtelies = 'Nenhum';
+            if (t.epAtelie) {
+              const atelieList = Array.isArray(t.epAtelie) ? t.epAtelie : [t.epAtelie];
+              const resolvedNames = atelieList.map((idOrName: string) => {
+                const matched = atelieMap.get(idOrName);
+                if (matched) return matched.name;
+                const foundByName = atelies.find((a: any) => a.name.toLowerCase() === idOrName.toLowerCase() || a.id.toLowerCase() === idOrName.toLowerCase());
+                return foundByName ? foundByName.name : idOrName;
+              });
+              allocatedAtelies = resolvedNames.join(', ');
+            }
+
+            turmasSummary += `- **${t.name}** (Cód: ${t.classCode || 'N/A'}) | Projeto: "${t.projectTitle || 'Sem título'}"\n`;
+            turmasSummary += `  - Curso: ${t.course || 'N/A'} | Período: ${t.period || 'N/A'} | Ano/Módulo: ${t.courseYear || 'N/A'} (Módulo ${t.courseModule || 'N/A'})\n`;
+            turmasSummary += `  - Descrição do Projeto: ${t.epDescricaoCurta || t.projectDescription || 'Sem descrição'}\n`;
+            turmasSummary += `  - Empresa Parceira: ${partnerName}\n`;
+            turmasSummary += `  - Ateliê do HubSpot: ${allocatedAtelies}\n`;
+            turmasSummary += `  - NPS: ${t.epNps || 'Sem nota'}\n`;
+          });
+        } else {
+          turmasSummary += "- Nenhuma turma cadastrada.\n";
+        }
+
+        // 4. Cronograma de Alocações Sprints/Ateliês
+        let allocationsSummary = `CRONOGRAMA DE ALOCAÇÕES ATUAIS (Por Semestre/Trimestre/Módulo):\n`;
+        let totalAllocations = 0;
+        
+        Object.keys(schedules).forEach((key) => {
+          const rows = schedules[key];
+          if (rows && rows.length > 0) {
+            allocationsSummary += `#### Cronograma para ${key.replace(/_/g, ' ')}:\n`;
+            rows.forEach((row: any) => {
+              const turmaObj = turmaMap.get(row.turmaId);
+              const partnerObj = partnerMap.get(row.partnerId);
+              if (!turmaObj && !partnerObj) return;
+              
+              totalAllocations++;
+              const tName = turmaObj ? `${turmaObj.name} (Código: ${turmaObj.classCode || 'Sem Código'})` : 'Desconhecida';
+              const pName = partnerObj ? partnerObj.name : 'Nenhum';
+              
+              allocationsSummary += `  - Turma: **${tName}** | Parceiro: **${pName}**\n`;
+              if (row.allocations) {
+                const phaseDetails: string[] = [];
+                Object.keys(row.allocations).forEach((phaseKey) => {
+                  const val = row.allocations[phaseKey];
+                  if (val) {
+                    const resolvedAtelies = val.split(',').map((id: string) => {
+                      const matched = atelieMap.get(id.trim());
+                      return matched ? matched.name : id.trim();
+                    }).join(' & ');
+                    phaseDetails.push(`${phaseKey}: **${resolvedAtelies}**`);
+                  }
+                });
+                if (phaseDetails.length > 0) {
+                  allocationsSummary += `    - Ateliê por Fase: ${phaseDetails.join(' | ')}\n`;
+                }
+              }
+            });
+          }
+        });
+
+        if (totalAllocations === 0) {
+          allocationsSummary += "- Nenhuma alocação registrada no cronograma de Sprints.\n";
+        }
+
+        customLiveContext = `
+=== DADOS DO SISTEMA EM TEMPO REAL ===
+${ateliesSummary}
+${partnersSummary}
+${turmasSummary}
+${allocationsSummary}
+======================================
+`;
       }
 
-      const prompt = `Você é o Assistente Virtual do Sistema Ateliês do Inteli.
-Responda de maneira amigável, clara e concisa em Português do Brasil.
-Abaixo estão as informações contextuais atuais para responder o usuário:
+      const prompt = `Você é o Assistente Virtual inteligente do Sistema de Ateliês e Cronogramas de Sprints do Inteli.
+Responda de maneira extremamente amigável, prestativa, clara e concisa em Português do Brasil.
+Abaixo estão as informações contextuais consolidadas e em tempo real sobre ateliês, parceiros/empresas, turmas, projetos e as alocações em cada fase/sprint do cronograma.
 
 ${npsInfo}
-Dados completos: ${contextDataString}
 
-Lembre-se: O usuário pode fazer perguntas curtas como "Qual o valor da NPS?". Use o contexto acima para responder precisamente e diretamente. 
+${customLiveContext}
+
+Instruções importantes:
+- Responda diretamente e com muita clareza às dúvidas do usuário sobre onde as empresas parceiras (ex: "Metro SP") estão alocadas em cada fase/sprint do cronograma.
+- Use as informações de "Ateliê por Fase" ou "Ateliê do HubSpot" correspondentes a cada turma para responder de forma precisa.
+- Se o usuário perguntar "Quantos ateliês temos", responda baseado no total de ateliês cadastrados que está indicado acima.
+- Se perguntar sobre "Quantos parceiros temos", use a contagem total de empresas parceiras acima.
+- Mantenha a resposta concisa, legível e bem organizada com tópicos em Markdown quando necessário.
 
 Mensagem do usuário: "${message}"`;
 
       const response = await aiClient.models.generateContent({
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-3.5-flash",
         contents: prompt
       });
 
       return res.json({ success: true, text: response.text });
     } catch (err: any) {
-      console.error("[Chat API Error]", err);
-      return res.status(500).json({ success: false, error: "Erro interno no chatbot: " + (err.message || err.toString()) });
+      console.error("[Chat API Error] Falling back to local heuristic response.", err);
+      const localResponse = getLocalChatbotResponse(message, contextData);
+      return res.json({ success: true, text: localResponse });
     }
   });
 
