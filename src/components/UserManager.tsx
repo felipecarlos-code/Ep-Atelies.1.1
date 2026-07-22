@@ -16,6 +16,7 @@ const ALL_AVAILABLE_TABS = [
   { id: 'atelies', label: 'Cadastro de Ateliê', desc: 'Gerenciamento dos blocos, cores e capacidades de ateliês.' },
   { id: 'turmas', label: 'Negócios / Turmas', desc: 'Edição de turmas, módulos, trimestre e ano de aplicação.' },
   { id: 'partners', label: 'Parceiros', desc: 'Gestão de empresas parceiras, logotipos e descrições.' },
+  { id: 'busca_documentos', label: 'Busca de Documentos', desc: 'Pesquisa e extração de informações de TAPI e termos de parceria no Google Drive.' },
   { id: 'hubspot', label: 'Conexão CRM HubSpot', desc: 'Sincronização direta de dados de pipelines de vendas.' },
   { id: 'database', label: 'Conexão do Banco', desc: 'Verificação de status do banco de dados na nuvem.' },
   { id: 'users', label: 'Gerenciamento de Acesso', desc: 'Controle de cadastro de pessoas e permissões de abas.' }

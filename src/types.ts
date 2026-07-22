@@ -31,6 +31,12 @@ export interface Turma {
   epOrientador?: string;            // [EP] Orientador (ep_orientador) do HubSpot
   orientador?: string;              // Orientador (fallback) do HubSpot
   courseYear?: string;              // Ano do Curso (Auto-calculated from modulo_curso)
+  
+  // TAPI Document tracking fields
+  tapiLink?: string;
+  tapiValidity?: string;
+  tapiStatus?: string;
+  tapiSummary?: string;
 }
 
 export interface Partner {
@@ -38,6 +44,12 @@ export interface Partner {
   name: string;
   logoUrl: string; // Base64 uploaded logo or preset URL/SVG string
   description?: string; // Made optional as it's moved to Turma
+  
+  // Partnership Term tracking fields
+  partnershipTermLink?: string;
+  partnershipTermValidity?: string;
+  partnershipTermStatus?: string;
+  partnershipTermSummary?: string;
 }
 
 export type PhaseKey = 'inicio' | 'kickoff' | 'sprint1' | 'sprint2' | 'sprint3' | 'sprint4' | 'fim';

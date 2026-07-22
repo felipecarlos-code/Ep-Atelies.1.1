@@ -6,6 +6,7 @@ import path from "path";
 import dns from "dns";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
+import mammoth from "mammoth";
 // DNS default order is not overridden to ensure smooth DNS resolution in Vercel serverless environment.
 
 // Ultra-lightweight direct Supabase PostgREST helper to avoid hanging connection pools on Vercel Serverless Functions
@@ -2172,6 +2173,200 @@ Mensagem do usuário: "${message}"`;
       console.error("[Chat API Error] Falling back to local heuristic response.", err);
       const localResponse = getLocalChatbotResponse(message, contextData);
       return res.json({ success: true, text: localResponse });
+    }
+  });
+
+  // Google Drive File Scan Endpoint
+  app.post("/api/drive/list", async (req, res) => {
+    const { accessToken, searchQuery, folderId } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ success: false, error: "Access token is required." });
+    }
+
+    try {
+      // Build Google Drive files.list query
+      let query = "trashed = false";
+      if (folderId) {
+        query += ` and '${folderId}' in parents`;
+      }
+      if (searchQuery) {
+        const escaped = searchQuery.replace(/'/g, "\\'");
+        query += ` and (name contains '${escaped}')`;
+      } else {
+        query += " and (name contains 'TAPI' or name contains 'Termo' or name contains 'Parceria' or name contains 'Contrato' or name contains 'Convenio' or name contains 'Abertura')";
+      }
+
+      const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,modifiedTime,webViewLink,parents)&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=50`;
+
+      const response = await fetch(listUrl, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[Drive List API Error]", response.status, errorText);
+        return res.status(response.status).json({ success: false, error: `Erro no Google Drive: ${errorText}` });
+      }
+
+      const data = await response.json();
+      return res.json({ success: true, files: data.files || [] });
+    } catch (err: any) {
+      console.error("[Drive List Error]", err);
+      return res.status(500).json({ success: false, error: err.message || "Erro desconhecido ao listar arquivos." });
+    }
+  });
+
+  // Google Drive Document Analysis via Gemini Endpoint
+  app.post("/api/drive/analyze-document", async (req, res) => {
+    const { accessToken, fileId, mimeType, fileName } = req.body;
+
+    if (!accessToken || !fileId || !mimeType) {
+      return res.status(400).json({ success: false, error: "Access token, fileId, and mimeType are required." });
+    }
+
+    if (!aiClient) {
+      return res.status(500).json({ success: false, error: "Gemini AI client not initialized on server. Configure GEMINI_API_KEY." });
+    }
+
+    try {
+      let fileBuffer: Buffer;
+      let actualMimeType = mimeType;
+      const isGoogleDoc = mimeType === 'application/vnd.google-apps.document';
+      const isDocx = mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+      if (isGoogleDoc) {
+        const exportUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`;
+        const response = await fetch(exportUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Erro ao exportar Documento Google (${response.status}): ${errText}`);
+        }
+        const text = await response.text();
+        fileBuffer = Buffer.from(text, 'utf-8');
+        actualMimeType = 'text/plain';
+      } else {
+        const downloadUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+        const response = await fetch(downloadUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Erro ao baixar arquivo do Drive (${response.status}): ${errText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        fileBuffer = Buffer.from(arrayBuffer);
+      }
+
+      // If it is a docx document, extract raw text using mammoth
+      if (isDocx) {
+        try {
+          const result = await mammoth.extractRawText({ buffer: fileBuffer });
+          fileBuffer = Buffer.from(result.value, 'utf-8');
+          actualMimeType = 'text/plain';
+        } catch (docxErr: any) {
+          console.error("[Docx Mammoth Extraction Error]", docxErr);
+          throw new Error(`Falha ao extrair texto do arquivo Word (.docx): ${docxErr.message}`);
+        }
+      }
+
+      let contents: any[] = [];
+      const systemInstruction = `Você é um assistente especialista em analisar documentos contratuais do Inteli (Instituto de Tecnologia e Liderança).
+Analise o documento fornecido para extrair as seguintes informações críticas e formatar estritamente como um objeto JSON válido.
+
+NOME DO ARQUIVO ATUAL NO GOOGLE DRIVE (Referência de Contexto muito Importante):
+"${fileName || "Não informado"}"
+
+REGRAS CRÍTICAS DE EXTRAÇÃO (Siga rigidamente para evitar alucinações e erros de template):
+1. Empresa Parceira ("empresaParceira"): 
+   - Atenção máxima! Muitos termos são criados baseando-se em modelos/templates que originalmente pertenciam a OUTRA empresa (por exemplo, modelos que citam Whirlpool S.A.).
+   - Você DEVE identificar quem é a VERDADEIRA empresa parceira/contratada ativa descrita no preâmbulo e na folha de assinatura deste termo específico.
+   - Use o nome do arquivo acima como forte indicação de quem é o parceiro real (por exemplo, se o arquivo cita "IBTCC", o parceiro real provavelmente é "INSTITUTO BRASILEIRO DE TECNOLOGIA E CIÊNCIA DA COMPUTAÇÃO" ou "IBTCC"). 
+   - Ignore menções a empresas de outros termos ou placeholders remanescentes do template de origem que não fazem sentido com o nome do arquivo.
+   - Retorne o nome oficial ou fantasia da empresa parceira correta.
+
+2. Datas de Assinatura ("dataAssinatura") e Validade ("dataValidade"):
+   - "dataAssinatura": Extraia a data em que o termo foi assinado (formato DD/MM/AAAA ou null).
+   - "dataValidade": Leia atentamente a cláusula de vigência (geralmente Cláusula Quarta ou item de duração). 
+   - Se a cláusula estipular um prazo explícito (por exemplo: "vigorará por 24 meses" ou "pelo prazo máximo de 24 meses") a partir da data de assinatura, você DEVE calcular matematicamente a data de validade somando esse prazo à data de assinatura identificada.
+   - Exemplo: Assinatura em 02/06/2026 com vigência de 24 meses gera exatamente a dataValidade de "02/06/2028". Nunca retorne null se puder fazer este cálculo. Formato: DD/MM/AAAA.
+
+3. Título do Projeto ("tituloProjeto"):
+   - O título ou nome do projeto do estudante associado (ou null se não encontrado).
+
+4. Resumo Crítico ("resumoCritico"):
+   - Um resumo conciso de 2 a 3 frases explicando o escopo da parceria e obrigações principais das partes.
+
+5. Status do Documento ("statusDoc"):
+   - Sendo "Ativo" ou "Expirado" (se a dataValidade já passou comparado a hoje, 21/07/2026) ou "Revisão Necessária".
+
+Sua resposta deve ser estruturada exatamente assim:
+{
+  "tituloProjeto": "Título do projeto ou null",
+  "empresaParceira": "Empresa Parceira Real",
+  "dataAssinatura": "DD/MM/AAAA ou null",
+  "dataValidade": "DD/MM/AAAA ou null",
+  "resumoCritico": "Texto do resumo",
+  "statusDoc": "Ativo" | "Expirado" | "Revisão Necessária"
+}
+
+Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crases (\`\`\`), explicações ou introduções adicionais.`;
+
+      if (actualMimeType === 'text/plain') {
+        const textContent = fileBuffer.toString('utf-8');
+        contents = [
+          {
+            text: `${systemInstruction}\n\nConteúdo do documento:\n${textContent}`
+          }
+        ];
+      } else {
+        const base64Data = fileBuffer.toString("base64");
+        contents = [
+          {
+            inlineData: {
+              mimeType: actualMimeType,
+              data: base64Data
+            }
+          },
+          {
+            text: systemInstruction
+          }
+        ];
+      }
+
+      const response = await aiClient.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: contents
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+      let extractedData;
+      try {
+        extractedData = JSON.parse(responseText);
+      } catch (jsonErr) {
+        console.error("Failed to parse Gemini response as JSON:", responseText);
+        extractedData = {
+          tituloProjeto: null,
+          empresaParceira: null,
+          dataAssinatura: null,
+          dataValidade: null,
+          resumoCritico: responseText.substring(0, 300),
+          statusDoc: "Revisão Necessária",
+          error: "Erro na formatação JSON da IA. Exibindo resposta bruta."
+        };
+      }
+
+      return res.json({ success: true, analysis: extractedData });
+    } catch (err: any) {
+      console.error("[Drive Document Analyze Error]", err);
+      return res.status(500).json({ success: false, error: err.message || "Erro desconhecido ao analisar o documento." });
     }
   });
 

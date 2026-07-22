@@ -17,6 +17,7 @@ import UserManager from './components/UserManager';
 import LoginPage from './components/LoginPage';
 import NpsReport from './components/NpsReport';
 import Chatbot from './components/Chatbot';
+import DocumentSearch from './components/DocumentSearch';
 
 import { 
   CalendarRange, 
@@ -53,7 +54,7 @@ function deduplicateArrayById<T extends { id: string }>(arr: T[]): T[] {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database' | 'users' | 'nps_report'>('sprints');
+  const [activeTab, setActiveTab] = useState<'sprints' | 'boletim' | 'atelies' | 'turmas' | 'partners' | 'hubspot' | 'database' | 'users' | 'nps_report' | 'busca_documentos'>('sprints');
   const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
   const [isMobileAdminDropdownOpen, setIsMobileAdminDropdownOpen] = useState(false);
   const [isReportsDropdownOpen, setIsReportsDropdownOpen] = useState(false);
@@ -442,7 +443,7 @@ export default function App() {
         id: `user-admin-${Date.now()}`,
         name: currentUser.name,
         email: currentUser.email.toLowerCase(),
-        allowedTabs: ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users', 'nps_report'],
+        allowedTabs: ['sprints', 'boletim', 'atelies', 'turmas', 'partners', 'hubspot', 'database', 'users', 'nps_report', 'busca_documentos'],
         isAdmin: true
       };
       setUsers([firstAdmin]);
@@ -1152,6 +1153,24 @@ export default function App() {
             </div>
           )}
 
+          {hasAccessToTab('busca_documentos') && (
+            <button
+              id="tab-busca-documentos"
+              onClick={() => {
+                setActiveTab('busca_documentos');
+                setIsAdminDropdownOpen(false);
+                setIsReportsDropdownOpen(false);
+              }}
+              className={`px-4 py-1.5 rounded font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                activeTab === 'busca_documentos'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                  : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+              }`}
+            >
+              Busca de Documentos
+            </button>
+          )}
+
           {/* Admin Dropdown tab matching deep teal color from diagram */}
           {(hasAccessToTab('atelies') || hasAccessToTab('hubspot') || hasAccessToTab('database') || hasAccessToTab('users')) && (
             <div className="relative">
@@ -1428,6 +1447,22 @@ export default function App() {
               </div>
             )}
           </div>
+        )}
+
+        {hasAccessToTab('busca_documentos') && (
+          <button
+            id="mobile-tab-busca-documentos"
+            onClick={() => {
+              setActiveTab('busca_documentos');
+              setIsMobileAdminDropdownOpen(false);
+              setIsMobileReportsDropdownOpen(false);
+            }}
+            className={`px-3 py-1.5 rounded font-bold text-[10px] whitespace-nowrap uppercase tracking-wider shrink-0 cursor-pointer ${
+              activeTab === 'busca_documentos' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600'
+            }`}
+          >
+            Busca de Documentos
+          </button>
         )}
 
         {/* Mobile Admin Dropdown */}
@@ -2078,6 +2113,15 @@ ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;`}
             turmas={turmas}
             partners={partners}
             atelies={atelies}
+          />
+        )}
+
+        {activeTab === 'busca_documentos' && (
+          <DocumentSearch
+            turmas={turmas}
+            partners={partners}
+            onUpdateTurma={handleUpdateTurma}
+            onUpdatePartner={handleUpdatePartner}
           />
         )}
       </main>

@@ -5,6 +5,7 @@ import { Atelie, Turma, Partner, AllocationRow, PHASES, PhaseKey } from '../type
 import { findMatchingAtelie } from '../utils/atelieMatcher';
 import { cleanOrDetectCourse } from './TurmaManager';
 import { BoletimPrintAlt } from './BoletimPrintAlt';
+import { BoletimPrintV3 } from './BoletimPrintV3';
 import { 
   FileSpreadsheet, 
   Printer, 
@@ -41,7 +42,7 @@ export default function BoletimEP({
   selectedQuarter,
 }: BoletimEPProps) {
   const [selectedPhase, setSelectedPhase] = useState<PhaseKey>('sprint1');
-  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt'>('print');
+  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt' | 'print_v3'>('print');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const [campusImgSrc, setCampusImgSrc] = useState(inteliCampusImg);
@@ -369,8 +370,8 @@ export default function BoletimEP({
     const originalLayout = layoutMode;
     const originalTitle = document.title;
     
-    // Force layout mode to print/print_alt so that the DOM section is active and fully rendered
-    const targetLayout = (layoutMode === 'print' || layoutMode === 'print_alt') ? layoutMode : 'print';
+    // Force layout mode to print/print_alt/print_v3 so that the DOM section is active and fully rendered
+    const targetLayout = (layoutMode === 'print' || layoutMode === 'print_alt' || layoutMode === 'print_v3') ? layoutMode : 'print';
     setLayoutMode(targetLayout);
     document.title = `Boletim EP - ${selectedYear} - ${selectedQuarter} - ${activePhaseLabel}`;
     
@@ -467,6 +468,17 @@ export default function BoletimEP({
             >
               <Layers size={13} />
               Boletim A4 (Opção 2)
+            </button>
+            <button
+              onClick={() => setLayoutMode('print_v3')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
+                layoutMode === 'print_v3' 
+                  ? 'bg-[#ff4545] text-white shadow-sm' 
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <FileText size={13} />
+              Boletim Vertical (V3)
             </button>
           </div>
         </div>
@@ -781,7 +793,7 @@ export default function BoletimEP({
       {activeAllocations.length > 0 && (
         <div 
           className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print' ? 'block' : layoutMode === 'ppt' ? 'hidden print:block' : 'hidden print:hidden'}`} 
-          id={layoutMode !== 'print_alt' ? 'active-boletim-print-section' : undefined}
+          id={layoutMode === 'print' ? 'active-boletim-print-section' : undefined}
         >
           
           {/* Printable Sheet Canvas Wrapper */}
@@ -1302,11 +1314,29 @@ export default function BoletimEP({
         </div>
       )}
 
+      {/* RENDER MODE: PRINT LAYOUT V3 (212x529mm) */}
+      {activeAllocations.length > 0 && (
+        <div 
+          className={`bg-white rounded-lg border border-slate-200 shadow-sm p-6 space-y-6 ${layoutMode === 'print_v3' ? 'block print:block' : 'hidden print:hidden'}`}
+          id={layoutMode === 'print_v3' ? 'active-boletim-print-section' : undefined}
+        >
+          <BoletimPrintV3 
+            activeAllocations={activeAllocations}
+            selectedQuarter={selectedQuarter}
+            selectedYear={selectedYear}
+            sprintDates={sprintDates}
+            campusImgSrc={campusImgSrc}
+            renderInteliLogo={renderInteliLogo}
+            handleLogoError={handleLogoError}
+          />
+        </div>
+      )}
+
        {/* Global CSS for physical paper print optimization */}
       <style>{`
         @media print {
           @page {
-            size: A4 portrait !important;
+            size: ${layoutMode === 'print_v3' ? '212mm 529mm' : 'A4 portrait'} !important;
             margin: 0 !important; /* Forces browser headers to disappear completely */
           }
           
