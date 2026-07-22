@@ -16,30 +16,24 @@ export function BoletimPrintV3({
   // The last page has the schedule (cronograma) and can hold ~4-5 projects.
   
   const MAX_PER_PAGE = 6;
-  const pages: any[][] = [];
-  let currentPage: any[] = [];
+  
+  const ano1 = activeAllocations.filter((a: any) => String(a.academicYear) === '1');
+  const ano3 = activeAllocations.filter((a: any) => String(a.academicYear) === '3');
+  const ano2 = activeAllocations.filter((a: any) => String(a.academicYear) === '2');
 
-  activeAllocations.forEach((alloc: any, index: number) => {
-    currentPage.push(alloc);
-    // If page is full, or it's the very last item, we break.
-    // If it's the last page and we need room for cronograma, 
-    // actually, let's just use 6 per page, and if the last page has 5 or 6 items, 
-    // the cronograma might overflow to a new page, which is fine.
-    // To closely match the PDF, we'll slice by 6.
-    if (currentPage.length === MAX_PER_PAGE || index === activeAllocations.length - 1) {
-      // Check if this is the last page, and if adding cronograma would overflow
-      if (index === activeAllocations.length - 1 && currentPage.length > 5) {
-        pages.push([...currentPage]);
-        currentPage = [];
-      } else {
-        pages.push([...currentPage]);
-        currentPage = [];
-      }
+  const chunkArray = (arr: any[]) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += MAX_PER_PAGE) {
+      chunks.push(arr.slice(i, i + MAX_PER_PAGE));
     }
-  });
+    return chunks.length > 0 ? chunks : [[]];
+  };
 
-  // If the last page is full, the cronograma will be on its own page
-  // We'll handle cronograma in the last page array
+  const pages = [
+    ...chunkArray(ano1),
+    ...chunkArray(ano3),
+    ...chunkArray(ano2)
+  ];
 
   const getQuarterText = (q: string) => {
     switch(q) {
@@ -128,21 +122,23 @@ export function BoletimPrintV3({
                   <div className="flex-1 flex flex-col overflow-hidden">
                     {/* Block Header */}
                     <div className="bg-[#99cdb0] text-white px-5 py-2 flex justify-between items-center shrink-0">
-                      <span className="font-medium text-[16px] uppercase tracking-wider font-sans">{headerText}</span>
+                      <span className="font-medium text-[16px] uppercase tracking-wider font-sans">
+                        {headerText} {alloc.atelieBlocks && alloc.atelieBlocks.length > 0 && !headerText.includes('PARCEIRO') ? ` - ${alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', 'BL.').trim()).join('/')}` : ''}
+                      </span>
                       {isEnglish && (
                         <span className="font-bold text-[12px] uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded">MÓDULO EM INGLÊS</span>
                       )}
                     </div>
                     {/* Block Body */}
-                    <div className="bg-slate-100 flex-1 p-5 flex flex-col justify-center">
-                      <h3 className="text-[#2e2640] text-[20px] font-medium leading-tight mb-2">
+                    <div className="bg-slate-100 flex-1 p-5 flex flex-col justify-center gap-1.5">
+                      <h3 className="text-[#2e2640] text-[20px] font-medium leading-tight">
                         {alloc.academicYear}° ANO - MÓD. {alloc.turma?.courseModule?.toString().padStart(2, '0') || '00'} {courseStr ? `- ${courseStr}` : ''}
                       </h3>
-                      <h4 className="text-[#2e2640] text-[18px] font-serif leading-snug mb-3">
-                        {alloc.subtitle}
-                      </h4>
-                      <p className="text-[#2e2640] text-[15px] leading-relaxed line-clamp-3 font-sans">
+                      <p className="text-[#2e2640] text-[16px] leading-relaxed line-clamp-2 font-sans font-medium">
                         {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
+                      </p>
+                      <p className="text-slate-500 text-[14px] leading-snug line-clamp-1 font-sans font-bold uppercase mt-1">
+                        Orientador(a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'Não Cadastrado'}
                       </p>
                     </div>
                   </div>
