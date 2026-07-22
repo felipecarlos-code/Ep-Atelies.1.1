@@ -1336,8 +1336,8 @@ export default function BoletimEP({
       <style>{`
         @media print {
           @page {
-            size: ${layoutMode === 'print_v3' ? '212mm 529mm' : 'A4 portrait'} !important;
-            margin: 0 !important; /* Forces browser headers to disappear completely */
+            size: ${layoutMode === 'print_v3' ? '212mm 529mm' : 'A4 portrait'};
+            margin: 0; /* Forces browser headers to disappear completely */
           }
           
           body {
