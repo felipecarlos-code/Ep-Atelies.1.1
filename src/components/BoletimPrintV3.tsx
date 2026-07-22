@@ -22,11 +22,12 @@ export function BoletimPrintV3({
   const ano2 = activeAllocations.filter((a: any) => String(a.academicYear) === '2');
 
   const chunkArray = (arr: any[]) => {
+    if (!arr || arr.length === 0) return [];
     const chunks = [];
     for (let i = 0; i < arr.length; i += MAX_PER_PAGE) {
       chunks.push(arr.slice(i, i + MAX_PER_PAGE));
     }
-    return chunks.length > 0 ? chunks : [[]];
+    return chunks;
   };
 
   const pages = [
@@ -34,6 +35,11 @@ export function BoletimPrintV3({
     ...chunkArray(ano3),
     ...chunkArray(ano2)
   ];
+  
+  // If no allocations at all, just show one empty page
+  if (pages.length === 0) {
+    pages.push([]);
+  }
 
   const getQuarterText = (q: string) => {
     switch(q) {
@@ -100,7 +106,7 @@ export function BoletimPrintV3({
               const courseStr = cleanOrDetectCourse(alloc.turma?.course, alloc.turma?.courseModule, alloc.turma?.name);
 
               return (
-                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch h-[170px]">
+                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch min-h-[210px]">
                   {/* Left: Logo */}
                   <div className="w-[180px] flex items-center justify-center shrink-0">
                     {isPartner ? (
@@ -119,26 +125,40 @@ export function BoletimPrintV3({
                   </div>
 
                   {/* Right: Info Block */}
-                  <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-hidden rounded-2xl shadow-sm border border-slate-200">
                     {/* Block Header */}
-                    <div className="bg-[#99cdb0] text-white px-5 py-2 flex justify-between items-center shrink-0">
-                      <span className="font-medium text-[16px] uppercase tracking-wider font-sans">
+                    <div className="bg-[#99cdb0] text-[#1c3829] px-5 py-2.5 flex justify-between items-center shrink-0 border-b border-[#82b89a]">
+                      <span className="font-bold text-[14px] uppercase tracking-wider font-sans">
                         {headerText} {alloc.atelieBlocks && alloc.atelieBlocks.length > 0 && !headerText.includes('PARCEIRO') ? ` - ${alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', 'BL.').trim()).join('/')}` : ''}
+                        <span className="font-semibold capitalize ml-2 text-[#2a4d3a]">
+                          - Orientador(a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'N/C'}
+                        </span>
                       </span>
                       {isEnglish && (
-                        <span className="font-bold text-[12px] uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded">MÓDULO EM INGLÊS</span>
+                        <span className="font-bold text-[11px] uppercase tracking-wider bg-[#1c3829] text-white px-2 py-0.5 rounded-md">MÓDULO EM INGLÊS</span>
                       )}
                     </div>
                     {/* Block Body */}
-                    <div className="bg-slate-100 flex-1 p-5 flex flex-col justify-center gap-1.5">
-                      <h3 className="text-[#2e2640] text-[20px] font-medium leading-tight">
-                        {alloc.academicYear}° ANO - MÓD. {alloc.turma?.courseModule?.toString().padStart(2, '0') || '00'} {courseStr ? `- ${courseStr}` : ''}
+                    <div className="bg-slate-50 flex-1 px-6 py-4 flex flex-col justify-center gap-1.5">
+                      <h3 className="text-[#2e2640] text-[19px] font-bold leading-tight uppercase font-sans">
+                        {alloc.academicYear}° ANO - MÓDULO {(() => {
+                          const ano = parseInt(alloc.academicYear) || 1;
+                          let q = 1;
+                          if (selectedQuarter === 'Q2') q = 2;
+                          else if (selectedQuarter === 'Q3') q = 3;
+                          else if (selectedQuarter === 'Q4') q = 4;
+                          const modNum = (ano - 1) * 4 + q;
+                          return modNum.toString().padStart(2, '0');
+                        })()} - {(() => {
+                          const rawSubtitle = alloc.subtitle || alloc.turma?.courseModule || alloc.turma?.course || '';
+                          const classCodeMatch = rawSubtitle.match(/^(?:[1-4]?[a-zA-Z]{2,5}\d+)\s*(?:-\s*(.*))?$/i);
+                          let cleaned = (classCodeMatch && classCodeMatch[1]) ? classCodeMatch[1] : rawSubtitle;
+                          cleaned = cleaned.replace(/\s*-\s*[1-4]º\s*[a-zA-Z]*$/i, '').trim();
+                          return cleaned;
+                        })()}
                       </h3>
-                      <p className="text-[#2e2640] text-[16px] leading-relaxed line-clamp-2 font-sans font-medium">
+                      <p className="text-[#2e2640] text-[16px] leading-relaxed line-clamp-3 font-sans font-medium mt-1">
                         {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
-                      </p>
-                      <p className="text-slate-500 text-[14px] leading-snug line-clamp-1 font-sans font-bold uppercase mt-1">
-                        Orientador(a): {alloc.turma?.epOrientador || alloc.turma?.orientador || 'Não Cadastrado'}
                       </p>
                     </div>
                   </div>
@@ -149,7 +169,7 @@ export function BoletimPrintV3({
 
           {/* Cronograma (Only on the very last page) */}
           {pageIndex === pages.length - 1 && (
-            <div className="px-12 mt-8 mb-12 shrink-0">
+            <div className="px-12 mt-0 mb-8 shrink-0">
               <h3 className="text-[#2e2640] text-3xl font-serif mb-6 border-b-2 border-[#2e2640] pb-2 inline-block">
                 CRONOGRAMA DO MÓDULO
               </h3>

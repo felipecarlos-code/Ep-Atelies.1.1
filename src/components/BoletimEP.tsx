@@ -234,7 +234,17 @@ export default function BoletimEP({
       }
     }
 
+    
+    // Clean up class code prefix from subtitle (e.g., "1AMD3 - ") and year suffix (e.g. "- 1º Ano")
+    if (subtitle) {
+      const classCodeMatch = subtitle.match(/^(?:[1-4]?[a-zA-Z]{2,5}\d+)\s*(?:-\s*(.*))?$/i);
+      let cleaned = (classCodeMatch && classCodeMatch[1]) ? classCodeMatch[1] : subtitle;
+      cleaned = cleaned.replace(/\s*-\s*[1-4]º\s*[a-zA-Z]*$/i, '').trim();
+      subtitle = cleaned || subtitle;
+    }
+
     return { title, subtitle, academicYear };
+
   };
 
   // Color-coding helpers strictly respecting segment colors on p. 68
@@ -642,7 +652,7 @@ export default function BoletimEP({
                 return (
                   <div 
                     key={alloc.rowId} 
-                    className="bg-white rounded-lg p-4 flex items-stretch gap-4 hover:shadow-md transition-all shadow-sm border-l-4 relative min-h-[170px]"
+                    className="bg-white rounded-lg p-4 flex items-stretch gap-4 hover:shadow-md transition-all shadow-sm border-l-4 relative min-h-[200px]"
                     style={{ borderLeftColor: seg.bg.includes('[#') ? seg.bg.slice(4, -1) : '#b2b6bf' }}
                   >
                     {/* Left Frame: Partner Logo container */}
@@ -720,7 +730,7 @@ export default function BoletimEP({
                 Array.from({ length: itemsPerSlide - slideAllocations.length }).map((_, idx) => (
                   <div 
                     key={`empty-slide-slot-${idx}`} 
-                    className="border border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 bg-white/5 min-h-[170px]"
+                    className="border border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 bg-white/5 min-h-[200px]"
                   >
                     <Layers size={20} className="text-white/10 mb-1" />
                     <span className="text-[9px] font-mono uppercase tracking-wider font-bold italic opacity-40">Lote Disponível</span>
