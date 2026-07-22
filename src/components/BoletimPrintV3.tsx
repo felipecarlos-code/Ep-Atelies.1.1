@@ -60,40 +60,13 @@ export function BoletimPrintV3({
   };
 
   return (
-    <div id="boletim-v3-container" className="flex flex-col items-center gap-8 bg-slate-100 py-8 print:py-0 print:bg-white">
-      <style>
-        {`
-          @media print {
-            @page {
-              size: 212mm 529mm;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            #boletim-v3-container {
-              gap: 0;
-              padding: 0;
-            }
-            .boletim-v3-page {
-              page-break-after: always;
-              margin: 0 !important;
-              box-shadow: none !important;
-            }
-            /* Hide UI elements */
-            nav, .no-print, button, .admin-dropdown {
-              display: none !important;
-            }
-          }
-        `}
-      </style>
+    <div id="boletim-v3-container" className="flex flex-col items-center gap-8 bg-slate-100 py-8 print:py-0 print:bg-white print:gap-0">
+      
 
       {pages.map((pageAllocations, pageIndex) => (
         <div 
           key={pageIndex} 
-          className="boletim-v3-page relative bg-white mx-auto shadow-xl overflow-hidden flex flex-col"
+          className="boletim-v3-page relative bg-white mx-auto shadow-xl overflow-hidden flex flex-col print:shadow-none print:my-0 print:break-after-page last:print:break-after-auto"
           style={{ width: '212mm', height: '529mm' }}
         >
           {/* Header Image - Only on the first page? The PDF shows it on all 3 pages */}

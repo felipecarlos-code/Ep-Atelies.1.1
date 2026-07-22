@@ -1332,129 +1332,88 @@ export default function BoletimEP({
         </div>
       )}
 
-       {/* Global CSS for physical paper print optimization */}
-      <style>{`
-        @media print {
-          @page {
-            size: ${layoutMode === 'print_v3' ? '212mm 529mm' : 'A4 portrait'};
-            margin: 0; /* Forces browser headers to disappear completely */
+             {/* Global CSS for physical paper print optimization */}
+      {layoutMode === 'print_v3' ? (
+        <style>{`
+          @media print {
+            @page {
+              size: 212mm 529mm !important;
+              margin: 0 !important;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background-color: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body * { visibility: hidden; }
+            #active-boletim-print-section, #active-boletim-print-section * { visibility: visible; }
+            #active-boletim-print-section {
+              display: block !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              background: white !important;
+              border: none !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
           }
-          
-          body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: white !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+        `}</style>
+      ) : (
+        <style>{`
+          @media print {
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+              background-color: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body * { visibility: hidden; }
+            #active-boletim-print-section, #active-boletim-print-section * { visibility: visible; }
+            #active-boletim-print-section {
+              display: block !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              background: white !important;
+              border: none !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            .boletim-print-page {
+              width: 21cm !important;
+              height: 29.6cm !important;
+              max-height: 29.6cm !important;
+              box-sizing: border-box !important;
+              padding: 0.8cm 1cm !important;
+              margin: 0 !important;
+              page-break-after: always !important;
+              break-after: page !important;
+              overflow: hidden !important;
+              display: flex !important;
+              flex-direction: column !important;
+              background: white !important;
+              border: none !important;
+              box-shadow: none !important;
+            }
+            .boletim-print-page:last-child {
+              page-break-after: auto !important;
+              break-after: auto !important;
+            }
           }
-
-          /* Hide non-printable elements */
-          body * {
-            visibility: hidden;
-          }
-          
-          #active-boletim-print-section, #active-boletim-print-section * {
-            visibility: visible;
-          }
-          
-          #active-boletim-print-section {
-            display: block !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            background: white !important;
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-
-          /* Page break directives */
-          .boletim-print-page {
-            width: 21cm !important;
-            height: 29.6cm !important;
-            max-height: 29.6cm !important;
-            box-sizing: border-box !important;
-            padding: 0.8cm 1cm !important; /* Elegant modern spacing to avoid edge-hugging */
-            margin: 0 !important;
-            page-break-after: always !important;
-            break-after: page !important;
-            overflow: hidden !important; /* Prevents spilling to next page */
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important; /* Distribute whitespace elegantly and fluidly */
-          }
-
-          .inteli-logo-print-lg {
-            height: 1.8cm !important;
-            max-height: 1.8cm !important;
-            width: auto !important;
-            display: inline-block !important;
-          }
-          
-          .inteli-logo-print-md {
-            height: 1.2cm !important;
-            max-height: 1.2cm !important;
-            width: auto !important;
-            display: inline-block !important;
-          }
-          
-          .inteli-logo-print-sm {
-            height: 0.8cm !important;
-            max-height: 0.8cm !important;
-            width: auto !important;
-            display: inline-block !important;
-          }
-          
-          .boletim-print-page:last-child {
-            page-break-after: avoid !important;
-            break-after: avoid !important;
-          }
-          
-          .print\\:break-before-page {
-            page-break-before: always !important;
-            break-before: page !important;
-          }
-          
-          /* Hide print instruction directives card */
-          .print-hidden, .print-hidden * {
-            display: none !important;
-            visibility: hidden !important;
-          }
-
-          /* Strip outer card borders and shadows in the printable sheet canvas container */
-          #printable-sheet-canvas {
-            border: none !important;
-            box-shadow: none !important;
-            background: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
-            width: 100% !important;
-          }
-
-          .break-inside-avoid {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-
-          #boletim-cronograma-rodape {
-            margin-top: auto !important;
-            padding-top: 0.5cm !important;
-          }
-
-          /* Eliminate all outside UI chrome from print */
-          header, nav, #sub-header-bar, .flex.justify-between.items-center.gap-3, button, select {
-            display: none !important;
-          }
-          
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-        }
-      `}</style>
+        `}</style>
+      )}
     </div>
   );
 }
