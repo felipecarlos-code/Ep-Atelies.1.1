@@ -645,14 +645,14 @@ export default function BoletimEP({
             </div>
 
             {/* Slide Grid Body (4-column bento grids aligned to segment ratios) */}
-            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 my-4 flex-1 items-center z-10">
+            <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 my-4 flex-1 items-stretch z-10">
               {slideAllocations.map((alloc) => {
                 const seg = getSegmentStyle(alloc.academicYear);
                 
                 return (
                   <div 
                     key={alloc.rowId} 
-                    className="bg-white rounded-lg p-4 flex items-stretch gap-4 hover:shadow-md transition-all shadow-sm border-l-4 relative min-h-[170px]"
+                    className="bg-white rounded-lg p-4 flex items-stretch gap-4 hover:shadow-md transition-all shadow-sm border-l-4 relative h-full min-h-[170px]"
                     style={{ borderLeftColor: seg.bg.includes('[#') ? seg.bg.slice(4, -1) : '#b2b6bf' }}
                   >
                     {/* Left Frame: Partner Logo container */}
@@ -730,7 +730,7 @@ export default function BoletimEP({
                 Array.from({ length: itemsPerSlide - slideAllocations.length }).map((_, idx) => (
                   <div 
                     key={`empty-slide-slot-${idx}`} 
-                    className="border border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 bg-white/5 min-h-[170px]"
+                    className="border border-dashed border-white/10 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 bg-white/5 h-full min-h-[170px]"
                   >
                     <Layers size={20} className="text-white/10 mb-1" />
                     <span className="text-[9px] font-mono uppercase tracking-wider font-bold italic opacity-40">Lote Disponível</span>

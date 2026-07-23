@@ -1,6 +1,10 @@
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
 import { cleanOrDetectCourse } from './TurmaManager';
+import imgPage0 from '../assets/images/regenerated_image_1784813520556.png';
+import imgPage1 from '../assets/images/regenerated_image_1784813521950.png';
+import imgPage2 from '../assets/images/regenerated_image_1784813523263.png';
+
 
 export function BoletimPrintV3({ 
   activeAllocations, 
@@ -71,7 +75,7 @@ export function BoletimPrintV3({
         >
           {/* Header Image - Only on the first page? The PDF shows it on all 3 pages */}
           <div className="w-full h-[180px] shrink-0">
-            <img src={campusImgSrc} alt="Campus" className="w-full h-full object-cover" />
+            <img src={pageIndex === 0 ? imgPage0 : pageIndex === 1 ? imgPage1 : pageIndex === 2 ? imgPage2 : campusImgSrc} alt="Campus" className="w-full h-full object-cover" />
           </div>
 
           {/* Title Area */}
@@ -106,17 +110,22 @@ export function BoletimPrintV3({
               const courseStr = cleanOrDetectCourse(alloc.turma?.course, alloc.turma?.courseModule, alloc.turma?.name);
 
               return (
-                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch h-[185px]">
+                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch min-h-[190px] h-auto">
                   {/* Left: Logo */}
                   <div className="w-[180px] flex items-center justify-center shrink-0">
                     {isPartner ? (
+                      <div className="flex flex-col items-center justify-center gap-2 px-2">
                         <img 
-                        src={alloc.partner.logoUrl} 
-                        alt={alloc.partner.name}
-                        className="max-w-[150px] max-h-[120px] object-contain mix-blend-multiply"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => handleLogoError && handleLogoError(e, alloc.partner.name)}
-                      />
+                          src={alloc.partner.logoUrl} 
+                          alt={alloc.partner.name}
+                          className="max-w-[140px] max-h-[90px] object-contain mix-blend-multiply"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => handleLogoError && handleLogoError(e, alloc.partner.name)}
+                        />
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest text-center leading-tight">
+                          {alloc.partner.name}
+                        </span>
+                      </div>
                     ) : (
                       <div className="text-slate-300 flex flex-col items-center">
                         <HelpCircle size={48} />
@@ -127,7 +136,7 @@ export function BoletimPrintV3({
                   {/* Right: Info Block */}
                   <div className="flex-1 flex flex-col overflow-hidden rounded-2xl shadow-sm border border-slate-200">
                     {/* Block Header */}
-                    <div className="bg-[#99cdb0] text-[#1c3829] px-5 py-2.5 flex justify-between items-center shrink-0 border-b border-[#82b89a]">
+                    <div className="bg-[#99cdb0] text-[#1c3829] px-5 py-2 flex justify-between items-center shrink-0 border-b border-[#82b89a]">
                       <span className="font-bold text-[14px] uppercase tracking-wider font-sans">
                         {headerText} {alloc.atelieBlocks && alloc.atelieBlocks.length > 0 && !headerText.includes('PARCEIRO') ? ` - ${alloc.atelieBlocks.map((b: any) => String(b).toUpperCase().replace('BLOCO', 'BL.').trim()).join('/')}` : ''}
                         <span className="font-semibold capitalize ml-2 text-[#2a4d3a]">
@@ -139,7 +148,7 @@ export function BoletimPrintV3({
                       )}
                     </div>
                     {/* Block Body */}
-                    <div className="bg-slate-50 flex-1 px-6 py-4 flex flex-col justify-center gap-1.5">
+                    <div className="bg-slate-50 flex-1 px-6 py-2.5 flex flex-col justify-center gap-1.5">
                       <h3 className="text-[#2e2640] text-[19px] font-bold leading-tight uppercase font-sans">
                         {alloc.academicYear}° ANO - MÓDULO {(() => {
                           const ano = parseInt(alloc.academicYear) || 1;
@@ -157,7 +166,7 @@ export function BoletimPrintV3({
                           return cleaned;
                         })()}
                       </h3>
-                      <p className="text-[#2e2640] text-[16px] leading-relaxed line-clamp-3 font-sans font-medium mt-1">
+                      <p className="text-[#2e2640] text-[14px] leading-snug line-clamp-5 font-sans font-medium mt-1">
                         {alloc.turma?.epDescricaoCurta || 'Sem descrição.'}
                       </p>
                     </div>
