@@ -106,7 +106,7 @@ export function BoletimPrintV3({
               const courseStr = cleanOrDetectCourse(alloc.turma?.course, alloc.turma?.courseModule, alloc.turma?.name);
 
               return (
-                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch min-h-[210px]">
+                <div key={alloc.rowId || idx} className="flex gap-8 items-stretch h-[185px]">
                   {/* Left: Logo */}
                   <div className="w-[180px] flex items-center justify-center shrink-0">
                     {isPartner ? (
@@ -169,7 +169,7 @@ export function BoletimPrintV3({
 
           {/* Cronograma (Only on the very last page) */}
           {pageIndex === pages.length - 1 && (
-            <div className="px-12 mt-0 mb-8 shrink-0">
+            <div className="px-12 mt-8 mb-12 shrink-0">
               <h3 className="text-[#2e2640] text-3xl font-serif mb-6 border-b-2 border-[#2e2640] pb-2 inline-block">
                 CRONOGRAMA DO MÓDULO
               </h3>
