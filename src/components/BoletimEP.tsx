@@ -42,7 +42,7 @@ export default function BoletimEP({
   selectedQuarter,
 }: BoletimEPProps) {
   const [selectedPhase, setSelectedPhase] = useState<PhaseKey>('sprint1');
-  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt' | 'print_v3'>('print');
+  const [layoutMode, setLayoutMode] = useState<'ppt' | 'print' | 'print_alt' | 'print_v3'>('print_v3');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const [campusImgSrc, setCampusImgSrc] = useState(inteliCampusImg);
@@ -458,6 +458,17 @@ export default function BoletimEP({
         <div className="flex items-center gap-2 relative z-10">
           <div className="bg-[#1a162b] p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
             <button
+              onClick={() => setLayoutMode('print_v3')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
+                layoutMode === 'print_v3' 
+                  ? 'bg-[#ff4545] text-white shadow-sm' 
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <FileText size={13} />
+              Boletim Oficial
+            </button>
+            <button
               onClick={() => setLayoutMode('print')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
                 layoutMode === 'print' 
@@ -466,7 +477,7 @@ export default function BoletimEP({
               }`}
             >
               <Printer size={13} />
-              Boletim A4 Oficial
+              Boletim folha A4
             </button>
             <button
               onClick={() => setLayoutMode('print_alt')}
@@ -478,17 +489,6 @@ export default function BoletimEP({
             >
               <Layers size={13} />
               Boletim A4 (Opção 2)
-            </button>
-            <button
-              onClick={() => setLayoutMode('print_v3')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
-                layoutMode === 'print_v3' 
-                  ? 'bg-[#ff4545] text-white shadow-sm' 
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <FileText size={13} />
-              Boletim Vertical (V3)
             </button>
           </div>
         </div>
