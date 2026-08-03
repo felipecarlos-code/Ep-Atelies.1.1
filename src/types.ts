@@ -37,6 +37,11 @@ export interface Turma {
   tapiValidity?: string;
   tapiStatus?: string;
   tapiSummary?: string;
+  // Termo de Parceria tracking fields (linked to Negócio)
+  partnershipTermLink?: string;
+  partnershipTermValidity?: string;
+  partnershipTermStatus?: string;
+  partnershipTermSummary?: string;
 }
 
 export interface Partner {

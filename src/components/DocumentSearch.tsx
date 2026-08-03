@@ -22,6 +22,9 @@ import {
   LogOut,
   ChevronRight
 } from 'lucide-react';
+import { Table } from 'lucide-react';
+import { DocumentReport } from './DocumentReport';
+import { FolderBrowserModal } from './FolderBrowserModal';
 import { Turma, Partner } from '../types';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -83,9 +86,38 @@ export default function DocumentSearch({
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Link / Association states
-  const [associationType, setAssociationType] = useState<'turma' | 'partner' | null>(null);
+  const [associationType, setAssociationType] = useState<'tapi' | 'termo' | null>(null);
   const [associationId, setAssociationId] = useState<string>('');
   const [isLinkedSuccess, setIsLinkedSuccess] = useState(false);
+  const [viewMode, setViewMode] = useState<'search' | 'report'>('search');
+  const [isFolderBrowserOpen, setIsFolderBrowserOpen] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [isDriveSelected, setIsDriveSelected] = useState(false);
+  const [driveIdSelected, setDriveIdSelected] = useState<string | null>(null);
+
+  const [turmaSearchTerm, setTurmaSearchTerm] = useState('');
+  const [isTurmaDropdownOpen, setIsTurmaDropdownOpen] = useState(false);
+
+  const validStagesCleanSearch = [
+    'concluido',
+    'concluidos', 
+    'pendencia de projeto', 
+    'patente', 
+    'envio de prototipos', 
+    'pre projeto',
+    'pre-projeto',
+    'pre projetos'
+  ];
+
+  const filteredTurmas = turmas.filter(t => {
+    const ds = (t.dealstage || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    return validStagesCleanSearch.includes(ds);
+  });
+
+  const searchFilteredTurmas = filteredTurmas.filter(t => {
+    const searchStr = `${t.name} ${t.projectTitle || ''}`.toLowerCase();
+    return searchStr.includes(turmaSearchTerm.toLowerCase());
+  });
 
   // Sync auth state listener on mount
   useEffect(() => {
@@ -126,7 +158,11 @@ export default function DocumentSearch({
       setIsLoggingIn(false);
     } catch (err: any) {
       console.error('Google Sign-in Error:', err);
-      setAuthError(err.message || 'Erro ao fazer login com o Google.');
+      if (err.code === 'auth/popup-closed-by-user') {
+        setAuthError('Login cancelado.');
+      } else {
+        setAuthError(err.message || 'Erro ao fazer login com o Google.');
+      }
       setIsLoggingIn(false);
     }
   };
@@ -165,7 +201,9 @@ export default function DocumentSearch({
         body: JSON.stringify({
           accessToken: token,
           searchQuery: searchQuery.trim(),
-          folderId: folderId.trim()
+          folderId: folderId.trim(),
+          isDrive: isDriveSelected,
+          driveId: driveIdSelected
         })
       });
 
@@ -247,7 +285,7 @@ export default function DocumentSearch({
   const handleSaveAssociation = () => {
     if (!selectedFile || !analysisResult) return;
 
-    if (associationType === 'turma') {
+    if (associationType === 'tapi') {
       const targetTurma = turmas.find(t => t.id === associationId);
       if (!targetTurma) return;
 
@@ -261,19 +299,19 @@ export default function DocumentSearch({
 
       onUpdateTurma(updatedTurma);
       setIsLinkedSuccess(true);
-    } else if (associationType === 'partner') {
-      const targetPartner = partners.find(p => p.id === associationId);
-      if (!targetPartner) return;
+    } else if (associationType === 'termo') {
+      const targetTurma = turmas.find(t => t.id === associationId);
+      if (!targetTurma) return;
 
-      const updatedPartner: Partner = {
-        ...targetPartner,
+      const updatedTurma: Turma = {
+        ...targetTurma,
         partnershipTermLink: selectedFile.webViewLink,
         partnershipTermValidity: analysisResult.dataValidade || undefined,
         partnershipTermStatus: analysisResult.statusDoc,
         partnershipTermSummary: analysisResult.resumoCritico
       };
 
-      onUpdatePartner(updatedPartner);
+      onUpdateTurma(updatedTurma);
       setIsLinkedSuccess(true);
     }
   };
@@ -302,11 +340,56 @@ export default function DocumentSearch({
     return <span className="bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-bold border border-amber-100 flex items-center gap-1">Documento</span>;
   };
 
+  const renderTabs = () => (
+    <>
+      {/* Top connected bar & Tabs */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-2 relative z-10">
+          <div className="bg-[#1a162b] p-1.5 rounded-lg border border-slate-800 flex items-center gap-1">
+            <button
+              onClick={() => setViewMode('search')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
+                viewMode === 'search' 
+                  ? 'bg-indigo-600 text-white shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Search size={13} />
+              Busca e Análise (IA)
+            </button>
+            <button
+              onClick={() => setViewMode('report')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded font-bold text-xs transition-all cursor-pointer ${
+                viewMode === 'report' 
+                  ? 'bg-indigo-600 text-white shadow-sm' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Table size={13} />
+              Relatório Incremental
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  if (viewMode === 'report') {
+    return (
+      <div id="drive-integration-dashboard" className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        {renderTabs()}
+        <DocumentReport turmas={turmas} partners={partners} />
+      </div>
+    );
+  }
+
   // Render Login page if not authenticated
   if (!token) {
     return (
-      <div id="drive-auth-container" className="max-w-4xl mx-auto p-6 md:p-12 text-center">
-        <div className="bg-white rounded-xl border border-slate-200/80 p-8 shadow-xs max-w-lg mx-auto">
+      <div id="drive-integration-dashboard" className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        {renderTabs()}
+        <div id="drive-auth-container" className="max-w-4xl mx-auto p-6 md:p-12 text-center">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-8 shadow-xs max-w-lg mx-auto">
           <div className="mx-auto w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-6">
             <FolderOpen size={32} />
           </div>
@@ -354,12 +437,14 @@ export default function DocumentSearch({
           )}
         </div>
       </div>
+      </div>
     );
   }
 
   return (
     <div id="drive-integration-dashboard" className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-      {/* Top connected bar */}
+
+
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
           {user?.photoURL ? (
@@ -396,20 +481,42 @@ export default function DocumentSearch({
               <p className="text-[10px] text-slate-400 mt-1">Busque TAPI, Termos de Parceria e Contratos</p>
             </div>
 
-            {/* Folder ID / Shared Drive ID */}
+            {/* Folder Selection */}
             <div>
               <label className="block text-xs font-bold text-slate-600 mb-1">
-                ID da Pasta ou Drive Compartilhado <span className="text-slate-400 font-normal">(Opcional)</span>
+                Pasta do Drive <span className="text-slate-400 font-normal">(Opcional)</span>
               </label>
-              <input 
-                type="text"
-                placeholder="Ex: 1A2b3C4d5E6f7G..."
-                value={folderId}
-                onChange={(e) => setFolderId(e.target.value)}
-                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-slate-50/50"
-              />
-              <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">
-                Recomendado para restringir a busca às pastas de projetos do <strong>Drive Compartilhado</strong> da coordenação.
+              <div className="flex items-center gap-2">
+                <div className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-slate-600 truncate flex items-center gap-2">
+                  <FolderOpen size={14} className="text-indigo-500 shrink-0" />
+                  {folderId ? (
+                    <span className="font-semibold text-slate-800 truncate" title={folderId}>
+                      {folderName || folderId}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">Todo o Google Drive (Não recomendado)</span>
+                  )}
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setIsFolderBrowserOpen(true)}
+                  className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-bold transition-colors whitespace-nowrap border border-indigo-200"
+                >
+                  Selecionar Pasta
+                </button>
+                {folderId && (
+                  <button 
+                    type="button"
+                    onClick={() => { setFolderId(''); setFolderName(''); setIsDriveSelected(false); setDriveIdSelected(null); }}
+                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-200"
+                    title="Limpar seleção"
+                  >
+                    <XCircle size={14} />
+                  </button>
+                )}
+              </div>
+              <p className="text-[9px] text-slate-400 mt-1.5 leading-relaxed">
+                Recomendado restringir a busca a uma pasta do <strong>Drive Compartilhado</strong>.
               </p>
             </div>
 
@@ -631,6 +738,7 @@ export default function DocumentSearch({
                     <p className="text-xs font-bold text-slate-700">Fazendo download e analisando o termo...</p>
                     <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
                       Estamos varrendo o arquivo com a IA do Gemini para localizar assinaturas, validades, escopo e status do contrato.
+                      <br/><span className="text-amber-600 font-medium">Nota: Documentos longos (ex: PDFs com muitas páginas) podem levar até 60 segundos.</span>
                     </p>
                   </div>
                 </div>
@@ -732,41 +840,58 @@ export default function DocumentSearch({
                         <select 
                           value={associationType || ''}
                           onChange={(e) => {
-                            setAssociationType(e.target.value as 'turma' | 'partner');
+                            setAssociationType(e.target.value as 'tapi' | 'termo');
                             setAssociationId('');
                           }}
                           className="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
                         >
-                          <option value="turma">Negócio / Turma (TAPI)</option>
-                          <option value="partner">Empresa Parceira (Termo Parceria)</option>
+                          <option value="tapi">Negócio / Turma (TAPI)</option>
+                          <option value="termo">Negócio / Turma (Termo Parceria)</option>
                         </select>
                       </div>
 
                       {/* Select Association item ID */}
                       <div className="w-full md:w-2/3">
                         <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">
-                          Selecione o {associationType === 'turma' ? 'Negócio/Turma' : 'Parceiro'} correspondente
+                          Selecione o Negócio/Turma correspondente
                         </label>
-                        <select 
-                          value={associationId}
-                          onChange={(e) => setAssociationId(e.target.value)}
-                          className="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white font-medium text-slate-700"
-                        >
-                          <option value="">-- Selecione para vincular --</option>
-                          {associationType === 'turma' ? (
-                            turmas.map(t => (
-                              <option key={t.id} value={t.id}>
-                                {t.name} {t.projectTitle ? ` - ${t.projectTitle}` : ''}
-                              </option>
-                            ))
-                          ) : (
-                            partners.map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.name}
-                              </option>
-                            ))
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Buscar Negócio/Turma..."
+                            value={associationId && !isTurmaDropdownOpen ? (filteredTurmas.find(t => t.id === associationId) ? `${filteredTurmas.find(t => t.id === associationId)?.name} ${filteredTurmas.find(t => t.id === associationId)?.projectTitle ? `- ${filteredTurmas.find(t => t.id === associationId)?.projectTitle}` : ''}` : turmaSearchTerm) : turmaSearchTerm}
+                            onChange={(e) => {
+                              setTurmaSearchTerm(e.target.value);
+                              setAssociationId('');
+                              setIsTurmaDropdownOpen(true);
+                            }}
+                            onFocus={() => setIsTurmaDropdownOpen(true)}
+                            onBlur={() => setTimeout(() => setIsTurmaDropdownOpen(false), 200)}
+                            className="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white font-medium text-slate-700"
+                          />
+                          {isTurmaDropdownOpen && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                              {searchFilteredTurmas.map(t => (
+                                <div
+                                  key={t.id}
+                                  className="px-3 py-2 text-xs hover:bg-indigo-50 cursor-pointer text-slate-700"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // Prevent input blur
+                                    setAssociationId(t.id);
+                                    setTurmaSearchTerm(`${t.name} ${t.projectTitle ? `- ${t.projectTitle}` : ''}`);
+                                    setIsTurmaDropdownOpen(false);
+                                  }}
+                                >
+                                  <div className="font-semibold">{t.name}</div>
+                                  {t.projectTitle && <div className="text-[10px] text-slate-500 truncate">{t.projectTitle}</div>}
+                                </div>
+                              ))}
+                              {searchFilteredTurmas.length === 0 && (
+                                <div className="px-3 py-2 text-xs text-slate-500">Nenhum resultado encontrado.</div>
+                              )}
+                            </div>
                           )}
-                        </select>
+                        </div>
                       </div>
                     </div>
 
@@ -798,6 +923,20 @@ export default function DocumentSearch({
 
         </div>
       </div>
+      
+      {isFolderBrowserOpen && token && (
+        <FolderBrowserModal 
+          token={token} 
+          onClose={() => setIsFolderBrowserOpen(false)}
+          onSelect={(id, name, isDrive, driveId) => {
+            setFolderId(id);
+            setFolderName(name);
+            setIsDriveSelected(isDrive || false);
+            setDriveIdSelected(driveId || null);
+            setIsFolderBrowserOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

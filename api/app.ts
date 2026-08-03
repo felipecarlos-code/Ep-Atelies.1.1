@@ -391,7 +391,7 @@ Com base nesses dados, gere um relatório executivo de altíssimo nível em Mark
 Mantenha o tom profissional, encorajador, focado em dados e soluções estratégicas. Não use cabeçalhos h1 (use h2 e h3 para encaixar bem no layout).`;
 
         const response = await aiClient.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-3.6-flash",
           contents: prompt,
         });
 
@@ -463,7 +463,7 @@ Mantenha o tom profissional, encorajador, focado em dados e soluções estratég
     if (suggestions.length < 2 && aiClient) {
       try {
         const response = await aiClient.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-3.6-flash",
           contents: `Dado o termo de busca de empresa ou marca: "${cleanQuery}", identifique as 1 a 3 empresas ou instituições reais mais prováveis correspondentes (especialmente brasileiras ou multinacionais).
 Forneça o nome completo da empresa e seu domínio de website oficial (ex: btgpactual.com, google.com, inteli.edu.br).
 Você DEVE retornar no formato JSON estrito, sem formatação markdown ou textos explicativos adicionais.
@@ -2164,7 +2164,7 @@ Instruções importantes:
 Mensagem do usuário: "${message}"`;
 
       const response = await aiClient.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt
       });
 
@@ -2177,8 +2177,53 @@ Mensagem do usuário: "${message}"`;
   });
 
   // Google Drive File Scan Endpoint
+  app.post("/api/drive/folders", async (req, res) => {
+    const { accessToken, parentId, isDrive } = req.body;
+    if (!accessToken) return res.status(400).json({ success: false, error: "Access token required" });
+
+    try {
+      if (!parentId || parentId === 'root_drives') {
+        // Fetch Shared Drives
+        const drivesResponse = await fetch("https://www.googleapis.com/drive/v3/drives?pageSize=100", {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const drivesData = await drivesResponse.json();
+        const sharedDrives = drivesData.drives || [];
+        
+        const folders = [
+          { id: 'root', name: 'Meu Drive (Root)', isDrive: false, driveId: null },
+          ...sharedDrives.map((d) => ({ id: d.id, name: d.name + ' (Drive Compartilhado)', isDrive: true, driveId: d.id }))
+        ];
+        
+        return res.json({ success: true, folders });
+      } else {
+        let query = `trashed = false and mimeType = 'application/vnd.google-apps.folder'`;
+        query += ` and '${parentId}' in parents`;
+        let listUrl = "";
+        if (isDrive) {
+          listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,driveId)&corpora=drive&driveId=${parentId}&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=1000`;
+        } else {
+          listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,driveId)&corpora=allDrives&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=1000`;
+        }
+        
+        const response = await fetch(listUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const data = await response.json();
+        
+        // Pass the isDrive flag down to children so that if they open a subfolder of a drive, we know. Wait, if it's a subfolder, it's not a root drive anymore, so we can use 'in parents' and it will work with corpora=allDrives! So we can just map and not set isDrive=true for children.
+        const returnedFolders = (data.files || []).map((f) => ({ ...f, isDrive: false, driveId: f.driveId || (isDrive ? parentId : null) }));
+        
+        return res.json({ success: true, folders: returnedFolders });
+      }
+    } catch (err) {
+      console.error("[Drive Folders Error]", err);
+      return res.status(500).json({ success: false, error: err.message || "Erro desconhecido." });
+    }
+  });
+
   app.post("/api/drive/list", async (req, res) => {
-    const { accessToken, searchQuery, folderId } = req.body;
+    const { accessToken, searchQuery, folderId, isDrive, driveId } = req.body;
 
     if (!accessToken) {
       return res.status(400).json({ success: false, error: "Access token is required." });
@@ -2187,17 +2232,60 @@ Mensagem do usuário: "${message}"`;
     try {
       // Build Google Drive files.list query
       let query = "trashed = false";
+      let corporaParams = "&corpora=allDrives&supportsAllDrives=true&includeItemsFromAllDrives=true";
+      
       if (folderId) {
-        query += ` and '${folderId}' in parents`;
+        if (isDrive) {
+          corporaParams = `&corpora=drive&driveId=${folderId}&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+        } else if (driveId) {
+          corporaParams = `&corpora=drive&driveId=${driveId}&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+        }
+
+        if (!isDrive) {
+          // Fetch subfolders to allow searching inside them
+          let folderIdsToSearch = [folderId];
+          let queue = [folderId];
+          let fetchedCount = 0;
+          const MAX_SUBFOLDERS = 500; // Prevent infinite/too long loops
+          
+          while (queue.length > 0 && fetchedCount < MAX_SUBFOLDERS) {
+            const currentId = queue.shift();
+            const subQuery = `trashed = false and mimeType = 'application/vnd.google-apps.folder' and '${currentId}' in parents`;
+            const subUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(subQuery)}&fields=files(id)${corporaParams}&pageSize=1000`;
+            
+            try {
+              const subRes = await fetch(subUrl, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+              const subData = await subRes.json();
+              if (subData.files && subData.files.length > 0) {
+                for (const f of subData.files) {
+                  if (fetchedCount < MAX_SUBFOLDERS) {
+                    folderIdsToSearch.push(f.id);
+                    queue.push(f.id);
+                    fetchedCount++;
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("[Drive Subfolder fetch error]", e);
+              break;
+            }
+          }
+          
+          console.log("Subfolders found:", folderIdsToSearch.length);
+          const parentConditions = folderIdsToSearch.map(id => `'${id}' in parents`).join(' or ');
+          query += ` and (${parentConditions})`;
+        }
       }
       if (searchQuery) {
         const escaped = searchQuery.replace(/'/g, "\\'");
         query += ` and (name contains '${escaped}')`;
       } else {
-        query += " and (name contains 'TAPI' or name contains 'Termo' or name contains 'Parceria' or name contains 'Contrato' or name contains 'Convenio' or name contains 'Abertura')";
+        query += " and (name contains 'TAPI' or name contains 'Termo' or name contains 'Parceria' or name contains 'Contrato' or name contains 'Convenio' or name contains 'Abertura' or name contains 'Aditivo')";
       }
 
-      const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,modifiedTime,webViewLink,parents)&supportsAllDrives=true&includeItemsFromAllDrives=true&pageSize=50`;
+      const listUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,modifiedTime,webViewLink,parents)${corporaParams}&pageSize=1000`;
 
       const response = await fetch(listUrl, {
         headers: {
@@ -2230,6 +2318,18 @@ Mensagem do usuário: "${message}"`;
 
     if (!aiClient) {
       return res.status(500).json({ success: false, error: "Gemini AI client not initialized on server. Configure GEMINI_API_KEY." });
+    }
+
+    const supportedMimes = [
+      'application/pdf',
+      'application/vnd.google-apps.document',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain',
+      'application/msword'
+    ];
+    
+    if (!supportedMimes.includes(mimeType) && !mimeType.startsWith('text/')) {
+       return res.status(400).json({ success: false, error: "Formato de arquivo não suportado. Apenas PDF, Google Docs, Word e Textos são permitidos." });
     }
 
     try {
@@ -2340,7 +2440,7 @@ Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crase
       }
 
       const response = await aiClient.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-3.6-flash",
         contents: contents
       });
 
