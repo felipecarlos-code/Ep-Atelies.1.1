@@ -864,7 +864,7 @@ export default function DocumentSearch({
                             value={associationId && !isTurmaDropdownOpen ? (filteredTurmas.find(t => t.id === associationId) ? `${filteredTurmas.find(t => t.id === associationId)?.name} ${filteredTurmas.find(t => t.id === associationId)?.projectTitle ? `- ${filteredTurmas.find(t => t.id === associationId)?.projectTitle}` : ''}` : turmaSearchTerm) : turmaSearchTerm}
                             onChange={(e) => {
                               setTurmaSearchTerm(e.target.value);
-                              setAssociationId(''); setTurmaSearchTerm('');
+                              setAssociationId('');
                               setIsTurmaDropdownOpen(true);
                             }}
                             onFocus={() => setIsTurmaDropdownOpen(true)}
