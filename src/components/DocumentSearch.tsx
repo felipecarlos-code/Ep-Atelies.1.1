@@ -36,6 +36,9 @@ const auth = getAuth(app);
 let cachedAccessToken: string | null = null;
 let cachedGoogleUser: User | null = null;
 
+let searchStateCache: any = null;
+
+
 interface DocumentSearchProps {
   turmas: Turma[];
   partners: Partner[];
@@ -73,27 +76,43 @@ export default function DocumentSearch({
   const [authError, setAuthError] = useState<string | null>(null);
 
   // Scan & Search states
-  const [searchQuery, setSearchQuery] = useState('');
-  const [folderId, setFolderId] = useState('');
-  const [files, setFiles] = useState<DriveFile[]>([]);
+  const [searchQuery, setSearchQuery] = useState(searchStateCache?.searchQuery || '');
+  const [folderId, setFolderId] = useState(searchStateCache?.folderId || '');
+  const [files, setFiles] = useState<DriveFile[]>(searchStateCache?.files || []);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
   // AI Analysis states
   const [analyzingFileId, setAnalyzingFileId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<DriveFile | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [selectedFile, setSelectedFile] = useState<DriveFile | null>(searchStateCache?.selectedFile || null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(searchStateCache?.analysisResult || null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   // Link / Association states
-  const [associationType, setAssociationType] = useState<'tapi' | 'termo' | null>(null);
-  const [associationId, setAssociationId] = useState<string>('');
+  const [associationType, setAssociationType] = useState<'tapi' | 'termo' | null>(searchStateCache?.associationType || null);
+  const [associationId, setAssociationId] = useState<string>(searchStateCache?.associationId || '');
   const [isLinkedSuccess, setIsLinkedSuccess] = useState(false);
-  const [viewMode, setViewMode] = useState<'search' | 'report'>('search');
+  const [viewMode, setViewMode] = useState<'search' | 'report'>(searchStateCache?.viewMode || 'search');
   const [isFolderBrowserOpen, setIsFolderBrowserOpen] = useState(false);
-  const [folderName, setFolderName] = useState('');
-  const [isDriveSelected, setIsDriveSelected] = useState(false);
-  const [driveIdSelected, setDriveIdSelected] = useState<string | null>(null);
+  const [folderName, setFolderName] = useState(searchStateCache?.folderName || '');
+  const [isDriveSelected, setIsDriveSelected] = useState(searchStateCache?.isDriveSelected || false);
+  const [driveIdSelected, setDriveIdSelected] = useState<string | null>(searchStateCache?.driveIdSelected || null);
+
+  useEffect(() => {
+    searchStateCache = {
+      searchQuery,
+      folderId,
+      files,
+      selectedFile,
+      analysisResult,
+      associationType,
+      associationId,
+      viewMode,
+      folderName,
+      isDriveSelected,
+      driveIdSelected
+    };
+  }, [searchQuery, folderId, files, selectedFile, analysisResult, associationType, associationId, viewMode, folderName, isDriveSelected, driveIdSelected]);
 
   const [turmaSearchTerm, setTurmaSearchTerm] = useState('');
   const [isTurmaDropdownOpen, setIsTurmaDropdownOpen] = useState(false);
@@ -176,6 +195,7 @@ export default function DocumentSearch({
       setUser(null);
       cachedAccessToken = null;
       cachedGoogleUser = null;
+      searchStateCache = null;
       setFiles([]);
       setSelectedFile(null);
       setAnalysisResult(null);
@@ -246,13 +266,13 @@ export default function DocumentSearch({
     );
 
     if (suggestedTurma) {
-      setAssociationType('turma');
+      setAssociationType('tapi');
       setAssociationId(suggestedTurma.id);
     } else if (suggestedPartner) {
-      setAssociationType('partner');
+      setAssociationType('termo');
       setAssociationId(suggestedPartner.id);
     } else {
-      setAssociationType('turma');
+      setAssociationType('tapi');
       setAssociationId(''); setTurmaSearchTerm('');
     }
 
@@ -301,6 +321,10 @@ export default function DocumentSearch({
 
       onUpdateTurma(updatedTurma);
       setIsLinkedSuccess(true);
+      setTimeout(() => {
+        setIsLinkedSuccess(false);
+        setViewMode('report');
+      }, 1500);
     } else if (associationType === 'termo') {
       const targetTurma = turmas.find(t => t.id === associationId);
       if (!targetTurma) return;
@@ -315,6 +339,10 @@ export default function DocumentSearch({
 
       onUpdateTurma(updatedTurma);
       setIsLinkedSuccess(true);
+      setTimeout(() => {
+        setIsLinkedSuccess(false);
+        setViewMode('report');
+      }, 1500);
     }
   };
 
