@@ -158,8 +158,10 @@ export default function DocumentSearch({
       setIsLoggingIn(false);
     } catch (err: any) {
       console.error('Google Sign-in Error:', err);
-      if (err.code === 'auth/popup-closed-by-user') {
-        setAuthError('Login cancelado.');
+      if (err.code === 'auth/unauthorized-domain') {
+        setAuthError('Domínio não autorizado. Por favor, adicione o link do site ao Firebase Console (Authentication > Settings > Authorized domains).');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setAuthError('O login foi cancelado.');
       } else {
         setAuthError(err.message || 'Erro ao fazer login com o Google.');
       }
@@ -251,7 +253,7 @@ export default function DocumentSearch({
       setAssociationId(suggestedPartner.id);
     } else {
       setAssociationType('turma');
-      setAssociationId('');
+      setAssociationId(''); setTurmaSearchTerm('');
     }
 
     try {
@@ -841,7 +843,7 @@ export default function DocumentSearch({
                           value={associationType || ''}
                           onChange={(e) => {
                             setAssociationType(e.target.value as 'tapi' | 'termo');
-                            setAssociationId('');
+                            setAssociationId(''); setTurmaSearchTerm('');
                           }}
                           className="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
                         >
@@ -862,7 +864,7 @@ export default function DocumentSearch({
                             value={associationId && !isTurmaDropdownOpen ? (filteredTurmas.find(t => t.id === associationId) ? `${filteredTurmas.find(t => t.id === associationId)?.name} ${filteredTurmas.find(t => t.id === associationId)?.projectTitle ? `- ${filteredTurmas.find(t => t.id === associationId)?.projectTitle}` : ''}` : turmaSearchTerm) : turmaSearchTerm}
                             onChange={(e) => {
                               setTurmaSearchTerm(e.target.value);
-                              setAssociationId('');
+                              setAssociationId(''); setTurmaSearchTerm('');
                               setIsTurmaDropdownOpen(true);
                             }}
                             onFocus={() => setIsTurmaDropdownOpen(true)}
@@ -875,8 +877,9 @@ export default function DocumentSearch({
                                 <div
                                   key={t.id}
                                   className="px-3 py-2 text-xs hover:bg-indigo-50 cursor-pointer text-slate-700"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault(); // Prevent input blur
+                                  onMouseDown={(e) => { e.preventDefault(); }}
+                                  onClick={(e) => {
+                                    e.preventDefault();
                                     setAssociationId(t.id);
                                     setTurmaSearchTerm(`${t.name} ${t.projectTitle ? `- ${t.projectTitle}` : ''}`);
                                     setIsTurmaDropdownOpen(false);
