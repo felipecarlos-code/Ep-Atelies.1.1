@@ -38,7 +38,7 @@ async function callSupabaseREST(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000); // Strict 6-second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased 15-second timeout
 
   try {
     const res = await globalThis.fetch(targetUrl, {
@@ -81,7 +81,7 @@ async function callSupabaseREST(
       data: null,
       error: {
         message: isTimeout 
-          ? "A requisição ao Supabase expirou (timeout de 6s). Verifique se o seu projeto do Supabase está ativo/pausado." 
+          ? "A requisição ao Supabase expirou (timeout de 15s). Verifique se o seu projeto do Supabase está ativo/pausado." 
           : err?.message || String(err),
         code: isTimeout ? "TIMEOUT" : "FETCH_ERROR",
         hint: "",
