@@ -12,15 +12,16 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   XCircle, 
-  ShieldAlert, 
-  Info, 
-  RotateCw, 
-  FileCode, 
-  Link2, 
-  FileCheck, 
-  HelpCircle,
+  FileCheck,
+  Building2,
+  MoreVertical,
+  Layers,
+  ArrowRight,
   LogOut,
-  ChevronRight
+  X,
+  Info,
+  RotateCw,
+  FileCode
 } from 'lucide-react';
 import { Table } from 'lucide-react';
 import { DocumentReport } from './DocumentReport';
@@ -201,6 +202,169 @@ export default function DocumentSearch({
       setAnalysisResult(null);
     } catch (err: any) {
       console.error('Sign-out Error:', err);
+    }
+  };
+
+  // Batch Sync States
+  const [isBatchSyncModalOpen, setIsBatchSyncModalOpen] = useState(false);
+  const [isBatchSyncing, setIsBatchSyncing] = useState(false);
+  const [batchSyncProgress, setBatchSyncProgress] = useState({ current: 0, total: 0 });
+  const [batchSyncLogs, setBatchSyncLogs] = useState<{message: string, type: 'info'|'success'|'error'}[]>([]);
+
+  const handleStartBatchSync = async () => {
+    if (!token || !folderId) {
+      setBatchSyncLogs([{ message: 'Por favor, selecione uma pasta raiz primeiro.', type: 'error' }]);
+      return;
+    }
+    
+    setIsBatchSyncing(true);
+    setBatchSyncLogs([{ message: `Iniciando sincronização na pasta: ${folderName}...`, type: 'info' }]);
+    setBatchSyncProgress({ current: 0, total: 0 });
+
+    try {
+      setBatchSyncLogs(prev => [...prev, { message: 'Buscando subpastas...', type: 'info' }]);
+      const response = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Erro ao listar subpastas.');
+      const data = await response.json();
+      
+      const subfolders = data.files?.filter((f: any) => f.mimeType === 'application/vnd.google-apps.folder') || [];
+      
+      if (subfolders.length === 0) {
+        setBatchSyncLogs(prev => [...prev, { message: 'Nenhuma subpasta encontrada.', type: 'error' }]);
+        setIsBatchSyncing(false);
+        return;
+      }
+      
+      setBatchSyncProgress({ current: 0, total: subfolders.length });
+      setBatchSyncLogs(prev => [...prev, { message: `Encontradas ${subfolders.length} subpastas. Iniciando análise...`, type: 'success' }]);
+
+      let currentProgress = 0;
+      for (const subfolder of subfolders) {
+        currentProgress++;
+        setBatchSyncProgress(prev => ({ ...prev, current: currentProgress }));
+        setBatchSyncLogs(prev => [...prev, { message: `Analisando pasta [${currentProgress}/${subfolders.length}]: ${subfolder.name}`, type: 'info' }]);
+        
+        try {
+          const folderRes = await fetch(`https://www.googleapis.com/drive/v3/files?q='${subfolder.id}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives`, { headers: { Authorization: `Bearer ${token}` } });
+          const folderData = await folderRes.json();
+          let items = folderData.files || [];
+          
+          const subSubFolders = items.filter((f: any) => f.mimeType === 'application/vnd.google-apps.folder');
+          let directFiles = items.filter((f: any) => f.mimeType !== 'application/vnd.google-apps.folder');
+          
+          for (const ssf of subSubFolders) {
+            const ssfRes = await fetch(`https://www.googleapis.com/drive/v3/files?q='${ssf.id}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,modifiedTime,webViewLink)&pageSize=1000&supportsAllDrives=true&includeItemsFromAllDrives=true&corpora=allDrives`, { headers: { Authorization: `Bearer ${token}` } });
+            const ssfData = await ssfRes.json();
+            directFiles = [...directFiles, ...(ssfData.files?.filter((f:any) => f.mimeType !== 'application/vnd.google-apps.folder') || [])];
+          }
+
+          const supportedMimes = ['application/pdf', 'application/vnd.google-apps.document', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+          const processableFiles = directFiles.filter((f: any) => supportedMimes.includes(f.mimeType));
+          
+          const tapiFiles = processableFiles.filter((f: any) => f.name.toLowerCase().includes('tapi'));
+          const termoFiles = processableFiles.filter((f: any) => f.name.toLowerCase().includes('termo') || f.name.toLowerCase().includes('contrato'));
+          
+          tapiFiles.sort((a: any, b: any) => new Date(b.modifiedTime).getTime() - new Date(a.modifiedTime).getTime());
+          termoFiles.sort((a: any, b: any) => new Date(b.modifiedTime).getTime() - new Date(a.modifiedTime).getTime());
+          
+          const latestTapi = tapiFiles[0];
+          const latestTermo = termoFiles[0];
+          
+          if (!latestTapi && !latestTermo) {
+            setBatchSyncLogs(prev => [...prev, { message: `Nenhum TAPI ou Termo encontrado na pasta.`, type: 'error' }]);
+            continue;
+          }
+
+          if (latestTapi) {
+            setBatchSyncLogs(prev => [...prev, { message: `Analisando TAPI: ${latestTapi.name}...`, type: 'info' }]);
+            const analyzeRes = await fetch('/api/drive/analyze-document', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accessToken: token, fileId: latestTapi.id, mimeType: latestTapi.mimeType, fileName: latestTapi.name })
+            });
+            const analyzeData = await analyzeRes.json();
+            if (analyzeRes.status === 429 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota')))) {
+              setBatchSyncLogs(prev => [...prev, { message: `Cota de IA atingida. Interrompendo sincronização.`, type: 'error' }]);
+              setIsBatchSyncing(false);
+              return;
+            }
+            if (analyzeData.success && analyzeData.analysis) {
+              const analysis = analyzeData.analysis;
+              const partnerName = analysis.empresaParceira || '';
+              const matchTurma = turmas.find(t => {
+                const sName = (subfolder.name || '').toLowerCase();
+                const pName = partnerName.toLowerCase();
+                return (partnerName && t.name.toLowerCase().includes(pName)) || 
+                       (t.projectTitle && sName.includes(t.projectTitle.toLowerCase())) ||
+                       sName.includes(t.name.toLowerCase());
+              });
+              
+              if (matchTurma) {
+                const updatedTurma = {
+                  ...matchTurma,
+                  tapiLink: latestTapi.webViewLink,
+                  tapiValidity: analysis.dataValidade || undefined,
+                  tapiStatus: analysis.statusDoc,
+                  tapiSummary: analysis.resumoCritico
+                };
+                onUpdateTurma(updatedTurma);
+                setBatchSyncLogs(prev => [...prev, { message: `TAPI vinculado à turma: ${matchTurma.name}`, type: 'success' }]);
+              } else {
+                setBatchSyncLogs(prev => [...prev, { message: `Turma não encontrada para TAPI de ${partnerName}`, type: 'error' }]);
+              }
+            }
+          }
+
+          if (latestTermo) {
+            setBatchSyncLogs(prev => [...prev, { message: `Analisando Termo: ${latestTermo.name}...`, type: 'info' }]);
+            const analyzeRes = await fetch('/api/drive/analyze-document', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accessToken: token, fileId: latestTermo.id, mimeType: latestTermo.mimeType, fileName: latestTermo.name })
+            });
+            const analyzeData = await analyzeRes.json();
+            if (analyzeRes.status === 429 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota')))) {
+              setBatchSyncLogs(prev => [...prev, { message: `Cota de IA atingida. Interrompendo sincronização.`, type: 'error' }]);
+              setIsBatchSyncing(false);
+              return;
+            }
+            if (analyzeData.success && analyzeData.analysis) {
+              const analysis = analyzeData.analysis;
+              const partnerName = analysis.empresaParceira || '';
+              const matchPartner = partners.find(p => partnerName && (p.name.toLowerCase().includes(partnerName.toLowerCase()) || partnerName.toLowerCase().includes(p.name.toLowerCase())));
+              
+              if (matchPartner) {
+                const updatedPartner = {
+                  ...matchPartner,
+                  partnershipTermLink: latestTermo.webViewLink,
+                  partnershipTermValidity: analysis.dataValidade || undefined,
+                  partnershipTermStatus: analysis.statusDoc,
+                  partnershipTermSummary: analysis.resumoCritico
+                };
+                onUpdatePartner(updatedPartner);
+                setBatchSyncLogs(prev => [...prev, { message: `Termo vinculado ao parceiro: ${matchPartner.name}`, type: 'success' }]);
+              } else {
+                setBatchSyncLogs(prev => [...prev, { message: `Parceiro não encontrado para Termo de ${partnerName}`, type: 'error' }]);
+              }
+            }
+          }
+
+        } catch (err: any) {
+          setBatchSyncLogs(prev => [...prev, { message: `Erro na pasta ${subfolder.name}: ${err.message}`, type: 'error' }]);
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Delay between folders to avoid rate limit
+      }
+      
+      setBatchSyncLogs(prev => [...prev, { message: 'Sincronização em lote concluída!', type: 'success' }]);
+      setTimeout(() => {
+        setIsBatchSyncModalOpen(false);
+        setViewMode('report');
+      }, 2000);
+
+    } catch (err: any) {
+      setBatchSyncLogs(prev => [...prev, { message: `Erro na sincronização em lote: ${err.message}`, type: 'error' }]);
+    } finally {
+      setIsBatchSyncing(false);
     }
   };
 
@@ -491,7 +655,7 @@ export default function DocumentSearch({
 
   return (
     <div id="drive-integration-dashboard" className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-
+      {renderTabs()}
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
@@ -531,9 +695,21 @@ export default function DocumentSearch({
 
             {/* Folder Selection */}
             <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">
-                Pasta do Drive <span className="text-slate-400 font-normal">(Opcional)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-600">
+                  Pasta do Drive <span className="text-slate-400 font-normal">(Opcional)</span>
+                </label>
+                {folderId && (
+                  <button 
+                    type="button"
+                    onClick={() => setIsBatchSyncModalOpen(true)}
+                    className="text-[10px] bg-indigo-600 text-white px-2 py-1 rounded font-bold flex items-center gap-1 hover:bg-indigo-700 transition-colors"
+                  >
+                    <Layers size={10} />
+                    Sincronização em Lote
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <div className="flex-1 text-xs px-3 py-2 border border-slate-200 rounded-lg bg-slate-50/50 text-slate-600 truncate flex items-center gap-2">
                   <FolderOpen size={14} className="text-indigo-500 shrink-0" />
@@ -1003,6 +1179,73 @@ export default function DocumentSearch({
         </div>
       </div>
       
+      {/* Batch Sync Modal */}
+      {isBatchSyncModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50">
+              <h3 className="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                <Layers className="text-indigo-600" size={16} />
+                Sincronização Automática em Lote
+              </h3>
+              <button 
+                onClick={() => !isBatchSyncing && setIsBatchSyncModalOpen(false)}
+                disabled={isBatchSyncing}
+                className="p-1 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="p-6 flex-1 overflow-y-auto">
+              {!isBatchSyncing && batchSyncProgress.total === 0 ? (
+                <div className="text-center py-6">
+                  <FolderOpen size={48} className="mx-auto text-indigo-200 mb-3" />
+                  <p className="text-sm text-slate-600 font-medium mb-4">
+                    Este processo irá analisar todas as subpastas dentro de <strong>{folderName}</strong>, extrair informações de TAPIs e Termos de Parceria usando IA, e associá-los automaticamente às Turmas e Parceiros.
+                  </p>
+                  <button
+                    onClick={handleStartBatchSync}
+                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <Sparkles size={16} />
+                    Iniciar Análise Automática
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                    <span>Progresso ({batchSyncProgress.current} de {batchSyncProgress.total})</span>
+                    <span>{batchSyncProgress.total > 0 ? Math.round((batchSyncProgress.current / batchSyncProgress.total) * 100) : 0}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 mb-6 overflow-hidden">
+                    <div 
+                      className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${batchSyncProgress.total > 0 ? (batchSyncProgress.current / batchSyncProgress.total) * 100 : 0}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="bg-slate-900 rounded-lg p-4 font-mono text-[10px] text-slate-300 h-64 overflow-y-auto flex flex-col gap-1.5 scroll-smooth" id="batch-logs-container">
+                    {batchSyncLogs.map((log, i) => (
+                      <div key={i} className={`flex items-start gap-2 ${log.type === 'error' ? 'text-rose-400' : log.type === 'success' ? 'text-emerald-400' : 'text-slate-300'}`}>
+                        <span className="opacity-50 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+                        <span>{log.message}</span>
+                      </div>
+                    ))}
+                    {isBatchSyncing && (
+                      <div className="flex items-center gap-2 text-indigo-400 animate-pulse">
+                        <span className="opacity-50">[{new Date().toLocaleTimeString()}]</span>
+                        <span>Processando...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isFolderBrowserOpen && token && (
         <FolderBrowserModal 
           token={token} 

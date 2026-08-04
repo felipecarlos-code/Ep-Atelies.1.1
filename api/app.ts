@@ -2384,11 +2384,10 @@ NOME DO ARQUIVO ATUAL NO GOOGLE DRIVE (Referência de Contexto muito Importante)
 
 REGRAS CRÍTICAS DE EXTRAÇÃO (Siga rigidamente para evitar alucinações e erros de template):
 1. Empresa Parceira ("empresaParceira"): 
-   - Atenção máxima! Muitos termos são criados baseando-se em modelos/templates que originalmente pertenciam a OUTRA empresa (por exemplo, modelos que citam Whirlpool S.A.).
-   - Você DEVE identificar quem é a VERDADEIRA empresa parceira/contratada ativa descrita no preâmbulo e na folha de assinatura deste termo específico.
-   - Use o nome do arquivo acima como forte indicação de quem é o parceiro real (por exemplo, se o arquivo cita "IBTCC", o parceiro real provavelmente é "INSTITUTO BRASILEIRO DE TECNOLOGIA E CIÊNCIA DA COMPUTAÇÃO" ou "IBTCC"). 
-   - Ignore menções a empresas de outros termos ou placeholders remanescentes do template de origem que não fazem sentido com o nome do arquivo.
-   - Retorne o nome oficial ou fantasia da empresa parceira correta.
+   - Atenção máxima! Você DEVE identificar quem é a VERDADEIRA empresa parceira/contratada ativa descrita no preâmbulo e na folha de assinatura deste termo.
+   - Procure no preâmbulo ou nas cláusulas quem é designado como "PARCEIRO DE PROJETO" ou "PARCEIRO".
+   - IMPORTANTE: "INTELI", "Instituto de Tecnologia e Liderança" ou "INSTITUTO BRASILEIRO DE TECNOLOGIA E CIÊNCIA DA COMPUTAÇÃO - IBTCC" somos NÓS (a instituição acadêmica). NUNCA liste o Inteli ou IBTCC como a Empresa Parceira.
+   - Retorne o nome oficial ou fantasia exclusivo da EMPRESA PARCEIRA (ex: "Instituto Ponte").
 
 2. Datas de Assinatura ("dataAssinatura") e Validade ("dataValidade"):
    - "dataAssinatura": Extraia a data em que o termo foi assinado (formato DD/MM/AAAA ou null).
@@ -2466,7 +2465,12 @@ Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crase
       return res.json({ success: true, analysis: extractedData });
     } catch (err: any) {
       console.error("[Drive Document Analyze Error]", err);
-      return res.status(500).json({ success: false, error: err.message || "Erro desconhecido ao analisar o documento." });
+      let errorMessage = err.message || "Erro desconhecido ao analisar o documento.";
+      if (errorMessage.includes("quota") || errorMessage.includes("resource_exhausted") || errorMessage.includes("429")) {
+        errorMessage = "A cota de uso da API (Gemini) foi atingida. Por favor, tente novamente mais tarde ou verifique os limites de uso na plataforma Google AI Studio.";
+        return res.status(429).json({ success: false, error: errorMessage });
+      }
+      return res.status(500).json({ success: false, error: errorMessage });
     }
   });
 
