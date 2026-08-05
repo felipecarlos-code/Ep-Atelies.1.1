@@ -2385,9 +2385,9 @@ NOME DO ARQUIVO ATUAL NO GOOGLE DRIVE (Referência de Contexto muito Importante)
 REGRAS CRÍTICAS DE EXTRAÇÃO (Siga rigidamente para evitar alucinações e erros de template):
 1. Empresa Parceira ("empresaParceira"): 
    - Atenção máxima! Você DEVE identificar quem é a VERDADEIRA empresa parceira/contratada ativa descrita no preâmbulo e na folha de assinatura deste termo.
-   - Procure no preâmbulo ou nas cláusulas quem é designado como "PARCEIRO DE PROJETO" ou "PARCEIRO".
+   - REGRA DE OURO: Procure no texto quem é designado expressamente como "PARCEIRO DE PROJETO" ou "PARCEIRO" na cláusula de qualificação das partes (ex: 'doravante denominada simplesmente "Instituto Ponte" ou "PARCEIRO DE PROJETO"'). O nome que antecede esta definição é o nome correto.
    - IMPORTANTE: "INTELI", "Instituto de Tecnologia e Liderança" ou "INSTITUTO BRASILEIRO DE TECNOLOGIA E CIÊNCIA DA COMPUTAÇÃO - IBTCC" somos NÓS (a instituição acadêmica). NUNCA liste o Inteli ou IBTCC como a Empresa Parceira.
-   - Retorne o nome oficial ou fantasia exclusivo da EMPRESA PARCEIRA (ex: "Instituto Ponte").
+   - Desconsidere o nosso nome (Inteli), deixe APENAS o nome do parceiro (ex: "Instituto Ponte").
 
 2. Datas de Assinatura ("dataAssinatura") e Validade ("dataValidade"):
    - "dataAssinatura": Extraia a data em que o termo foi assinado (formato DD/MM/AAAA ou null).
@@ -2466,6 +2466,10 @@ Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crase
     } catch (err: any) {
       console.error("[Drive Document Analyze Error]", err);
       let errorMessage = err.message || "Erro desconhecido ao analisar o documento.";
+      if (errorMessage.includes("503") || errorMessage.includes("UNAVAILABLE") || errorMessage.includes("high demand")) {
+        errorMessage = "A inteligência artificial está indisponível ou com alta demanda no momento. Por favor, tente novamente em instantes.";
+        return res.status(503).json({ success: false, error: errorMessage });
+      }
       if (errorMessage.includes("quota") || errorMessage.includes("resource_exhausted") || errorMessage.includes("429")) {
         errorMessage = "A cota de uso da API (Gemini) foi atingida. Por favor, tente novamente mais tarde ou verifique os limites de uso na plataforma Google AI Studio.";
         return res.status(429).json({ success: false, error: errorMessage });

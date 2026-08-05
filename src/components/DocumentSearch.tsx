@@ -283,7 +283,7 @@ export default function DocumentSearch({
               body: JSON.stringify({ accessToken: token, fileId: latestTapi.id, mimeType: latestTapi.mimeType, fileName: latestTapi.name })
             });
             const analyzeData = await analyzeRes.json();
-            if (analyzeRes.status === 429 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota')))) {
+            if (analyzeRes.status === 429 || analyzeRes.status === 503 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota') || analyzeData.error?.includes('indisponível') || analyzeData.error?.includes('alta demanda')))) {
               setBatchSyncLogs(prev => [...prev, { message: `Cota de IA atingida. Interrompendo sincronização.`, type: 'error' }]);
               setIsBatchSyncing(false);
               return;
@@ -323,7 +323,7 @@ export default function DocumentSearch({
               body: JSON.stringify({ accessToken: token, fileId: latestTermo.id, mimeType: latestTermo.mimeType, fileName: latestTermo.name })
             });
             const analyzeData = await analyzeRes.json();
-            if (analyzeRes.status === 429 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota')))) {
+            if (analyzeRes.status === 429 || analyzeRes.status === 503 || (!analyzeData.success && (analyzeData.error?.includes('cota') || analyzeData.error?.includes('quota') || analyzeData.error?.includes('indisponível') || analyzeData.error?.includes('alta demanda')))) {
               setBatchSyncLogs(prev => [...prev, { message: `Cota de IA atingida. Interrompendo sincronização.`, type: 'error' }]);
               setIsBatchSyncing(false);
               return;

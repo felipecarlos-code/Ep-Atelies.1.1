@@ -21,10 +21,7 @@ export function DocumentReport({ turmas, partners }: DocumentReportProps) {
 
   // Map data
   const reportData = turmas
-    .filter(turma => {
-      const ds = (turma.dealstage || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-      return validStagesClean.includes(ds);
-    })
+    
     .map(turma => {
       const partner = partners.find(p => p.id === turma.partnerId);
     return {
@@ -48,7 +45,10 @@ export function DocumentReport({ turmas, partners }: DocumentReportProps) {
     return true;
   });
 
-  const years = Array.from(new Set(reportData.map(r => r.ano).filter(a => a !== 'N/C'))).sort();
+  const years = Array.from(new Set([
+    ...Array.from({ length: new Date().getFullYear() - 2024 + 2 }, (_, i) => (2024 + i).toString()),
+    ...reportData.map(r => r.ano).filter(a => a !== 'N/C')
+  ])).sort((a, b) => b.localeCompare(a));
   const quarters = Array.from(new Set(reportData.map(r => r.trimestre).filter(q => q !== 'N/C'))).sort();
 
   const handleExportCSV = () => {
