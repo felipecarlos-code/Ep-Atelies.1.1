@@ -107,7 +107,7 @@ export function BoletimPrintV3({
               
               const isEnglish = alloc.subtitle?.toLowerCase().includes('inglês') || alloc.subtitle?.toLowerCase().includes('english');
 
-              const courseStr = cleanOrDetectCourse(alloc.turma?.course, alloc.turma?.courseModule, alloc.turma?.name);
+              const courseStr = cleanOrDetectCourse(alloc.turma?.course, alloc.turma?.courseModule, alloc.turma?.name, alloc.turma?.classCode);
 
               return (
                 <div key={alloc.rowId || idx} className="flex gap-8 items-stretch min-h-[190px] h-auto">
@@ -149,8 +149,13 @@ export function BoletimPrintV3({
                     </div>
                     {/* Block Body */}
                     <div className="bg-slate-50 flex-1 px-6 py-2.5 flex flex-col justify-center gap-1.5">
-                      <h3 className="text-[#2e2640] text-[19px] font-bold leading-tight uppercase font-sans">
-                        {alloc.academicYear}° ANO - MÓDULO {(() => {
+                      <h3 className={`text-[#2e2640] font-bold leading-tight uppercase font-sans ${alloc.academicYear !== '1' ? 'text-[14px]' : 'text-[19px]'}`}>
+                        {alloc.academicYear}° ANO - {(() => {
+                          if (alloc.academicYear !== '1' && courseStr) {
+                            return `${courseStr.toUpperCase()} - `;
+                          }
+                          return '';
+                        })()}MÓDULO {(() => {
                           const ano = parseInt(alloc.academicYear) || 1;
                           let q = 1;
                           if (selectedQuarter === 'Q2') q = 2;
@@ -163,6 +168,19 @@ export function BoletimPrintV3({
                           const classCodeMatch = rawSubtitle.match(/^(?:[1-4]?[a-zA-Z]{2,5}\d+)\s*(?:-\s*(.*))?$/i);
                           let cleaned = (classCodeMatch && classCodeMatch[1]) ? classCodeMatch[1] : rawSubtitle;
                           cleaned = cleaned.replace(/\s*-\s*[1-4]º\s*[a-zA-Z]*$/i, '').trim();
+                          
+                          // Clean up if it was previously duplicated in subtitle
+                          if (alloc.academicYear !== '1' && courseStr) {
+                            const prefix = `${courseStr.toUpperCase()} - `;
+                            const suffix = ` - ${courseStr.toUpperCase()}`;
+                            if (cleaned.toUpperCase().startsWith(prefix.toUpperCase())) {
+                              cleaned = cleaned.substring(prefix.length).trim();
+                            }
+                            if (cleaned.toUpperCase().endsWith(suffix.toUpperCase())) {
+                              cleaned = cleaned.substring(0, cleaned.length - suffix.length).trim();
+                            }
+                          }
+
                           return cleaned;
                         })()}
                       </h3>

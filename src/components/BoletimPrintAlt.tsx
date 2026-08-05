@@ -176,7 +176,7 @@ export function BoletimPrintAlt({
                             </span>
                             {alloc.turma && (
                               <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640] max-w-full truncate">
-                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
                               </span>
                             )}
                           </div>
@@ -246,7 +246,7 @@ export function BoletimPrintAlt({
                             </span>
                             {alloc.turma && (
                               <span className="text-[7.5px] font-sans font-bold px-1.5 py-0.5 rounded bg-[#90a5e5]/10 text-[#2e2640] max-w-full truncate">
-                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                                {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
                               </span>
                             )}
                           </div>

@@ -243,6 +243,8 @@ export default function BoletimEP({
       subtitle = cleaned || subtitle;
     }
 
+    
+
     return { title, subtitle, academicYear };
 
   };
@@ -699,10 +701,11 @@ export default function BoletimEP({
                             {seg.name}
                           </span>
                           {alloc.turma && alloc.academicYear !== '1' && (
-                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider animate-pulse-subtle">
-                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
+                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
+                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
                             </span>
                           )}
+                          
                         </div>
                         <p className="font-mono text-[9px] text-[#2e2640] font-bold mt-0.5 uppercase tracking-wide truncate">
                           {alloc.subtitle}
@@ -923,11 +926,12 @@ export default function BoletimEP({
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                {alloc.turma && alloc.academicYear !== '1' && (
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
-                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
-                                  </span>
-                                )}
+                          {alloc.turma && alloc.academicYear !== '1' && (
+                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
+                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
+                            </span>
+                          )}
+                                
                               </div>
                               
                               <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
@@ -1032,11 +1036,12 @@ export default function BoletimEP({
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                {alloc.turma && alloc.academicYear !== '1' && (
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
-                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
-                                  </span>
-                                )}
+                          {alloc.turma && alloc.academicYear !== '1' && (
+                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
+                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
+                            </span>
+                          )}
+                                
                               </div>
                               
                               <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
@@ -1122,11 +1127,12 @@ export default function BoletimEP({
                                 <span className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded border ${seg.badgeBg} ${seg.borderLight} ${seg.badgeText}`}>
                                   {seg.name}
                                 </span>
-                                {alloc.turma && alloc.academicYear !== '1' && (
-                                  <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
-                                    Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name)}
-                                  </span>
-                                )}
+                          {alloc.turma && alloc.academicYear !== '1' && (
+                            <span className="inline-block bg-[#90a5e5]/10 border border-[#90a5e5]/20 text-[#2e2640] text-[8px] font-extrabold px-1.5 py-0.2 rounded uppercase tracking-wider">
+                              Curso: {cleanOrDetectCourse(alloc.turma.course, alloc.turma.courseModule, alloc.turma.name, alloc.turma.classCode)}
+                            </span>
+                          )}
+                                
                               </div>
                               
                               <p className="font-mono text-[9.5px] print:text-[9px] text-[#2e2640] font-bold uppercase tracking-wider truncate mt-0.5 print:mt-1">
