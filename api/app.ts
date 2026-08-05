@@ -2376,48 +2376,26 @@ Mensagem do usuário: "${message}"`;
       }
 
       let contents: any[] = [];
-      const systemInstruction = `Você é um assistente especialista em analisar documentos contratuais do Inteli (Instituto de Tecnologia e Liderança).
-Analise o documento fornecido para extrair as seguintes informações críticas e formatar estritamente como um objeto JSON válido.
-
-NOME DO ARQUIVO ATUAL NO GOOGLE DRIVE (Referência de Contexto muito Importante):
-"${fileName || "Não informado"}"
-
-REGRAS CRÍTICAS DE EXTRAÇÃO (Siga rigidamente para evitar alucinações e erros de template):
-1. Empresa Parceira ("empresaParceira"): 
-   - Atenção máxima! Você DEVE identificar quem é a VERDADEIRA empresa parceira/contratada ativa descrita no preâmbulo e na folha de assinatura deste termo.
-   - REGRA DE OURO: Procure no texto quem é designado expressamente como "PARCEIRO DE PROJETO" ou "PARCEIRO" na cláusula de qualificação das partes (ex: 'doravante denominada simplesmente "Instituto Ponte" ou "PARCEIRO DE PROJETO"'). O nome que antecede esta definição é o nome correto.
-   - IMPORTANTE: "INTELI", "Instituto de Tecnologia e Liderança" ou "INSTITUTO BRASILEIRO DE TECNOLOGIA E CIÊNCIA DA COMPUTAÇÃO - IBTCC" somos NÓS (a instituição acadêmica). NUNCA liste o Inteli ou IBTCC como a Empresa Parceira.
-   - Desconsidere o nosso nome (Inteli), deixe APENAS o nome do parceiro (ex: "Instituto Ponte").
-
-2. Datas de Assinatura ("dataAssinatura") e Validade ("dataValidade"):
-   - "dataAssinatura": Extraia a data em que o termo foi assinado (formato DD/MM/AAAA ou null).
-   - "dataValidade": Leia atentamente a cláusula de vigência (geralmente Cláusula Quarta ou item de duração). 
-   - Se a cláusula estipular um prazo explícito (por exemplo: "vigorará por 24 meses" ou "pelo prazo máximo de 24 meses") a partir da data de assinatura, você DEVE calcular matematicamente a data de validade somando esse prazo à data de assinatura identificada.
-   - Exemplo: Assinatura em 02/06/2026 com vigência de 24 meses gera exatamente a dataValidade de "02/06/2028". Nunca retorne null se puder fazer este cálculo. Formato: DD/MM/AAAA.
-
-3. Título do Projeto ("tituloProjeto"):
-   - O título ou nome do projeto do estudante associado (ou null se não encontrado).
-
-4. Resumo Crítico ("resumoCritico"):
-   - Um resumo conciso de 2 a 3 frases explicando o escopo da parceria e obrigações principais das partes.
-
-5. Status do Documento ("statusDoc"):
-   - Sendo "Ativo" ou "Expirado" (se a dataValidade já passou comparado a hoje, 21/07/2026) ou "Revisão Necessária".
-
-Sua resposta deve ser estruturada exatamente assim:
+      const systemInstruction = `Analise o doc do Inteli ("${fileName || "N/A"}").
+Retorne um JSON exato (sem formatação markdown) com:
 {
   "tituloProjeto": "Título do projeto ou null",
-  "empresaParceira": "Empresa Parceira Real",
+  "empresaParceira": "Nome do Parceiro real (NÃO listar Inteli, Instituto de Tecnologia e Liderança, ou IBTCC)",
   "dataAssinatura": "DD/MM/AAAA ou null",
-  "dataValidade": "DD/MM/AAAA ou null",
-  "resumoCritico": "Texto do resumo",
-  "statusDoc": "Ativo" | "Expirado" | "Revisão Necessária"
-}
-
-Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crases (\`\`\`), explicações ou introduções adicionais.`;
+  "dataValidade": "Calculada (dataAssinatura + vigência, ex: 24 meses). DD/MM/AAAA ou null",
+  "resumoCritico": "Resumo de 1-2 frases do escopo",
+  "statusDoc": "Ativo"
+}`;
 
       if (actualMimeType === 'text/plain') {
-        const textContent = fileBuffer.toString('utf-8');
+        let textContent = fileBuffer.toString('utf-8');
+        // OTIMIZAÇÃO DE TOKENS: Para documentos longos, pegar o início (preâmbulo/partes) e fim (assinaturas/datas)
+        const MAX_CHARS = 10000;
+        if (textContent.length > MAX_CHARS) {
+          textContent = textContent.substring(0, 5000) + 
+            "\n\n...[TEXTO INTERMEDIÁRIO OMITIDO PARA ECONOMIA DE TOKENS]...\n\n" + 
+            textContent.substring(textContent.length - 5000);
+        }
         contents = [
           {
             text: `${systemInstruction}\n\nConteúdo do documento:\n${textContent}`
@@ -2439,7 +2417,7 @@ Importante: Retorne apenas o JSON bruto. Não inclua blocos de código com crase
       }
 
       const response = await aiClient.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-2.5-flash",
         contents: contents
       });
 
